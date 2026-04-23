@@ -15,7 +15,7 @@ def send_verification_email(to_email: str, first_name: str, token: str) -> None:
     <h2>Bonjour {first_name},</h2>
     <p>Merci de vous être inscrit sur <strong>Hi! Platform</strong>.</p>
     <p>Cliquez sur le lien ci-dessous pour vérifier votre adresse email :</p>
-    <p><a href="{verify_url}" style="background:#1A3A8F;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;">
+    <p><a href="{verify_url}" style="background:#004575;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;">
       Vérifier mon email
     </a></p>
     <p>Ce lien expire dans 24 heures.</p>

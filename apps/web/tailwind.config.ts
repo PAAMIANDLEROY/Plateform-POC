@@ -6,13 +6,13 @@ const config: Config = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: "#1A3A8F",
-          dark: "#122970",
-          light: "#2550C0",
+          DEFAULT: "#004575",
+          dark: "#003460",
+          light: "#005a96",
         },
         danger: {
-          DEFAULT: "#D72638",
-          dark: "#b01e2c",
+          DEFAULT: "#E61853",
+          dark: "#c41245",
         },
         surface: "#F4F6FA",
         "text-muted": "#4A4A6A",
