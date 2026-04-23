@@ -12,6 +12,7 @@ const links = [
   { href: "/apps", label: "Hi! App" },
   { href: "/insights", label: "Insights" },
   { href: "/studio", label: "Studio" },
+  { href: "/lms", label: "LMS" },
 ];
 
 export function Nav() {

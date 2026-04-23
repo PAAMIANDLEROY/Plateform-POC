@@ -115,6 +115,256 @@ export const MOCK_APPS = [
   { id: "3", title: "NLP Demo", description: "Testez des modèles de traitement du langage naturel.", url: "https://huggingface.co/spaces", tags: ["NLP", "Transformers"], school: "Télécom Paris" },
 ];
 
+// ─── LMS / Cohort management ────────────────────────────────────────────────
+
+export interface Cohort {
+  id: string;
+  name: string;
+  description: string;
+  school: string;
+  status: "active" | "archived" | "draft";
+  createdAt: string;
+  startDate: string;
+  endDate: string;
+  enrolledCount: number;
+  completionRate: number;
+  avgScore: number;
+  avgTimeSpent: number;
+  assignedCourseIds: string[];
+}
+
+export interface CourseProgress {
+  courseId: string;
+  title: string;
+  progress: number;
+  score: number | null;
+  completedAt: string | null;
+}
+
+export interface StudentEnrollment {
+  userId: string;
+  cohortId: string;
+  name: string;
+  initials: string;
+  email: string;
+  school: string;
+  enrolledAt: string;
+  lastActive: string;
+  daysInactive: number;
+  coursesCompleted: number;
+  totalCourses: number;
+  videosWatched: number;
+  totalVideos: number;
+  quizAvg: number;
+  timeSpent: number;
+  status: "active" | "at-risk" | "completed" | "inactive";
+  courseProgress: CourseProgress[];
+}
+
+export const MOCK_COHORTS: Cohort[] = [
+  {
+    id: "1",
+    name: "Master IA — Promo 2026",
+    description: "Cohorte principale M2 Data Science & IA. Parcours complet : fondamentaux ML, deep learning et NLP.",
+    school: "Polytechnique",
+    status: "active",
+    createdAt: "2026-01-15",
+    startDate: "3 févr. 2026",
+    endDate: "25 juil. 2026",
+    enrolledCount: 24,
+    completionRate: 67,
+    avgScore: 78,
+    avgTimeSpent: 840,
+    assignedCourseIds: ["1", "2", "3"],
+  },
+  {
+    id: "2",
+    name: "Formation Executive IA",
+    description: "Programme intensif pour managers et décideurs. Focus usages, éthique et ROI de l'IA en entreprise.",
+    school: "HEC",
+    status: "active",
+    createdAt: "2026-02-10",
+    startDate: "1 mars 2026",
+    endDate: "30 mai 2026",
+    enrolledCount: 12,
+    completionRate: 82,
+    avgScore: 85,
+    avgTimeSpent: 420,
+    assignedCourseIds: ["1", "5"],
+  },
+  {
+    id: "3",
+    name: "Data Engineering Bootcamp",
+    description: "Formation intensive sur les pipelines de données, MLOps et cloud computing. Niveau avancé.",
+    school: "Télécom Paris",
+    status: "active",
+    createdAt: "2026-03-01",
+    startDate: "7 avr. 2026",
+    endDate: "30 sept. 2026",
+    enrolledCount: 18,
+    completionRate: 34,
+    avgScore: 71,
+    avgTimeSpent: 360,
+    assignedCourseIds: ["2", "4", "6"],
+  },
+  {
+    id: "4",
+    name: "ML Fondamentaux — Automne 2025",
+    description: "Cohorte archivée. 92 % de taux de complétion final, meilleure promotion à ce jour.",
+    school: "ENSAE",
+    status: "archived",
+    createdAt: "2025-09-01",
+    startDate: "15 sept. 2025",
+    endDate: "31 janv. 2026",
+    enrolledCount: 31,
+    completionRate: 92,
+    avgScore: 81,
+    avgTimeSpent: 980,
+    assignedCourseIds: ["1", "3", "4"],
+  },
+];
+
+export const MOCK_STUDENTS: StudentEnrollment[] = [
+  {
+    userId: "u1",
+    cohortId: "1",
+    name: "Alice Moreau",
+    initials: "AM",
+    email: "a.moreau@polytechnique.edu",
+    school: "Polytechnique",
+    enrolledAt: "3 févr. 2026",
+    lastActive: "22 avr. 2026",
+    daysInactive: 1,
+    coursesCompleted: 2,
+    totalCourses: 3,
+    videosWatched: 5,
+    totalVideos: 6,
+    quizAvg: 88,
+    timeSpent: 920,
+    status: "active",
+    courseProgress: [
+      { courseId: "1", title: "Fondamentaux du ML", progress: 100, score: 92, completedAt: "15 mars 2026" },
+      { courseId: "2", title: "Python pour la Data Science", progress: 100, score: 85, completedAt: "1 avr. 2026" },
+      { courseId: "3", title: "Réseaux de neurones profonds", progress: 68, score: null, completedAt: null },
+    ],
+  },
+  {
+    userId: "u2",
+    cohortId: "1",
+    name: "Thomas Bernard",
+    initials: "TB",
+    email: "t.bernard@polytechnique.edu",
+    school: "Polytechnique",
+    enrolledAt: "3 févr. 2026",
+    lastActive: "20 avr. 2026",
+    daysInactive: 3,
+    coursesCompleted: 1,
+    totalCourses: 3,
+    videosWatched: 3,
+    totalVideos: 6,
+    quizAvg: 74,
+    timeSpent: 560,
+    status: "active",
+    courseProgress: [
+      { courseId: "1", title: "Fondamentaux du ML", progress: 100, score: 74, completedAt: "20 mars 2026" },
+      { courseId: "2", title: "Python pour la Data Science", progress: 45, score: null, completedAt: null },
+      { courseId: "3", title: "Réseaux de neurones profonds", progress: 0, score: null, completedAt: null },
+    ],
+  },
+  {
+    userId: "u3",
+    cohortId: "1",
+    name: "Sofia Ramos",
+    initials: "SR",
+    email: "s.ramos@polytechnique.edu",
+    school: "Polytechnique",
+    enrolledAt: "3 févr. 2026",
+    lastActive: "10 avr. 2026",
+    daysInactive: 13,
+    coursesCompleted: 0,
+    totalCourses: 3,
+    videosWatched: 1,
+    totalVideos: 6,
+    quizAvg: 0,
+    timeSpent: 120,
+    status: "at-risk",
+    courseProgress: [
+      { courseId: "1", title: "Fondamentaux du ML", progress: 22, score: null, completedAt: null },
+      { courseId: "2", title: "Python pour la Data Science", progress: 0, score: null, completedAt: null },
+      { courseId: "3", title: "Réseaux de neurones profonds", progress: 0, score: null, completedAt: null },
+    ],
+  },
+  {
+    userId: "u4",
+    cohortId: "1",
+    name: "Julien Petit",
+    initials: "JP",
+    email: "j.petit@polytechnique.edu",
+    school: "Polytechnique",
+    enrolledAt: "3 févr. 2026",
+    lastActive: "23 avr. 2026",
+    daysInactive: 0,
+    coursesCompleted: 3,
+    totalCourses: 3,
+    videosWatched: 6,
+    totalVideos: 6,
+    quizAvg: 91,
+    timeSpent: 1100,
+    status: "completed",
+    courseProgress: [
+      { courseId: "1", title: "Fondamentaux du ML", progress: 100, score: 95, completedAt: "10 mars 2026" },
+      { courseId: "2", title: "Python pour la Data Science", progress: 100, score: 88, completedAt: "28 mars 2026" },
+      { courseId: "3", title: "Réseaux de neurones profonds", progress: 100, score: 91, completedAt: "18 avr. 2026" },
+    ],
+  },
+  {
+    userId: "u5",
+    cohortId: "1",
+    name: "Inès Dupont",
+    initials: "ID",
+    email: "i.dupont@polytechnique.edu",
+    school: "Polytechnique",
+    enrolledAt: "3 févr. 2026",
+    lastActive: "1 avr. 2026",
+    daysInactive: 22,
+    coursesCompleted: 0,
+    totalCourses: 3,
+    videosWatched: 0,
+    totalVideos: 6,
+    quizAvg: 0,
+    timeSpent: 45,
+    status: "inactive",
+    courseProgress: [
+      { courseId: "1", title: "Fondamentaux du ML", progress: 8, score: null, completedAt: null },
+      { courseId: "2", title: "Python pour la Data Science", progress: 0, score: null, completedAt: null },
+      { courseId: "3", title: "Réseaux de neurones profonds", progress: 0, score: null, completedAt: null },
+    ],
+  },
+  {
+    userId: "u6",
+    cohortId: "1",
+    name: "Marc Lefèvre",
+    initials: "ML",
+    email: "m.lefevre@polytechnique.edu",
+    school: "Polytechnique",
+    enrolledAt: "3 févr. 2026",
+    lastActive: "21 avr. 2026",
+    daysInactive: 2,
+    coursesCompleted: 2,
+    totalCourses: 3,
+    videosWatched: 4,
+    totalVideos: 6,
+    quizAvg: 79,
+    timeSpent: 810,
+    status: "active",
+    courseProgress: [
+      { courseId: "1", title: "Fondamentaux du ML", progress: 100, score: 82, completedAt: "18 mars 2026" },
+      { courseId: "2", title: "Python pour la Data Science", progress: 100, score: 76, completedAt: "5 avr. 2026" },
+      { courseId: "3", title: "Réseaux de neurones profonds", progress: 32, score: null, completedAt: null },
+    ],
+  },
+];
+
 export type InsightBlock =
   | { type: "text"; content: string }
   | { type: "heading"; content: string; level: 2 | 3 }
