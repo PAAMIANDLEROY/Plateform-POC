@@ -1,8 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
 
-from database import get_db
 from models.user import User, UserRole
 from schemas.auth import UserResponse
 from core.deps import get_current_user, require_role
@@ -20,39 +18,33 @@ class UpdateRoleRequest(BaseModel):
 
 
 @router.get("/me", response_model=UserResponse)
-def get_me(current_user: User = Depends(get_current_user)):
+async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
 
 
 @router.put("/me", response_model=UserResponse)
-def update_me(
-    body: UpdateProfileRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
+async def update_me(body: UpdateProfileRequest, current_user: User = Depends(get_current_user)):
     if body.first_name is not None:
         current_user.first_name = body.first_name.strip()
     if body.last_name is not None:
         current_user.last_name = body.last_name.strip()
-    db.commit()
-    db.refresh(current_user)
+    await current_user.save()
     return current_user
 
 
 @router.get("/{user_id}", response_model=UserResponse, dependencies=[Depends(require_role("admin", "superuser"))])
-def get_user(user_id: str, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
+async def get_user(user_id: str):
+    user = await User.get(user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return user
 
 
 @router.put("/{user_id}/role", response_model=UserResponse, dependencies=[Depends(require_role("admin", "superuser"))])
-def update_role(user_id: str, body: UpdateRoleRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
+async def update_role(user_id: str, body: UpdateRoleRequest):
+    user = await User.get(user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     user.role = body.role
-    db.commit()
-    db.refresh(user)
+    await user.save()
     return user

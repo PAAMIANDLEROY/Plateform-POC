@@ -1,14 +1,11 @@
 from fastapi import Depends, HTTPException, status, Cookie
-from sqlalchemy.orm import Session
 from typing import Optional
 
-from database import get_db
 from core.security import decode_token
 from models.user import User
 
 
-def get_current_user(
-    db: Session = Depends(get_db),
+async def get_current_user(
     access_token: Optional[str] = Cookie(default=None),
 ) -> User:
     credentials_exception = HTTPException(
@@ -26,14 +23,14 @@ def get_current_user(
     if not user_id:
         raise credentials_exception
 
-    user = db.query(User).filter(User.id == user_id).first()
+    user = await User.get(user_id)
     if not user or not user.is_active:
         raise credentials_exception
     return user
 
 
 def require_role(*roles: str):
-    def checker(current_user: User = Depends(get_current_user)) -> User:
+    async def checker(current_user: User = Depends(get_current_user)) -> User:
         if current_user.role not in roles:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
         return current_user

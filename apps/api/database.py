@@ -1,19 +1,14 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from motor.motor_asyncio import AsyncIOMotorClient
+from beanie import init_beanie
 
 from core.config import settings
 
-engine = create_engine(settings.DATABASE_URL, pool_pre_ping=True)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+async def init_db() -> None:
+    client = AsyncIOMotorClient(settings.MONGODB_URL)
+    db_name = settings.MONGODB_URL.rsplit("/", 1)[-1].split("?")[0]
 
-class Base(DeclarativeBase):
-    pass
+    from models.user import User
+    from models.allowed_domain import AllowedDomain
 
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    await init_beanie(database=client[db_name], document_models=[User, AllowedDomain])

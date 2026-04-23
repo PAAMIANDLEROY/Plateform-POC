@@ -1,17 +1,15 @@
 services:
-  postgres:
-    image: postgres:16-alpine
+  mongodb:
+    image: mongo:7
     container_name: hiplatform_db
     environment:
-      POSTGRES_USER: hiplatform
-      POSTGRES_PASSWORD: hiplatform_dev
-      POSTGRES_DB: hiplatform
+      MONGO_INITDB_DATABASE: hiplatform
     ports:
-      - "5432:5432"
+      - "27017:27017"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mongo_data:/data/db
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U hiplatform"]
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,13 +19,13 @@ services:
     container_name: hiplatform_api
     env_file: ./apps/api/.env
     environment:
-      DATABASE_URL: postgresql://hiplatform:hiplatform_dev@postgres:5432/hiplatform
+      MONGODB_URL: mongodb://mongodb:27017/hiplatform
     ports:
       - "8000:8000"
     volumes:
       - ./apps/api:/app
     depends_on:
-      postgres:
+      mongodb:
         condition: service_healthy
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
@@ -46,4 +44,4 @@ services:
     command: npm run dev
 
 volumes:
-  postgres_data:
+  mongo_data:
