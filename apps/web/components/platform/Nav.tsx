@@ -10,6 +10,7 @@ const links = [
   { href: "/courses", label: "Hi! Course" },
   { href: "/moocs", label: "Hi! MOOC" },
   { href: "/apps", label: "Hi! App" },
+  { href: "/insights", label: "Insights" },
   { href: "/studio", label: "Studio" },
 ];
 
