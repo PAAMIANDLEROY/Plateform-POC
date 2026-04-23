@@ -48,7 +48,18 @@ export default function TubePage() {
               <h3 className="mt-2 font-semibold text-white text-sm leading-snug group-hover:text-primary transition-colors">
                 {v.title}
               </h3>
-              <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+              <div className="flex items-center gap-1 mt-1.5 mb-2">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <span key={s} className={`text-sm ${s <= Math.round(v.rating) ? "text-yellow-400" : "text-gray-700"}`}>★</span>
+                ))}
+                <span className="text-xs text-gray-500 ml-1">{v.rating.toFixed(1)}</span>
+              </div>
+              <div className="flex flex-wrap gap-1 mb-3">
+                {v.tags.slice(0, 3).map((t) => (
+                  <span key={t} className="text-xs bg-white/5 border border-white/10 text-gray-400 px-2 py-0.5 rounded-full">{t}</span>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 text-xs text-gray-500 border-t border-white/5 pt-2.5">
                 <span>{v.school}</span>
                 <span>·</span>
                 <span>{v.views.toLocaleString()} vues</span>
