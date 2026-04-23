@@ -5,11 +5,11 @@ const categories = ["Tous", "IA & Data", "Mathématiques", "Finance", "Programma
 
 export default function TubePage() {
   return (
-    <>
+    <div className="max-w-7xl mx-auto px-6 py-10">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Hi! Tube</h1>
-          <p className="text-text-muted mt-1">Vidéothèque pédagogique IP Paris</p>
+          <h1 className="text-3xl font-bold text-white">Hi! Tube</h1>
+          <p className="text-gray-400 mt-1">Vidéothèque pédagogique IP Paris</p>
         </div>
       </div>
 
@@ -17,10 +17,10 @@ export default function TubePage() {
         {categories.map((c) => (
           <button
             key={c}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               c === "Tous"
-                ? "bg-primary text-white"
-                : "bg-white border border-gray-200 text-text-muted hover:border-primary hover:text-primary"
+                ? "bg-primary text-white shadow-lg shadow-primary/30"
+                : "bg-white/10 border border-white/10 text-gray-400 hover:border-primary hover:text-white"
             }`}
           >
             {c}
@@ -33,22 +33,22 @@ export default function TubePage() {
           <Link
             key={v.id}
             href={`/tube/${v.id}`}
-            className="bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all group"
+            className="bg-gray-900 rounded-xl overflow-hidden border border-white/10 hover:border-primary/50 transition-all group"
           >
-            <div className="relative aspect-video bg-gray-100 overflow-hidden">
+            <div className="relative aspect-video overflow-hidden">
               <img src={v.thumbnail} alt={v.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-              <span className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">
+              <span className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1.5 py-0.5 rounded">
                 {v.duration}
               </span>
             </div>
             <div className="p-4">
-              <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+              <span className="text-xs font-medium text-primary bg-primary/15 px-2 py-0.5 rounded-full">
                 {v.category}
               </span>
-              <h3 className="mt-2 font-semibold text-gray-900 text-sm leading-snug group-hover:text-primary transition-colors">
+              <h3 className="mt-2 font-semibold text-white text-sm leading-snug group-hover:text-primary transition-colors">
                 {v.title}
               </h3>
-              <div className="mt-2 flex items-center gap-2 text-xs text-text-muted">
+              <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
                 <span>{v.school}</span>
                 <span>·</span>
                 <span>{v.views.toLocaleString()} vues</span>
@@ -57,6 +57,6 @@ export default function TubePage() {
           </Link>
         ))}
       </div>
-    </>
+    </div>
   );
 }
