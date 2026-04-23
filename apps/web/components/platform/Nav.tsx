@@ -6,11 +6,11 @@ import { clsx } from "clsx";
 import { MOCK_USER } from "@/lib/mock";
 
 const links = [
+  { href: "/insights", label: "Insights" },
   { href: "/tube", label: "Hi! Tube" },
   { href: "/courses", label: "Hi! Course" },
   { href: "/moocs", label: "Hi! MOOC" },
   { href: "/apps", label: "Hi! App" },
-  { href: "/insights", label: "Insights" },
   { href: "/studio", label: "Studio" },
   { href: "/lms", label: "LMS" },
 ];

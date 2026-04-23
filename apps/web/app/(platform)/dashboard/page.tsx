@@ -1,7 +1,15 @@
 import Link from "next/link";
-import { MOCK_USER, MOCK_COURSES, MOCK_VIDEOS } from "@/lib/mock";
+import { MOCK_USER, MOCK_COURSES, MOCK_VIDEOS, MOCK_INSIGHTS } from "@/lib/mock";
 
 const subBanners = [
+  {
+    title: "Recherche & Insights Hi! PARIS",
+    desc: "Articles interactifs publiés par les chercheurs d'IP Paris, Polytechnique, Télécom Paris et HEC.",
+    href: "/insights",
+    cta: "Lire les Insights",
+    accent: "from-danger/80 to-danger/20",
+    icon: "🔬",
+  },
   {
     title: "Apprenez les fondamentaux de l'IA",
     desc: "Des cours conçus par les chercheurs d'IP Paris, de Polytechnique et de Télécom Paris.",
@@ -9,14 +17,6 @@ const subBanners = [
     cta: "Explorer les cours",
     accent: "from-primary/80 to-primary/20",
     icon: "📖",
-  },
-  {
-    title: "Suivez un parcours complet",
-    desc: "Nos MOOCs structurés vous guident du machine learning aux applications en production.",
-    href: "/moocs",
-    cta: "Voir les parcours",
-    accent: "from-danger/80 to-danger/20",
-    icon: "🎓",
   },
   {
     title: "Expérimentez en temps réel",
@@ -29,59 +29,56 @@ const subBanners = [
 ];
 
 const modules = [
-  { name: "Hi! Tube", desc: "Vidéothèque pédagogique", icon: "▶", href: "/tube", count: "6 vidéos" },
-  { name: "Hi! Course", desc: "Cours interactifs markdown", icon: "📖", href: "/courses", count: "6 cours" },
-  { name: "Hi! MOOC", desc: "Parcours structurés", icon: "🎓", href: "/moocs", count: "3 parcours" },
-  { name: "Hi! App", desc: "Applications interactives", icon: "⚡", href: "/apps", count: "3 apps" },
-  { name: "Hi! Studio", desc: "Builder de cours", icon: "✏️", href: "/studio", count: "Créer" },
+  { name: "Insights",    desc: "Recherche & actualité",   icon: "🔬", href: "/insights", count: "4 articles" },
+  { name: "Hi! Tube",    desc: "Vidéothèque pédagogique", icon: "▶",  href: "/tube",     count: "6 vidéos"   },
+  { name: "Hi! Course",  desc: "Cours interactifs",       icon: "📖", href: "/courses",  count: "6 cours"    },
+  { name: "Hi! MOOC",    desc: "Parcours structurés",     icon: "🎓", href: "/moocs",    count: "3 parcours" },
+  { name: "Hi! App",     desc: "Applications interactives", icon: "⚡", href: "/apps",  count: "3 apps"     },
 ];
 
 export default function DashboardPage() {
   return (
     <>
-      {/* ── Grosse bannière hero ─────────────────────────────────────── */}
+      {/* ── Hero ────────────────────────────────────────────────────── */}
       <section className="relative w-full h-[560px] overflow-hidden">
-        {/* Image IA en fond */}
         <img
           src="https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=1600&q=80"
           alt="Intelligence Artificielle"
           className="absolute inset-0 w-full h-full object-cover"
         />
-        {/* Overlay gradient noir */}
         <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/30" />
 
-        {/* Contenu */}
         <div className="relative h-full max-w-7xl mx-auto px-6 flex flex-col justify-center">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 text-white/80 text-sm font-medium px-4 py-1.5 rounded-full mb-6 w-fit">
             Hi! PARIS — IP Paris
           </div>
           <h1 className="text-5xl md:text-6xl font-extrabold text-white leading-tight mb-4 max-w-2xl">
-            L'IA au cœur de<br />
-            <span className="text-primary">votre formation</span>
+            La recherche IA<br />
+            <span className="text-danger">à votre portée</span>
           </h1>
           <p className="text-lg text-gray-300 max-w-xl mb-8">
-            La plateforme pédagogique mutualisée d'IP Paris. Cours, vidéos,
-            MOOCs et applications en un seul endroit.
+            Articles de recherche, cours, vidéos et MOOCs produits par les
+            chercheurs d'IP Paris — tout en un seul endroit.
           </p>
           <div className="flex items-center gap-4">
             <Link
-              href="/courses"
-              className="bg-primary text-white px-7 py-3 rounded-xl font-semibold text-base hover:bg-primary-dark transition-colors shadow-lg shadow-primary/30"
+              href="/insights"
+              className="bg-danger text-white px-7 py-3 rounded-xl font-semibold text-base hover:bg-danger-dark transition-colors shadow-lg shadow-danger/30"
             >
-              Commencer maintenant
+              Découvrir les Insights
             </Link>
             <Link
-              href="/tube"
+              href="/courses"
               className="border border-white/30 text-white px-7 py-3 rounded-xl font-semibold text-base hover:bg-white/10 transition-colors"
             >
-              Voir les vidéos
+              Explorer les cours
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ── Trois sous-bannières ─────────────────────────────────────── */}
+      {/* ── Sous-bannières ──────────────────────────────────────────── */}
       <section className="max-w-7xl mx-auto px-6 -mt-12 relative z-10 mb-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {subBanners.map((b) => (
@@ -101,7 +98,7 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* ── Accès rapide modules ─────────────────────────────────────── */}
+      {/* ── Accès rapide ────────────────────────────────────────────── */}
       <section className="max-w-7xl mx-auto px-6 mb-16">
         <h2 className="text-2xl font-bold text-white mb-6">
           Bonjour, {MOCK_USER.first_name} 👋
@@ -111,11 +108,60 @@ export default function DashboardPage() {
             <Link
               key={m.name}
               href={m.href}
-              className="group bg-gray-900 border border-white/10 rounded-xl p-5 hover:border-primary/50 hover:bg-gray-800 transition-all"
+              className="group bg-gray-900 border border-white/10 rounded-xl p-5 hover:border-danger/40 hover:bg-gray-800 transition-all"
             >
               <div className="text-2xl mb-2">{m.icon}</div>
-              <p className="text-sm font-semibold text-white group-hover:text-primary transition-colors">{m.name}</p>
+              <p className="text-sm font-semibold text-white group-hover:text-danger transition-colors">{m.name}</p>
               <p className="text-xs text-gray-500 mt-0.5">{m.count}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Derniers Insights ───────────────────────────────────────── */}
+      <section className="max-w-7xl mx-auto px-6 mb-16">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-white">Derniers Insights</h2>
+            <p className="text-sm text-gray-500 mt-0.5">Articles de recherche publiés par Hi! PARIS</p>
+          </div>
+          <Link href="/insights" className="text-sm text-danger hover:text-danger-dark transition-colors font-medium">
+            Voir tout →
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {MOCK_INSIGHTS.slice(0, 3).map((article) => (
+            <Link
+              key={article.id}
+              href={`/insights/${article.id}`}
+              className="group bg-gray-900 border border-white/10 rounded-xl overflow-hidden hover:border-danger/30 transition-all"
+            >
+              <div className="relative h-40 overflow-hidden">
+                <img
+                  src={article.cover}
+                  alt={article.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent" />
+                <span className="absolute top-3 left-3 text-xs font-medium bg-danger text-white px-2.5 py-0.5 rounded-full">
+                  {article.category}
+                </span>
+              </div>
+              <div className="p-4">
+                <h3 className="font-bold text-white text-sm leading-snug mb-2 group-hover:text-danger transition-colors line-clamp-2">
+                  {article.title}
+                </h3>
+                <p className="text-xs text-gray-500 line-clamp-2 mb-3">{article.abstract}</p>
+                <div className="flex flex-wrap gap-1 mb-3">
+                  {article.tags.slice(0, 2).map((t) => (
+                    <span key={t} className="text-xs bg-white/5 border border-white/10 text-gray-400 px-2 py-0.5 rounded-full">{t}</span>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between text-xs text-gray-600 border-t border-white/5 pt-2.5">
+                  <span>{article.authors[0]}</span>
+                  <span>{article.read_time} min · {article.school}</span>
+                </div>
+              </div>
             </Link>
           ))}
         </div>
@@ -137,23 +183,13 @@ export default function DashboardPage() {
               className="group bg-gray-900 border border-white/10 rounded-xl overflow-hidden hover:border-primary/40 transition-all"
             >
               <div className="relative overflow-hidden" style={{ aspectRatio: "16/9" }}>
-                <img
-                  src={v.thumbnail}
-                  alt={v.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
+                <img src={v.thumbnail} alt={v.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <span className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1.5 py-0.5 rounded font-mono">
-                  {v.duration}
-                </span>
-                <span className="absolute top-2 left-2 text-xs font-medium bg-primary/80 backdrop-blur text-white px-2 py-0.5 rounded-full">
-                  {v.category}
-                </span>
+                <span className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1.5 py-0.5 rounded font-mono">{v.duration}</span>
+                <span className="absolute top-2 left-2 text-xs font-medium bg-primary/80 backdrop-blur text-white px-2 py-0.5 rounded-full">{v.category}</span>
               </div>
               <div className="p-4">
-                <h3 className="font-semibold text-white text-sm leading-snug group-hover:text-primary transition-colors mb-2">
-                  {v.title}
-                </h3>
+                <h3 className="font-semibold text-white text-sm leading-snug group-hover:text-primary transition-colors mb-2">{v.title}</h3>
                 <div className="flex items-center gap-1 mb-2">
                   {[1, 2, 3, 4, 5].map((s) => (
                     <span key={s} className={`text-sm ${s <= Math.round(v.rating) ? "text-yellow-400" : "text-gray-700"}`}>★</span>
@@ -190,12 +226,8 @@ export default function DashboardPage() {
               href={`/courses/${c.id}`}
               className="group bg-gray-900 border border-white/10 rounded-xl p-5 hover:border-primary/40 hover:bg-gray-800 transition-all"
             >
-              <span className="text-xs font-medium text-primary bg-primary/15 px-2 py-0.5 rounded-full">
-                {c.category}
-              </span>
-              <h3 className="mt-3 font-semibold text-white text-sm leading-snug group-hover:text-primary transition-colors">
-                {c.title}
-              </h3>
+              <span className="text-xs font-medium text-primary bg-primary/15 px-2 py-0.5 rounded-full">{c.category}</span>
+              <h3 className="mt-3 font-semibold text-white text-sm leading-snug group-hover:text-primary transition-colors">{c.title}</h3>
               <p className="text-xs text-gray-500 mt-1 mb-4">{c.description}</p>
               <div className="flex items-center gap-2 text-xs text-gray-500 border-t border-white/5 pt-3">
                 <span>{c.school}</span>
