@@ -30,10 +30,10 @@ const subBanners = [
 
 const modules = [
   { name: "Insights",    desc: "Recherche & actualité",   icon: "🔬", href: "/insights", count: "4 articles" },
-  { name: "Hi! Tube",    desc: "Vidéothèque pédagogique", icon: "▶",  href: "/tube",     count: "6 vidéos"   },
-  { name: "Hi! Course",  desc: "Cours interactifs",       icon: "📖", href: "/courses",  count: "6 cours"    },
+  { name: "Hi! Tube",    desc: "Vidéothèque pédagogique", icon: "▶",  href: "/tube",     count: "9 vidéos"   },
+  { name: "Hi! Course",  desc: "Cours interactifs",       icon: "📖", href: "/courses",  count: "12 cours"   },
   { name: "Hi! MOOC",    desc: "Parcours structurés",     icon: "🎓", href: "/moocs",    count: "3 parcours" },
-  { name: "Hi! App",     desc: "Applications interactives", icon: "⚡", href: "/apps",  count: "3 apps"     },
+  { name: "Hi! App",     desc: "Applications interactives", icon: "⚡", href: "/apps",  count: "8 apps"     },
 ];
 
 export default function DashboardPage() {
