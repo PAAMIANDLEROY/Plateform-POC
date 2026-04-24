@@ -137,7 +137,7 @@ export default function RegisterPage() {
         </div>
 
         <p className="mt-4 text-center text-xs text-text-muted">
-          Réservé aux membres des institutions partenaires d'IP Paris.
+          Réservé aux membres des institutions partenaires d'Hi! PARIS.
         </p>
       </div>
     </div>

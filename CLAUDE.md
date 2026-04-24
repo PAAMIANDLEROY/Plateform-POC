@@ -6,7 +6,7 @@ Contexte projet pour Claude Code. Ce fichier est la source de vérité pour tout
 
 ## Contexte
 
-Plateforme pédagogique mutualisée pour **IP Paris** (Hi! PARIS / Hi! PACE).
+Plateforme pédagogique mutualisée pour **Hi! PARIS** (Hi! PACE).
 Objectif : remplacer Moodle et les LMS externes par une solution moderne, open source, contrôlée en interne.
 Inspirations UX : YouTube (engagement), Google Colab (interactivité technique), HFactory (certification).
 

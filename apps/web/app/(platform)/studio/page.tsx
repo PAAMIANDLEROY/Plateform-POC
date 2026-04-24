@@ -7,7 +7,7 @@ import { MOCK_COURSES } from "@/lib/mock";
 
 type Mode = "course" | "mooc" | "video" | "app";
 
-const SCHOOLS = ["Polytechnique", "Télécom Paris", "ENSAE", "HEC", "IP Paris"];
+const SCHOOLS = ["Polytechnique", "Télécom Paris", "ENSAE", "HEC", "Hi! PARIS"];
 const CATEGORIES = ["IA & Data", "Mathématiques", "Finance", "Programmation", "Statistiques", "DevOps"];
 const LEVELS = ["Débutant", "Intermédiaire", "Avancé"];
 

@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Hi! Platform",
-  description: "Plateforme pédagogique mutualisée IP Paris",
+  description: "Plateforme pédagogique mutualisée Hi! PARIS",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

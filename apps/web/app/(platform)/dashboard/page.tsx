@@ -4,7 +4,7 @@ import { MOCK_USER, MOCK_COURSES, MOCK_VIDEOS, MOCK_INSIGHTS } from "@/lib/mock"
 const subBanners = [
   {
     title: "Recherche & Insights Hi! PARIS",
-    desc: "Articles interactifs publiés par les chercheurs d'IP Paris, Polytechnique, Télécom Paris et HEC.",
+    desc: "Articles interactifs publiés par les chercheurs de Hi! PARIS, Polytechnique, Télécom Paris et HEC.",
     href: "/insights",
     cta: "Lire les Insights",
     accent: "from-danger/80 to-danger/20",
@@ -12,7 +12,7 @@ const subBanners = [
   },
   {
     title: "Apprenez les fondamentaux de l'IA",
-    desc: "Des cours conçus par les chercheurs d'IP Paris, de Polytechnique et de Télécom Paris.",
+    desc: "Des cours conçus par les chercheurs de Hi! PARIS, de Polytechnique et de Télécom Paris.",
     href: "/courses",
     cta: "Explorer les cours",
     accent: "from-primary/80 to-primary/20",
@@ -51,7 +51,7 @@ export default function DashboardPage() {
 
         <div className="relative h-full max-w-7xl mx-auto px-6 flex flex-col justify-center">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 text-white/80 text-sm font-medium px-4 py-1.5 rounded-full mb-6 w-fit">
-            Hi! PARIS — IP Paris
+            Hi! PARIS
           </div>
           <h1 className="text-5xl md:text-6xl font-extrabold text-white leading-tight mb-4 max-w-2xl">
             La recherche IA<br />
@@ -59,7 +59,7 @@ export default function DashboardPage() {
           </h1>
           <p className="text-lg text-gray-300 max-w-xl mb-8">
             Articles de recherche, cours, vidéos et MOOCs produits par les
-            chercheurs d'IP Paris — tout en un seul endroit.
+            chercheurs de Hi! PARIS — tout en un seul endroit.
           </p>
           <div className="flex items-center gap-4">
             <Link

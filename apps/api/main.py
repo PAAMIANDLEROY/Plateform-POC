@@ -7,7 +7,7 @@ from routers import auth, users
 app = FastAPI(
     title="Hi! Platform API",
     version="0.1.0",
-    description="API for Hi! Platform — IP Paris pedagogical platform",
+    description="API for Hi! Platform — Hi! PARIS pedagogical platform",
 )
 
 app.add_middleware(
