@@ -1,19 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
 import Link from "next/link";
 import { MOCK_COURSES } from "@/lib/mock";
 import { Badge } from "@/components/ui/Badge";
-import { PageSpinner } from "@/components/ui/Spinner";
 
 type QuizState = { selected: number | null; revealed: boolean };
 
-const LEVEL_LABEL: Record<string, string> = {
-  Débutant: "beginner", Intermédiaire: "intermediate", Avancé: "advanced",
-};
+type BlockData =
+  | { id: string; type: "heading"; content: string; level?: number }
+  | { id: string; type: "text"; content: string }
+  | { id: string; type: "markdown"; content: string }
+  | { id: string; type: "quiz"; question: string; options: string[]; answer: number; explanation: string }
+  | { id: string; type: "divider" };
 
-const MOCK_BLOCKS = [
+const MOCK_BLOCKS: BlockData[] = [
   { id: "b1", type: "heading", content: "Introduction", level: 2 },
   { id: "b2", type: "text", content: "Ce cours couvre les concepts fondamentaux nécessaires pour comprendre ce domaine en profondeur. Vous apprendrez les bases théoriques et les applications pratiques à travers des exemples concrets et des exercices interactifs." },
   { id: "b3", type: "markdown", content: "```python\nimport numpy as np\nimport pandas as pd\n\n# Chargement des données\ndf = pd.read_csv('data.csv')\nprint(df.head())\nprint(df.describe())\n```" },
@@ -25,15 +26,17 @@ const MOCK_BLOCKS = [
   { id: "b9", type: "text", content: "Félicitations ! Vous avez parcouru l'ensemble des blocs de ce cours. Validez votre complétion pour obtenir votre attestation." },
 ];
 
-export default function CoursePage() {
-  const { id } = useParams<{ id: string }>();
-  const course = MOCK_COURSES.find((c) => c.id === id);
+export function generateStaticParams() {
+  return MOCK_COURSES.map((c) => ({ id: c.id }));
+}
+
+export default function CoursePage({ params }: { params: { id: string } }) {
+  const course = MOCK_COURSES.find((c) => c.id === params.id) ?? MOCK_COURSES[0];
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [quizStates, setQuizStates] = useState<Record<string, QuizState>>({});
 
-  if (!course) return <PageSpinner />;
-
-  const progress = Math.round((completed.size / MOCK_BLOCKS.filter((b) => b.type !== "divider").length) * 100);
+  const nonDividerCount = MOCK_BLOCKS.filter((b) => b.type !== "divider").length;
+  const progress = Math.round((completed.size / nonDividerCount) * 100);
   const allDone = progress === 100;
 
   function markDone(blockId: string) {
@@ -49,7 +52,7 @@ export default function CoursePage() {
     <div className="max-w-7xl mx-auto px-6 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
 
-        {/* ── Sidebar progression ── */}
+        {/* Sidebar */}
         <div className="lg:col-span-1 order-2 lg:order-1">
           <div className="sticky top-24 bg-gray-900 border border-white/10 rounded-2xl p-5 space-y-4">
             <Link href="/learning-ai/courses" className="text-xs text-gray-500 hover:text-white transition-colors">
@@ -83,13 +86,12 @@ export default function CoursePage() {
           </div>
         </div>
 
-        {/* ── Contenu ── */}
+        {/* Contenu */}
         <div className="lg:col-span-3 order-1 lg:order-2 space-y-4">
           <div className="mb-6">
             <h1 className="text-2xl font-extrabold text-white mb-2">{course.title}</h1>
             <p className="text-gray-400 text-sm">{course.description}</p>
           </div>
-
           {MOCK_BLOCKS.map((block) => (
             <Block
               key={block.id}
@@ -107,8 +109,11 @@ export default function CoursePage() {
 }
 
 function Block({ block, completed, quizState, onMarkDone, onSelectQuiz }: {
-  block: any; completed: boolean; quizState?: QuizState;
-  onMarkDone: () => void; onSelectQuiz: (i: number) => void;
+  block: BlockData;
+  completed: boolean;
+  quizState?: QuizState;
+  onMarkDone: () => void;
+  onSelectQuiz: (i: number) => void;
 }) {
   if (block.type === "divider") return <hr className="border-white/10 my-2" />;
 
@@ -121,12 +126,10 @@ function Block({ block, completed, quizState, onMarkDone, onSelectQuiz }: {
       {block.type === "text" && (
         <div>
           <p className="text-gray-300 leading-relaxed text-sm">{block.content}</p>
-          {!completed && (
-            <button onClick={onMarkDone} className="mt-3 text-xs text-gray-500 hover:text-primary transition-colors">
-              Marquer comme lu ✓
-            </button>
-          )}
-          {completed && <span className="mt-2 inline-block text-xs text-primary">✓ Lu</span>}
+          {!completed
+            ? <button onClick={onMarkDone} className="mt-3 text-xs text-gray-500 hover:text-primary transition-colors">Marquer comme lu ✓</button>
+            : <span className="mt-2 inline-block text-xs text-primary">✓ Lu</span>
+          }
         </div>
       )}
 
@@ -135,12 +138,10 @@ function Block({ block, completed, quizState, onMarkDone, onSelectQuiz }: {
           <pre className="bg-gray-950 border border-white/10 text-emerald-400 rounded-xl p-4 text-sm overflow-x-auto font-mono whitespace-pre">
             {block.content}
           </pre>
-          {!completed && (
-            <button onClick={onMarkDone} className="mt-3 text-xs text-gray-500 hover:text-primary transition-colors">
-              Marquer comme vu ✓
-            </button>
-          )}
-          {completed && <span className="mt-2 inline-block text-xs text-primary">✓ Vu</span>}
+          {!completed
+            ? <button onClick={onMarkDone} className="mt-3 text-xs text-gray-500 hover:text-primary transition-colors">Marquer comme vu ✓</button>
+            : <span className="mt-2 inline-block text-xs text-primary">✓ Vu</span>
+          }
         </div>
       )}
 
@@ -148,7 +149,7 @@ function Block({ block, completed, quizState, onMarkDone, onSelectQuiz }: {
         <div>
           <p className="font-semibold text-white mb-4 text-sm">❓ {block.question}</p>
           <div className="flex flex-col gap-2">
-            {block.options.map((opt: string, i: number) => {
+            {block.options.map((opt, i) => {
               const revealed = quizState?.revealed;
               const selected = quizState?.selected;
               const isCorrect = i === block.answer;

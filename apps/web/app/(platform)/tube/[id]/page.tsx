@@ -1,18 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
 import Link from "next/link";
 import { MOCK_VIDEOS } from "@/lib/mock";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
-import { PageSpinner } from "@/components/ui/Spinner";
 
 type Comment = { id: string; author: string; content: string; createdAt: string };
 
-export default function VideoPage() {
-  const { id } = useParams<{ id: string }>();
-  const video = MOCK_VIDEOS.find((v) => v.id === id);
+export function generateStaticParams() {
+  return MOCK_VIDEOS.map((v) => ({ id: v.id }));
+}
+
+export default function VideoPage({ params }: { params: { id: string } }) {
+  const video = MOCK_VIDEOS.find((v) => v.id === params.id) ?? MOCK_VIDEOS[0];
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState<Comment[]>([
     { id: "1", author: "Alice M.", content: "Excellente introduction, très claire !", createdAt: "il y a 2 jours" },
@@ -20,9 +21,7 @@ export default function VideoPage() {
   ]);
   const [watched, setWatched] = useState(0);
 
-  if (!video) return <PageSpinner />;
-
-  const related = MOCK_VIDEOS.filter((v) => v.id !== id && v.category === video.category).slice(0, 4);
+  const related = MOCK_VIDEOS.filter((v) => v.id !== params.id && v.category === video.category).slice(0, 4);
 
   function submitComment(e: React.FormEvent) {
     e.preventDefault();
@@ -35,9 +34,7 @@ export default function VideoPage() {
     <div className="max-w-7xl mx-auto px-6 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-        {/* ── Colonne principale ── */}
         <div className="lg:col-span-2 space-y-6">
-
           {/* Lecteur */}
           <div className="bg-black rounded-2xl overflow-hidden border border-white/10">
             {video.youtubeId ? (
@@ -72,7 +69,7 @@ export default function VideoPage() {
               <span>{video.duration}</span>
               <span>·</span>
               <div className="flex items-center gap-1">
-                {[1,2,3,4,5].map((s) => (
+                {[1, 2, 3, 4, 5].map((s) => (
                   <span key={s} className={`text-sm ${s <= Math.round(video.rating) ? "text-yellow-400" : "text-gray-700"}`}>★</span>
                 ))}
                 <span className="text-xs ml-1">{video.rating.toFixed(1)}</span>
@@ -108,12 +105,8 @@ export default function VideoPage() {
           <div>
             <h2 className="text-lg font-bold text-white mb-4">{comments.length} commentaire{comments.length > 1 ? "s" : ""}</h2>
             <form onSubmit={submitComment} className="flex gap-3 mb-6">
-              <input
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="Ajouter un commentaire..."
-                className="flex-1 bg-gray-900 border border-white/10 text-white text-sm px-4 py-2.5 rounded-xl focus:outline-none focus:border-primary transition-all placeholder-gray-600"
-              />
+              <input value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Ajouter un commentaire..."
+                className="flex-1 bg-gray-900 border border-white/10 text-white text-sm px-4 py-2.5 rounded-xl focus:outline-none focus:border-primary transition-all placeholder-gray-600" />
               <button type="submit" disabled={!comment.trim()}
                 className="bg-primary text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary-dark transition-colors disabled:opacity-40">
                 Envoyer
@@ -136,7 +129,7 @@ export default function VideoPage() {
           </div>
         </div>
 
-        {/* ── Sidebar ── */}
+        {/* Sidebar */}
         <div className="space-y-3">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-bold text-white">Vidéos similaires</h2>

@@ -196,8 +196,8 @@ export default function ExcelQuizPage() {
       const data: GeneratedQuiz = await res.json();
       setQuiz(data);
       setStep("preview");
-    } catch (err: any) {
-      setError(err.message ?? "Une erreur est survenue");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Une erreur est survenue");
       setStep("upload");
     }
   }
