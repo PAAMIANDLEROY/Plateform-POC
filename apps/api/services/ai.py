@@ -95,6 +95,176 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans markdown, sans commentaires 
 }}"""
 
 
+DEMO_COURSE = """# Introduction au Machine Learning
+
+## Objectifs pédagogiques
+- Comprendre les fondements du machine learning
+- Distinguer apprentissage supervisé et non-supervisé
+- Maîtriser les métriques d'évaluation essentielles
+- Appliquer les bonnes pratiques de validation
+
+## Section 1 : Qu'est-ce que le Machine Learning ?
+
+Le machine learning est un sous-domaine de l'intelligence artificielle qui permet aux systèmes informatiques d'apprendre automatiquement à partir de données, sans être explicitement programmés pour chaque tâche.
+
+> **Point clé** : Un modèle ML apprend des patterns dans les données d'entraînement pour généraliser à de nouvelles données inconnues.
+
+Contrairement à la programmation classique où les règles sont écrites manuellement, le ML extrait ces règles directement depuis les exemples. Cette approche est particulièrement puissante pour des problèmes où les règles sont trop complexes à formaliser.
+
+## Section 2 : Types d'apprentissage
+
+**Apprentissage supervisé** : Le modèle apprend depuis des données étiquetées (paires entrée/sortie). Exemples : classification d'images, prédiction de prix.
+
+**Apprentissage non-supervisé** : Le modèle découvre des structures cachées dans des données non étiquetées. Exemples : clustering, réduction de dimension.
+
+**Apprentissage par renforcement** : Un agent apprend en interagissant avec un environnement et en recevant des récompenses ou pénalités.
+
+## Section 3 : Évaluation des modèles
+
+L'évaluation est cruciale pour mesurer la qualité d'un modèle et éviter le surapprentissage.
+
+```python
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, f1_score
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+model.fit(X_train, y_train)
+predictions = model.predict(X_test)
+print(f"Accuracy: {accuracy_score(y_test, predictions):.3f}")
+print(f"F1-score: {f1_score(y_test, predictions, average='weighted'):.3f}")
+```
+
+> **Point clé** : Utilisez toujours un jeu de test séparé pour l'évaluation finale. Ne touchez jamais aux données de test pendant l'entraînement.
+
+## Quiz de validation
+
+**Question 1** : Quel type d'apprentissage utilise des données étiquetées ?
+- [x] Supervisé (correct)
+- [ ] Non-supervisé
+- [ ] Par renforcement
+- [ ] Semi-supervisé
+
+*Explication : L'apprentissage supervisé nécessite des paires (entrée, étiquette) pour entraîner le modèle.*
+
+**Question 2** : Quelle métrique est la plus adaptée aux classes déséquilibrées ?
+- [ ] Accuracy
+- [x] F1-score (correct)
+- [ ] MSE
+- [ ] R²
+
+*Explication : Le F1-score combine précision et rappel, ce qui le rend robuste aux déséquilibres de classes.*
+
+## Résumé
+
+Le machine learning repose sur trois piliers fondamentaux : les **données** (qualité et quantité), les **algorithmes** (choix du modèle adapté) et l'**évaluation** (mesurer la généralisation). Maîtriser ces trois aspects est indispensable pour développer des systèmes ML fiables.
+
+## Ressources complémentaires
+- Scikit-learn documentation : https://scikit-learn.org
+- Cours Andrew Ng (Coursera) : Machine Learning Specialization
+- Livre : "Hands-On Machine Learning" — Aurélien Géron
+"""
+
+
+def _build_course_prompt(
+    transcription: str,
+    slides_content: str,
+    title: str,
+    level: str,
+    language: str,
+    n_sections: int,
+) -> str:
+    lang_label = "français" if language == "fr" else "anglais"
+    level_label = {"beginner": "débutant", "intermediate": "intermédiaire", "advanced": "avancé"}.get(level, level)
+
+    sources = []
+    if transcription:
+        sources.append(f"TRANSCRIPTION VIDÉO:\n{transcription[:4000]}")
+    if slides_content:
+        sources.append(f"CONTENU DES SLIDES:\n{slides_content[:2000]}")
+
+    return f"""Tu es un expert en création de contenu pédagogique. Génère un cours complet et structuré en Markdown à partir des sources suivantes.
+
+{'=' * 60}
+{chr(10).join(sources) if sources else "Génère un cours de démonstration sur les fondamentaux de l'IA."}
+{'=' * 60}
+
+PARAMÈTRES:
+- Titre : {title}
+- Niveau : {level_label}
+- Langue : {lang_label}
+- Nombre de sections : {n_sections}
+
+STRUCTURE OBLIGATOIRE (respecte exactement) :
+# [Titre du cours]
+
+## Objectifs pédagogiques
+- [3-4 objectifs]
+
+## Section 1 : [Titre]
+[150-250 mots de contenu synthétisé depuis les sources]
+> **Point clé** : [insight important]
+[exemple de code si pertinent en bloc ```]
+
+## Section 2 : [Titre]
+[idem]
+
+[... {n_sections} sections au total ...]
+
+## Quiz de validation
+[3-4 questions QCM au format :]
+**Question N** : [question]
+- [x] [bonne réponse] (correct)
+- [ ] [mauvaise réponse]
+- [ ] [mauvaise réponse]
+- [ ] [mauvaise réponse]
+*Explication : [explication pédagogique]*
+
+## Résumé
+[100-150 mots récapitulatifs]
+
+## Ressources complémentaires
+- [3-4 ressources pertinentes]
+
+CONTRAINTES :
+- Réponds UNIQUEMENT avec le Markdown, sans commentaires ni backticks englobants
+- Synthétise fidèlement le contenu des sources
+- Adopte un ton {level_label} approprié
+- Langue : {lang_label} uniquement"""
+
+
+async def generate_course_from_content(
+    transcription: str = "",
+    slides_content: str = "",
+    title: str = "Cours généré par IA",
+    level: str = "intermediate",
+    language: str = "fr",
+    n_sections: int = 4,
+) -> str:
+    """
+    Génère un cours Markdown complet depuis transcription + slides via Claude.
+    Fallback sur démo si ANTHROPIC_API_KEY absent.
+    """
+    if not settings.ANTHROPIC_API_KEY:
+        logger.warning("ANTHROPIC_API_KEY non configuré — retour cours de démo")
+        return DEMO_COURSE
+
+    try:
+        import anthropic
+        client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+        prompt = _build_course_prompt(transcription, slides_content, title, level, language, n_sections)
+
+        message = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=8192,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return message.content[0].text.strip()
+
+    except Exception as e:
+        logger.error("Erreur Claude API (course): %s", e)
+        raise ValueError(f"Erreur lors de la génération du cours: {e}")
+
+
 async def generate_quiz_from_content(
     content: str,
     n_questions: int = 5,

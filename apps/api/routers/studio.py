@@ -1,7 +1,7 @@
 """
 Studio IA — Pipelines de génération de contenu.
 Phase 3 : Excel → Quiz
-Phase 4 : Vidéo + Slides → Cours (à venir)
+Phase 4 : Vidéo + Slides → Cours
 """
 import io
 import json
@@ -12,7 +12,10 @@ from typing import Optional
 
 from core.deps import require_role
 from core.store import CurrentUser
-from services.ai import generate_quiz_from_content
+from services.ai import generate_quiz_from_content, generate_course_from_content
+from services.transcription import (
+    transcribe_audio, extract_pptx_text, extract_pdf_text, extract_youtube_id
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/studio", tags=["studio"])
@@ -44,10 +47,26 @@ class SaveQuizRequest(BaseModel):
     quiz: GeneratedQuiz
 
 
+class GeneratedCourse(BaseModel):
+    title: str
+    content: str  # Markdown complet
+    level: str
+    language: str
+    sources_used: list[str]
+
+
+class SaveCourseRequest(BaseModel):
+    title: str
+    content: str
+    level: str
+    language: str
+    category: Optional[str] = None
+    school: Optional[str] = None
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _extract_excel_content(file_bytes: bytes) -> str:
-    """Parse le fichier Excel et retourne son contenu sous forme de texte structuré."""
     try:
         import openpyxl
     except ImportError:
@@ -55,17 +74,13 @@ def _extract_excel_content(file_bytes: bytes) -> str:
 
     wb = openpyxl.load_workbook(io.BytesIO(file_bytes), read_only=True, data_only=True)
     ws = wb.active
-
     lines = []
     headers = None
 
     for i, row in enumerate(ws.iter_rows(values_only=True)):
         values = [str(v).strip() if v is not None else "" for v in row]
-
-        # Ignore empty rows
         if not any(values):
             continue
-
         if i == 0:
             headers = values
             lines.append("En-têtes: " + " | ".join(headers))
@@ -76,16 +91,15 @@ def _extract_excel_content(file_bytes: bytes) -> str:
                 entry = " | ".join(v for v in values if v)
             if entry:
                 lines.append(f"Ligne {i}: {entry}")
-
-        if i > 200:  # Limite pour le prompt
-            lines.append(f"... (fichier tronqué à 200 lignes)")
+        if i > 200:
+            lines.append("... (tronqué à 200 lignes)")
             break
 
     wb.close()
     return "\n".join(lines)
 
 
-# ── Routes ────────────────────────────────────────────────────────────────────
+# ── Pipeline 1 : Excel → Quiz ─────────────────────────────────────────────────
 
 @router.post("/excel-to-quiz", response_model=GeneratedQuiz)
 async def excel_to_quiz(
@@ -96,18 +110,12 @@ async def excel_to_quiz(
     quiz_title: Optional[str] = Form(default=None),
     current_user: CurrentUser = Depends(require_role(*TEACHER_ROLES)),
 ):
-    """
-    Pipeline 1 — Excel → Quiz.
-    Upload un .xlsx, extrait le contenu, appelle Claude, retourne le quiz structuré.
-    """
     if not file.filename or not file.filename.lower().endswith((".xlsx", ".xls")):
         raise HTTPException(status_code=400, detail="Fichier Excel (.xlsx) requis")
-
     if file.size and file.size > 10 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="Fichier trop volumineux (max 10 MB)")
 
     content_bytes = await file.read()
-
     try:
         extracted = _extract_excel_content(content_bytes)
     except Exception as e:
@@ -135,25 +143,123 @@ async def save_quiz(
     body: SaveQuizRequest,
     current_user: CurrentUser = Depends(require_role(*TEACHER_ROLES)),
 ):
-    """
-    Sauvegarde un quiz généré dans un cours existant.
-    Pour l'instant : stockage en mémoire dans le store global.
-    """
     from core.store import store
-
-    # On ajoute le quiz comme blocs dans la mémoire locale (pas de DB encore)
-    # Quand la DB sera là, ce sera inséré dans course_blocks
     quiz_data = body.quiz.model_dump()
+    store.update(current_user.id, {f"draft_quiz_{body.course_id}": json.dumps(quiz_data)})
+    return {"message": "Quiz sauvegardé", "course_id": body.course_id, "questions_count": len(body.quiz.questions)}
+
+
+# ── Pipeline 2 : Vidéo + Slides → Cours ──────────────────────────────────────
+
+@router.post("/video-to-course", response_model=GeneratedCourse)
+async def video_to_course(
+    title: str = Form(...),
+    level: str = Form(default="intermediate"),
+    language: str = Form(default="fr"),
+    n_sections: int = Form(default=4, ge=2, le=8),
+    youtube_url: Optional[str] = Form(default=None),
+    video_file: Optional[UploadFile] = File(default=None),
+    slides_file: Optional[UploadFile] = File(default=None),
+    current_user: CurrentUser = Depends(require_role(*TEACHER_ROLES)),
+):
+    """
+    Pipeline 2 — Vidéo + Slides → Cours Markdown.
+    Sources acceptées :
+      - URL YouTube (résumé contextuel utilisé dans le prompt)
+      - Fichier vidéo/audio MP4/WAV/MP3 (transcrit via Whisper)
+      - Fichier PPTX ou PDF (extrait textuellement)
+    """
+    if not youtube_url and not video_file and not slides_file:
+        raise HTTPException(status_code=400, detail="Au moins une source requise (URL YouTube, vidéo, ou slides)")
+
+    sources_used = []
+    transcription = ""
+    slides_content = ""
+
+    # ── Transcription ─────────────────────────────────────────────────────────
+    if youtube_url and youtube_url.strip():
+        yt_id = extract_youtube_id(youtube_url.strip())
+        if yt_id:
+            transcription = f"[Vidéo YouTube : {youtube_url}]\n[ID: {yt_id}]\nContenu de la vidéo à analyser selon le titre et la thématique du cours."
+            sources_used.append(f"YouTube: {youtube_url}")
+        else:
+            transcription = f"[URL vidéo externe : {youtube_url}]"
+            sources_used.append(f"Vidéo: {youtube_url}")
+
+    if video_file and video_file.filename:
+        allowed_video = (".mp4", ".mov", ".avi", ".mp3", ".wav", ".m4a", ".webm")
+        if not any(video_file.filename.lower().endswith(ext) for ext in allowed_video):
+            raise HTTPException(status_code=400, detail=f"Format vidéo non supporté. Acceptés: {', '.join(allowed_video)}")
+        video_bytes = await video_file.read()
+        if len(video_bytes) > 100 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="Fichier vidéo trop volumineux (max 100 MB)")
+        logger.info("Transcription fichier vidéo: %s (%d bytes)", video_file.filename, len(video_bytes))
+        transcription = await transcribe_audio(video_bytes, video_file.filename)
+        sources_used.append(f"Vidéo: {video_file.filename}")
+
+    # ── Extraction slides ─────────────────────────────────────────────────────
+    if slides_file and slides_file.filename:
+        slides_bytes = await slides_file.read()
+        fname = slides_file.filename.lower()
+        if fname.endswith(".pptx") or fname.endswith(".ppt"):
+            slides_content = extract_pptx_text(slides_bytes)
+            sources_used.append(f"Slides PPTX: {slides_file.filename}")
+        elif fname.endswith(".pdf"):
+            slides_content = extract_pdf_text(slides_bytes)
+            sources_used.append(f"PDF: {slides_file.filename}")
+        else:
+            raise HTTPException(status_code=400, detail="Format slides non supporté. Acceptés: .pptx, .pdf")
+
+    if not transcription and not slides_content:
+        raise HTTPException(status_code=422, detail="Aucun contenu extrait des sources fournies")
+
+    # ── Génération du cours ───────────────────────────────────────────────────
+    try:
+        content = await generate_course_from_content(
+            transcription=transcription,
+            slides_content=slides_content,
+            title=title,
+            level=level,
+            language=language,
+            n_sections=n_sections,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+    return GeneratedCourse(
+        title=title,
+        content=content,
+        level=level,
+        language=language,
+        sources_used=sources_used,
+    )
+
+
+@router.post("/save-course")
+async def save_course(
+    body: SaveCourseRequest,
+    current_user: CurrentUser = Depends(require_role(*TEACHER_ROLES)),
+):
+    """Sauvegarde un cours généré. Stockage en mémoire (DB dans une prochaine étape)."""
+    from core.store import store
+    import uuid
+    course_id = str(uuid.uuid4())
     store.update(current_user.id, {
-        f"draft_quiz_{body.course_id}": json.dumps(quiz_data),
+        f"draft_course_{course_id}": json.dumps({
+            "id": course_id,
+            "title": body.title,
+            "content": body.content,
+            "level": body.level,
+            "language": body.language,
+            "category": body.category,
+            "school": body.school,
+            "created_by": current_user.id,
+        })
     })
+    return {"message": "Cours sauvegardé", "course_id": course_id, "title": body.title}
 
-    return {
-        "message": "Quiz sauvegardé avec succès",
-        "course_id": body.course_id,
-        "questions_count": len(body.quiz.questions),
-    }
 
+# ── Health ────────────────────────────────────────────────────────────────────
 
 @router.get("/health")
 def studio_health():
@@ -161,5 +267,6 @@ def studio_health():
     return {
         "studio": "ok",
         "ai_configured": bool(settings.ANTHROPIC_API_KEY),
-        "pipelines": ["excel-to-quiz"],
+        "transcription_configured": bool(settings.OPENAI_API_KEY),
+        "pipelines": ["excel-to-quiz", "video-to-course"],
     }

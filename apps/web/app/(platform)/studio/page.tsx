@@ -539,9 +539,8 @@ function AIStudio() {
       title: "Vidéo + Slides → Cours",
       desc: "Combinez une vidéo et un fichier PPTX/PDF pour générer un cours Markdown complet avec quiz intégrés.",
       badge: "Phase 4",
-      badgeColor: "bg-white/10 text-gray-400 border-white/10",
-      cta: "Bientôt disponible",
-      disabled: true,
+      badgeColor: "bg-primary/15 text-primary border-primary/20",
+      cta: "Générer un cours",
     },
   ];
 
