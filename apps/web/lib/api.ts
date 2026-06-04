@@ -138,6 +138,21 @@ export const authApi = {
 
   updateProfile: (data: Partial<UserResponse>) =>
     request<UserResponse>("/api/v1/users/me", { method: "PUT", body: JSON.stringify(data) }),
+
+  getMyData: () => request<Record<string, unknown>>("/api/v1/users/me/data"),
+
+  exportMyData: () =>
+    fetch(`${API_URL}/api/v1/users/me/export`, { credentials: "include" }).then((r) => r.blob()),
+
+  deleteMe: () => request<void>("/api/v1/users/me", { method: "DELETE" }),
+
+  updateConsent: (analytics: boolean, tracking: boolean) =>
+    request<UserResponse>("/api/v1/users/me/consent", {
+      method: "PUT",
+      body: JSON.stringify({ analytics, tracking }),
+    }),
+
+  getConsent: () => request<{ analytics: boolean; tracking: boolean; updated_at: string | null }>("/api/v1/users/me/consent"),
 };
 
 // ─── Videos ──────────────────────────────────────────────────────────────────
