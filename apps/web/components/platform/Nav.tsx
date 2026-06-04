@@ -187,6 +187,19 @@ export function Nav() {
             <NavDropdown key={section.slug} {...section} />
           ))}
 
+          {/* Mon parcours */}
+          <Link
+            href="/my-learning"
+            className={clsx(
+              "px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap",
+              pathname.startsWith("/my-learning")
+                ? "bg-primary text-white shadow-lg shadow-primary/20"
+                : "text-gray-400 hover:text-white hover:bg-white/10"
+            )}
+          >
+            Mon parcours
+          </Link>
+
           {/* Studio + LMS — réservés teachers */}
           {isTeacher && (
             <>
@@ -239,6 +252,9 @@ export function Nav() {
               <div className="absolute right-0 top-full mt-2 w-44 bg-gray-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50">
                 <Link href="/profile" onClick={() => setUserMenuOpen(false)} className="block px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors">
                   Mon profil
+                </Link>
+                <Link href="/my-learning" onClick={() => setUserMenuOpen(false)} className="block px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors">
+                  Mon parcours
                 </Link>
                 <div className="border-t border-white/10" />
                 <button onClick={handleLogout} className="w-full text-left px-4 py-3 text-sm text-danger hover:bg-danger/10 transition-colors">

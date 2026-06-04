@@ -221,6 +221,69 @@ export const moocsApi = {
     request(`/api/v1/moocs/${id}/progress`),
 };
 
+// ─── Learning (progress, badges, certificates) ────────────────────────────────
+
+export interface LearningProgress {
+  course_id: string;
+  progress_pct: number;
+  completed: boolean;
+  completed_at: string | null;
+  score?: number;
+  started_at: string;
+}
+
+export interface Badge {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  awarded_at?: string;
+}
+
+export interface Certificate {
+  id: string;
+  user_id: string;
+  course_id: string;
+  course_title: string;
+  user_name: string;
+  issued_at: string;
+  verification_url: string;
+}
+
+export interface LearningDashboard {
+  total_courses_started: number;
+  total_courses_completed: number;
+  total_badges: number;
+  total_certificates: number;
+  progress: LearningProgress[];
+  badges: Badge[];
+  certificates: Certificate[];
+  in_progress: LearningProgress[];
+  completed: LearningProgress[];
+}
+
+export const learningApi = {
+  dashboard: () => request<LearningDashboard>("/api/v1/learning/dashboard"),
+  getAllProgress: () => request<LearningProgress[]>("/api/v1/learning/progress"),
+  getCourseProgress: (courseId: string) => request<LearningProgress>(`/api/v1/learning/progress/${courseId}`),
+  updateProgress: (courseId: string, progress_pct: number, score?: number) =>
+    request(`/api/v1/learning/progress/${courseId}`, { method: "POST", body: JSON.stringify({ progress_pct, score }) }),
+  completeCourse: (courseId: string) =>
+    request(`/api/v1/learning/complete/${courseId}`, { method: "POST" }),
+  getBadges: () => request<{ earned: Badge[]; locked: Badge[]; total: number }>("/api/v1/learning/badges"),
+  listCertificates: () => request<Certificate[]>("/api/v1/learning/certificates"),
+  issueCertificate: (courseId: string, courseTitle: string) =>
+    request<Certificate>(`/api/v1/learning/certificates/${courseId}?course_title=${encodeURIComponent(courseTitle)}`, { method: "POST" }),
+  downloadCertificate: (certId: string) =>
+    fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/api/v1/learning/certificates/${certId}/download`, { credentials: "include" }).then((r) => r.blob()),
+  verifyCertificate: (certId: string) =>
+    request(`/api/v1/learning/certificates/${certId}/verify`),
+  enrollMOOC: (moocId: string) =>
+    request(`/api/v1/learning/mooc/${moocId}/enroll`, { method: "POST" }),
+  completeModule: (moocId: string, moduleId: string) =>
+    request(`/api/v1/learning/mooc/${moocId}/module/${moduleId}/complete`, { method: "POST" }),
+};
+
 // ─── Apps ────────────────────────────────────────────────────────────────────
 
 export const appsApi = {
