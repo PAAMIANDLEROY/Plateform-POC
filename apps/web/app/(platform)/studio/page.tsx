@@ -555,7 +555,7 @@ function AIStudio() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         {pipelines.map((p) => (
-          <div key={p.href} className={`bg-gray-900 border border-white/10 rounded-2xl p-6 flex flex-col gap-4 ${p.disabled ? "opacity-60" : "hover:border-white/20 transition-all"}`}>
+          <div key={p.href} className="bg-gray-900 border border-white/10 rounded-2xl p-6 flex flex-col gap-4 hover:border-white/20 transition-all">
             <div className="text-4xl">{p.icon}</div>
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -564,13 +564,9 @@ function AIStudio() {
               </div>
               <p className="text-sm text-gray-400 leading-relaxed">{p.desc}</p>
             </div>
-            {p.disabled ? (
-              <span className="text-sm text-gray-600 font-medium">{p.cta}</span>
-            ) : (
-              <Link href={p.href} className="bg-primary text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-primary-dark transition-colors text-center">
-                {p.cta} →
-              </Link>
-            )}
+            <Link href={p.href} className="bg-primary text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-primary-dark transition-colors text-center">
+              {p.cta} →
+            </Link>
           </div>
         ))}
       </div>
