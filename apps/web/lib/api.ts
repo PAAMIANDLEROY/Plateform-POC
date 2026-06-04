@@ -30,6 +30,12 @@ export interface UserResponse {
   email: string;
   role: string;
   is_verified: boolean;
+  school: string;
+  bio: string;
+  avatar_url: string | null;
+  linkedin: string;
+  github: string;
+  is_profile_complete: boolean;
 }
 
 export interface TokenResponse {
@@ -110,21 +116,28 @@ export interface AppResponse {
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
-export const authApi = {
-  register: (data: { first_name: string; last_name: string; email: string; password: string }) =>
-    request<{ message: string }>("/api/v1/auth/register", { method: "POST", body: JSON.stringify(data) }),
+export interface AuthResponse {
+  access_token: string;
+  token_type: string;
+  user: UserResponse;
+  is_new: boolean;
+}
 
-  login: (data: { email: string; password: string }) =>
-    request<TokenResponse>("/api/v1/auth/login", { method: "POST", body: JSON.stringify(data) }),
+export const authApi = {
+  requestCode: (email: string) =>
+    request<{ message: string }>("/api/v1/auth/request-code", { method: "POST", body: JSON.stringify({ email }) }),
+
+  verifyCode: (email: string, code: string) =>
+    request<AuthResponse>("/api/v1/auth/verify-code", { method: "POST", body: JSON.stringify({ email, code }) }),
 
   logout: () => request<{ message: string }>("/api/v1/auth/logout", { method: "POST" }),
 
-  refresh: () => request<TokenResponse>("/api/v1/auth/refresh", { method: "POST" }),
-
-  verifyEmail: (token: string) =>
-    request<{ message: string }>("/api/v1/auth/verify-email", { method: "POST", body: JSON.stringify({ token }) }),
+  refresh: () => request<AuthResponse>("/api/v1/auth/refresh", { method: "POST" }),
 
   me: () => request<UserResponse>("/api/v1/users/me"),
+
+  updateProfile: (data: Partial<UserResponse>) =>
+    request<UserResponse>("/api/v1/users/me", { method: "PUT", body: JSON.stringify(data) }),
 };
 
 // ─── Videos ──────────────────────────────────────────────────────────────────

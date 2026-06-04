@@ -6,9 +6,8 @@ import { authApi, UserResponse } from "./api";
 interface AuthState {
   user: UserResponse | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  refresh: () => Promise<void>;
+  setUser: (u: UserResponse | null) => void;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -30,18 +29,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refresh().finally(() => setLoading(false));
   }, [refresh]);
 
-  const login = async (email: string, password: string) => {
-    const data = await authApi.login({ email, password });
-    setUser(data.user);
-  };
-
   const logout = async () => {
-    await authApi.logout();
+    try { await authApi.logout(); } catch {}
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refresh }}>
+    <AuthContext.Provider value={{ user, loading, logout, setUser }}>
       {children}
     </AuthContext.Provider>
   );
@@ -51,12 +45,4 @@ export function useAuth(): AuthState {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
   return ctx;
-}
-
-export function useRequireAuth(): UserResponse {
-  const { user, loading } = useAuth();
-  if (!loading && !user) {
-    if (typeof window !== "undefined") window.location.href = "/login";
-  }
-  return user!;
 }
