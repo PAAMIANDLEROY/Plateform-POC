@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
     FRONTEND_URL: str = "http://localhost:3000"
+    ANTHROPIC_API_KEY: str = ""
 
     @property
     def allowed_domains_list(self) -> List[str]:

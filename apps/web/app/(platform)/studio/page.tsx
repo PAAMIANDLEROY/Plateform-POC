@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { MOCK_COURSES } from "@/lib/mock";
 
 // ─── Types & constants ────────────────────────────────────────────────────────
 
-type Mode = "course" | "mooc" | "video" | "app";
+type Mode = "course" | "mooc" | "video" | "app" | "ai";
 
 const SCHOOLS = ["Polytechnique", "Télécom Paris", "ENSAE", "HEC", "Hi! PARIS"];
 const CATEGORIES = ["IA & Data", "Mathématiques", "Finance", "Programmation", "Statistiques", "DevOps"];
@@ -25,6 +26,7 @@ const MODE_TABS: { key: Mode; label: string; icon: string; desc: string }[] = [
   { key: "mooc",   label: "MOOC",         icon: "🎓", desc: "Parcours multi-cours" },
   { key: "video",  label: "Vidéo",        icon: "▶",  desc: "Vidéo pédagogique" },
   { key: "app",    label: "Application",  icon: "⚡", desc: "App interactive" },
+  { key: "ai",     label: "Studio IA",    icon: "✨", desc: "Génération automatique de contenu via IA" },
 ];
 
 // ─── Shared UI helpers ────────────────────────────────────────────────────────
@@ -518,6 +520,65 @@ function AppEditor() {
   );
 }
 
+// ─── AI Studio ────────────────────────────────────────────────────────────────
+
+function AIStudio() {
+  const pipelines = [
+    {
+      href: "/studio/excel-quiz",
+      icon: "📊",
+      title: "Excel → Quiz",
+      desc: "Uploadez un fichier Excel et générez automatiquement un QCM structuré grâce à Claude.",
+      badge: "Phase 3",
+      badgeColor: "bg-primary/15 text-primary border-primary/20",
+      cta: "Générer un quiz",
+    },
+    {
+      href: "/studio/video-course",
+      icon: "🎬",
+      title: "Vidéo + Slides → Cours",
+      desc: "Combinez une vidéo et un fichier PPTX/PDF pour générer un cours Markdown complet avec quiz intégrés.",
+      badge: "Phase 4",
+      badgeColor: "bg-white/10 text-gray-400 border-white/10",
+      cta: "Bientôt disponible",
+      disabled: true,
+    },
+  ];
+
+  return (
+    <div className="max-w-3xl">
+      <div className="mb-8">
+        <h2 className="text-xl font-bold text-white mb-1">Studio de création IA</h2>
+        <p className="text-sm text-gray-400">
+          Générez automatiquement des contenus pédagogiques à partir de vos fichiers existants,
+          grâce à Claude (Anthropic).
+        </p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        {pipelines.map((p) => (
+          <div key={p.href} className={`bg-gray-900 border border-white/10 rounded-2xl p-6 flex flex-col gap-4 ${p.disabled ? "opacity-60" : "hover:border-white/20 transition-all"}`}>
+            <div className="text-4xl">{p.icon}</div>
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="font-bold text-white">{p.title}</h3>
+                <span className={`text-xs font-medium border px-2 py-0.5 rounded-full ${p.badgeColor}`}>{p.badge}</span>
+              </div>
+              <p className="text-sm text-gray-400 leading-relaxed">{p.desc}</p>
+            </div>
+            {p.disabled ? (
+              <span className="text-sm text-gray-600 font-medium">{p.cta}</span>
+            ) : (
+              <Link href={p.href} className="bg-primary text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-primary-dark transition-colors text-center">
+                {p.cta} →
+              </Link>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Studio page ─────────────────────────────────────────────────────────
 
 export default function StudioPage() {
@@ -584,6 +645,7 @@ export default function StudioPage() {
       {mode === "mooc"   && <MOOCEditor />}
       {mode === "video"  && <VideoEditor />}
       {mode === "app"    && <AppEditor />}
+      {mode === "ai"     && <AIStudio />}
     </div>
   );
 }
