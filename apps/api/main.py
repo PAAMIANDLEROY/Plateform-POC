@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
-from routers import auth, users, videos, courses, moocs, apps, studio, learning
+from routers import auth, users, videos, courses, moocs, apps, studio, learning, analytics
 
 app = FastAPI(
     title="Hi! Platform API",
@@ -26,6 +26,7 @@ app.include_router(moocs.router)
 app.include_router(apps.router)
 app.include_router(studio.router)
 app.include_router(learning.router)
+app.include_router(analytics.router)
 
 
 @app.get("/health")

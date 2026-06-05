@@ -1,6 +1,46 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { clsx } from "clsx";
 import { Badge } from "@/components/ui/Badge";
+
+interface GitHubMeta {
+  stars: number;
+  language: string | null;
+  updatedAt: string;
+}
+
+function parseGitHubRepo(url: string): string | null {
+  const match = url.match(/github\.com\/([^/]+\/[^/?#]+)/);
+  return match ? match[1] : null;
+}
+
+function useGitHubMeta(githubRepo?: string | null): GitHubMeta | null {
+  const [meta, setMeta] = useState<GitHubMeta | null>(null);
+
+  useEffect(() => {
+    if (!githubRepo) return;
+    let cancelled = false;
+    fetch(`https://api.github.com/repos/${githubRepo}`, {
+      headers: { Accept: "application/vnd.github+json" },
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!cancelled && data) {
+          setMeta({
+            stars: data.stargazers_count,
+            language: data.language,
+            updatedAt: new Date(data.updated_at).toLocaleDateString("fr-FR", { month: "short", year: "numeric" }),
+          });
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [githubRepo]);
+
+  return meta;
+}
 
 interface AppCardProps {
   id: string;
@@ -9,6 +49,8 @@ interface AppCardProps {
   thumbnail_url?: string | null;
   school?: string | null;
   tags?: string[];
+  url?: string | null;
+  githubRepo?: string | null;
   className?: string;
 }
 
@@ -19,30 +61,38 @@ export function AppCard({
   thumbnail_url,
   school,
   tags = [],
+  url,
+  githubRepo,
   className,
 }: AppCardProps) {
+  // Resolve GitHub repo from URL if not explicitly provided
+  const resolvedRepo = githubRepo ?? (url ? parseGitHubRepo(url) : null);
+  const ghMeta = useGitHubMeta(resolvedRepo);
+
+  const isGitHub = !!resolvedRepo;
+  const isExternal = url && !url.startsWith("/");
+
   return (
-    <Link
-      href={`/apps/${id}`}
-      className={clsx(
-        "group bg-gray-900 border border-white/10 rounded-xl overflow-hidden hover:border-primary/40 hover:bg-gray-800 transition-all block",
-        className
-      )}
-    >
+    <div className={clsx("group bg-gray-900 border border-white/10 rounded-xl overflow-hidden hover:border-primary/40 transition-all flex flex-col", className)}>
       {thumbnail_url ? (
         <div className="h-32 overflow-hidden">
           <img src={thumbnail_url} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
         </div>
       ) : (
-        <div className="h-32 bg-gradient-to-br from-white/5 to-white/0 flex items-center justify-center text-4xl">⚡</div>
+        <div className="h-28 bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+          <span className="text-4xl">{isGitHub ? "🐙" : "⚡"}</span>
+        </div>
       )}
-      <div className="p-4">
-        <h3 className="font-semibold text-white text-sm leading-snug group-hover:text-primary transition-colors mb-1.5 line-clamp-1">
+
+      <div className="p-4 flex flex-col flex-1">
+        <h3 className="font-semibold text-white text-sm leading-snug group-hover:text-primary-light transition-colors mb-1.5 line-clamp-1">
           {title}
         </h3>
+
         {description && (
           <p className="text-xs text-gray-500 line-clamp-2 mb-3">{description}</p>
         )}
+
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
             {tags.slice(0, 3).map((t) => (
@@ -50,10 +100,50 @@ export function AppCard({
             ))}
           </div>
         )}
-        {school && (
-          <div className="text-xs text-gray-600 border-t border-white/5 pt-2.5">{school}</div>
-        )}
+
+        <div className="mt-auto">
+          {/* GitHub metadata */}
+          {ghMeta && (
+            <div className="flex items-center gap-3 text-xs text-gray-500 mb-3 pb-3 border-b border-white/5">
+              <span className="flex items-center gap-1">
+                <span>⭐</span>
+                <span>{ghMeta.stars.toLocaleString("fr-FR")}</span>
+              </span>
+              {ghMeta.language && (
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />
+                  <span>{ghMeta.language}</span>
+                </span>
+              )}
+              <span className="ml-auto">{ghMeta.updatedAt}</span>
+            </div>
+          )}
+
+          {/* School + open button */}
+          <div className="flex items-center justify-between">
+            {school && <span className="text-xs text-gray-600">{school}</span>}
+            <div className="flex gap-2 ml-auto">
+              {url && isExternal && (
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-xs font-semibold text-primary hover:text-primary-light transition-colors"
+                >
+                  Ouvrir ↗
+                </a>
+              )}
+              <Link
+                href={`/apps/${id}`}
+                className="text-xs text-gray-500 hover:text-white transition-colors"
+              >
+                Détails
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
-    </Link>
+    </div>
   );
 }

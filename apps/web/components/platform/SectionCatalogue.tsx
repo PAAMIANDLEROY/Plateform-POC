@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
@@ -26,23 +27,80 @@ const tabs = [
   { key: "apps",    icon: "⚡", label: "Hi! App"    },
 ] as const;
 
+const LEVELS = ["Tous", "Débutant", "Intermédiaire", "Avancé"];
+const CATEGORIES_VIDEO = ["Tous", "IA & Data", "Mathématiques", "Finance", "Programmation"];
+const CATEGORIES_COURSE = ["Tous", "IA & Data", "Programmation", "Statistiques", "DevOps", "Société & Éthique", "Mathématiques"];
+
 export function SectionCatalogue({ section, activeModule }: SectionCatalogueProps) {
   const base = `/${section.slug}`;
+  const [search, setSearch]   = useState("");
+  const [level, setLevel]     = useState("Tous");
+  const [category, setCategory] = useState("Tous");
+
+  // Reset filters when switching module
+  function handleModuleChange() {
+    setSearch("");
+    setLevel("Tous");
+    setCategory("Tous");
+  }
+
+  const filteredVideos = useMemo(() =>
+    MOCK_VIDEOS.filter((v) => {
+      const q = search.toLowerCase();
+      const matchSearch = !q || v.title.toLowerCase().includes(q) || v.tags.some((t) => t.toLowerCase().includes(q));
+      const matchCategory = category === "Tous" || v.category === category;
+      return matchSearch && matchCategory;
+    }),
+  [search, category]);
+
+  const filteredCourses = useMemo(() =>
+    MOCK_COURSES.filter((c) => {
+      const q = search.toLowerCase();
+      const matchSearch = !q || c.title.toLowerCase().includes(q) || c.description.toLowerCase().includes(q);
+      const matchLevel    = level === "Tous" || c.level === level;
+      const matchCategory = category === "Tous" || c.category === category;
+      return matchSearch && matchLevel && matchCategory;
+    }),
+  [search, level, category]);
+
+  const filteredMoocs = useMemo(() =>
+    MOCK_MOOCS.filter((m) => {
+      const q = search.toLowerCase();
+      return !q || m.title.toLowerCase().includes(q) || m.description.toLowerCase().includes(q);
+    }),
+  [search]);
+
+  const filteredApps = useMemo(() =>
+    MOCK_APPS.filter((a) => {
+      const q = search.toLowerCase();
+      return (
+        !q ||
+        a.title.toLowerCase().includes(q) ||
+        a.description.toLowerCase().includes(q) ||
+        a.tags.some((t) => t.toLowerCase().includes(q))
+      );
+    }),
+  [search]);
+
+  const showLevels      = activeModule === "courses";
+  const showCategories  = activeModule === "tube" || activeModule === "courses";
+  const categoryOptions = activeModule === "tube" ? CATEGORIES_VIDEO : CATEGORIES_COURSE;
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-10">
-      {/* En-tête section */}
+      {/* Section header */}
       <div className="mb-8">
         <h1 className="text-3xl font-extrabold text-white mb-1">{section.label}</h1>
         <p className="text-gray-400">{section.description}</p>
       </div>
 
-      {/* Onglets modules */}
-      <div className="flex items-center gap-2 mb-8 border-b border-white/10 pb-0">
+      {/* Module tabs */}
+      <div className="flex items-center gap-2 mb-6 border-b border-white/10 pb-0">
         {tabs.map((tab) => (
           <Link
             key={tab.key}
             href={`${base}/${tab.key}`}
+            onClick={handleModuleChange}
             className={clsx(
               "flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-t-lg border-b-2 transition-all -mb-px",
               activeModule === tab.key
@@ -56,73 +114,142 @@ export function SectionCatalogue({ section, activeModule }: SectionCatalogueProp
         ))}
       </div>
 
-      {/* Contenu */}
+      {/* Search + filters */}
+      <div className="flex flex-wrap gap-3 mb-8">
+        <input
+          type="text"
+          placeholder={`Rechercher dans ${activeModule === "tube" ? "les vidéos" : activeModule === "courses" ? "les cours" : activeModule === "moocs" ? "les MOOCs" : "les apps"}…`}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="bg-gray-900 border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-primary/50 transition-colors w-64"
+        />
+
+        {showCategories && (
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="bg-gray-900 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50 transition-colors"
+          >
+            {categoryOptions.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        )}
+
+        {showLevels && (
+          <div className="flex gap-1.5">
+            {LEVELS.map((l) => (
+              <button
+                key={l}
+                onClick={() => setLevel(l)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  level === l
+                    ? "bg-primary text-white"
+                    : "bg-gray-900 border border-white/10 text-gray-400 hover:text-white hover:border-white/30"
+                }`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {(search || level !== "Tous" || category !== "Tous") && (
+          <button
+            onClick={() => { setSearch(""); setLevel("Tous"); setCategory("Tous"); }}
+            className="text-xs text-gray-500 hover:text-white px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/30 transition-all"
+          >
+            ✕ Réinitialiser
+          </button>
+        )}
+      </div>
+
+      {/* Content */}
       {activeModule === "tube" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {MOCK_VIDEOS.map((v) => (
-            <VideoCard
-              key={v.id}
-              id={v.id}
-              title={v.title}
-              youtube_id={v.youtubeId}
-              thumbnail_url={v.thumbnail}
-              category={v.category}
-              school={v.school}
-              tags={v.tags}
-              view_count={v.views}
-            />
-          ))}
-        </div>
+        filteredVideos.length === 0
+          ? <EmptyState query={search} />
+          : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredVideos.map((v) => (
+                <VideoCard
+                  key={v.id}
+                  id={v.id}
+                  title={v.title}
+                  youtube_id={v.youtubeId}
+                  thumbnail_url={v.thumbnail}
+                  category={v.category}
+                  school={v.school}
+                  tags={v.tags}
+                  view_count={v.views}
+                />
+              ))}
+            </div>
       )}
 
       {activeModule === "courses" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {MOCK_COURSES.map((c) => (
-            <CourseCard
-              key={c.id}
-              id={c.id}
-              title={c.title}
-              description={c.description}
-              category={c.category}
-              level={c.level === "Débutant" ? "beginner" : c.level === "Avancé" ? "advanced" : "intermediate"}
-              school={c.school}
-              estimated_duration_minutes={c.duration}
-              status={c.status}
-            />
-          ))}
-        </div>
+        filteredCourses.length === 0
+          ? <EmptyState query={search} />
+          : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredCourses.map((c) => (
+                <CourseCard
+                  key={c.id}
+                  id={c.id}
+                  title={c.title}
+                  description={c.description}
+                  category={c.category}
+                  level={c.level === "Débutant" ? "beginner" : c.level === "Avancé" ? "advanced" : "intermediate"}
+                  school={c.school}
+                  estimated_duration_minutes={c.duration}
+                  status={c.status}
+                />
+              ))}
+            </div>
       )}
 
       {activeModule === "moocs" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {MOCK_MOOCS.map((m) => (
-            <MOOCCard
-              key={m.id}
-              id={m.id}
-              title={m.title}
-              description={m.description}
-              school={m.school}
-              enrolled_count={m.enrolled}
-              modules_count={m.courses}
-            />
-          ))}
-        </div>
+        filteredMoocs.length === 0
+          ? <EmptyState query={search} />
+          : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredMoocs.map((m) => (
+                <MOOCCard
+                  key={m.id}
+                  id={m.id}
+                  title={m.title}
+                  description={m.description}
+                  school={m.school}
+                  enrolled_count={m.enrolled}
+                  modules_count={m.courses}
+                />
+              ))}
+            </div>
       )}
 
       {activeModule === "apps" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {MOCK_APPS.map((a) => (
-            <AppCard
-              key={a.id}
-              id={a.id}
-              title={a.title}
-              description={a.description}
-              school={a.school}
-              tags={a.tags}
-            />
-          ))}
-        </div>
+        filteredApps.length === 0
+          ? <EmptyState query={search} />
+          : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {filteredApps.map((a) => (
+                <AppCard
+                  key={a.id}
+                  id={a.id}
+                  title={a.title}
+                  description={a.description}
+                  school={a.school}
+                  tags={a.tags}
+                  url={a.url}
+                  githubRepo={a.githubRepo}
+                />
+              ))}
+            </div>
       )}
+    </div>
+  );
+}
+
+function EmptyState({ query }: { query: string }) {
+  return (
+    <div className="text-center py-20 text-gray-600">
+      <p className="text-base mb-1">Aucun résultat{query ? ` pour « ${query} »` : ""}.</p>
+      <p className="text-sm">Essayez un autre terme ou réinitialisez les filtres.</p>
     </div>
   );
 }

@@ -157,15 +157,25 @@ export const MOCK_MOOCS = [
   { id: "3", title: "MLOps & mise en production", description: "Déployer et monitorer des modèles ML en entreprise.", school: "Télécom Paris", courses: 5, enrolled: 180, status: "published" },
 ];
 
-export const MOCK_APPS = [
+export interface MockApp {
+  id: string;
+  title: string;
+  description: string;
+  url: string;
+  tags: string[];
+  school: string;
+  githubRepo?: string;
+}
+
+export const MOCK_APPS: MockApp[] = [
   { id: "1", title: "Playground ML", description: "Entraîne et visualise des modèles interactivement.", url: "https://playground.tensorflow.org", tags: ["ML", "Visualisation"], school: "Polytechnique" },
-  { id: "2", title: "Explorateur de datasets", description: "Analyse statistique et visualisation de jeux de données CSV.", url: "https://datasette.io", tags: ["Data", "Statistiques"], school: "ENSAE" },
+  { id: "2", title: "Explorateur de datasets", description: "Analyse statistique et visualisation de jeux de données CSV.", url: "https://github.com/simonw/datasette", githubRepo: "simonw/datasette", tags: ["Data", "Statistiques"], school: "ENSAE" },
   { id: "3", title: "NLP Demo", description: "Testez des modèles de traitement du langage naturel.", url: "https://huggingface.co/spaces", tags: ["NLP", "Transformers"], school: "Télécom Paris" },
-  { id: "4", title: "Chatbot RAG", description: "Posez des questions sur vos documents grâce à un chatbot avec Retrieval-Augmented Generation.", url: "https://huggingface.co/spaces/deepset/retrieval-augmented-generation", tags: ["RAG", "NLP", "Génération"], school: "Télécom Paris" },
-  { id: "5", title: "Classifieur CNN Interactif", description: "Entraînez et évaluez un CNN sur vos propres images directement dans le navigateur.", url: "https://teachablemachine.withgoogle.com", tags: ["CNN", "Computer Vision", "Classification"], school: "Polytechnique" },
-  { id: "6", title: "Générateur d'images IA", description: "Générez des images à partir d'une description textuelle avec Stable Diffusion.", url: "https://huggingface.co/spaces/stabilityai/stable-diffusion", tags: ["Diffusion", "Génération", "Multimodal"], school: "ENSAE" },
+  { id: "4", title: "Chatbot RAG", description: "Posez des questions sur vos documents grâce à un chatbot avec Retrieval-Augmented Generation.", url: "https://github.com/langchain-ai/langchain", githubRepo: "langchain-ai/langchain", tags: ["RAG", "NLP", "Génération"], school: "Télécom Paris" },
+  { id: "5", title: "Classifieur CNN Interactif", description: "Entraînez et évaluez un CNN sur vos propres images directement dans le navigateur.", url: "https://github.com/googlecreativelab/teachablemachine-community", githubRepo: "googlecreativelab/teachablemachine-community", tags: ["CNN", "Computer Vision", "Classification"], school: "Polytechnique" },
+  { id: "6", title: "Générateur d'images IA", description: "Générez des images à partir d'une description textuelle avec Stable Diffusion.", url: "https://github.com/AUTOMATIC1111/stable-diffusion-webui", githubRepo: "AUTOMATIC1111/stable-diffusion-webui", tags: ["Diffusion", "Génération", "Multimodal"], school: "ENSAE" },
   { id: "7", title: "Détecteur d'anomalies", description: "Identifiez des valeurs aberrantes dans vos datasets avec des algorithmes non-supervisés.", url: "https://playground.tensorflow.org", tags: ["Anomaly Detection", "Non-supervisé", "Data"], school: "ENSAE" },
-  { id: "8", title: "Visualiseur d'embeddings", description: "Explorez les espaces vectoriels de vos modèles NLP avec des projections t-SNE et UMAP.", url: "https://projector.tensorflow.org", tags: ["Embeddings", "NLP", "Visualisation"], school: "Polytechnique" },
+  { id: "8", title: "Visualiseur d'embeddings", description: "Explorez les espaces vectoriels de vos modèles NLP avec des projections t-SNE et UMAP.", url: "https://github.com/tensorflow/embedding-projector-standalone", githubRepo: "tensorflow/embedding-projector-standalone", tags: ["Embeddings", "NLP", "Visualisation"], school: "Polytechnique" },
 ];
 
 // ─── LMS / Cohort management ────────────────────────────────────────────────

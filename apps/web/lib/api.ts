@@ -284,6 +284,33 @@ export const learningApi = {
     request(`/api/v1/learning/mooc/${moocId}/module/${moduleId}/complete`, { method: "POST" }),
 };
 
+// ─── Analytics (admin/teacher) ───────────────────────────────────────────────
+
+export interface PlatformKPIs {
+  users: { total: number; by_role: Record<string, number>; active_last_30d: number };
+  content: { courses_total: number; courses_published: number; videos: number; moocs: number; apps: number };
+  generated_at: string;
+}
+
+export interface AtRiskResult {
+  thresholds: { inactivity_days: number; score_threshold: number };
+  count: number;
+  students: { id: string; email: string; school: string }[];
+}
+
+export const analyticsApi = {
+  platformKPIs: () => request<PlatformKPIs>("/api/v1/analytics/platform"),
+
+  atRisk: (inactivityDays = 7, scoreThreshold = 60) =>
+    request<AtRiskResult>(`/api/v1/analytics/at-risk?inactivity_days=${inactivityDays}&score_threshold=${scoreThreshold}`),
+
+  exportUsersCSV: () =>
+    fetch(`${API_URL}/api/v1/analytics/export/users`, { credentials: "include" }).then((r) => r.blob()),
+
+  exportCoursesCSV: () =>
+    fetch(`${API_URL}/api/v1/analytics/export/courses`, { credentials: "include" }).then((r) => r.blob()),
+};
+
 // ─── Apps ────────────────────────────────────────────────────────────────────
 
 export const appsApi = {

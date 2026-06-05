@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { Cohort, StudentEnrollment } from "@/lib/mock";
+import { downloadCSV, todayStamp } from "@/lib/export";
 
 type FilterType = "all" | "active" | "at-risk" | "completed" | "inactive";
 
@@ -42,6 +43,21 @@ export function CohortDetail({
 }) {
   const [filter, setFilter] = useState<FilterType>("all");
   const [search, setSearch] = useState("");
+
+  function handleExportCSV() {
+    const rows = students.map((s) => ({
+      "Nom": s.name,
+      "Email": s.email,
+      "École": s.school,
+      "Statut": STATUS_LABELS[s.status],
+      "Cours complétés": `${s.coursesCompleted}/${s.totalCourses}`,
+      "Score moyen": s.quizAvg > 0 ? `${s.quizAvg}/100` : "—",
+      "Temps investi (min)": s.timeSpent,
+      "Jours inactif": s.daysInactive,
+      "Dernière activité": s.lastActive,
+    }));
+    downloadCSV(rows, `cohorte-${cohort.id}-${todayStamp()}.csv`);
+  }
 
   const filtered = students.filter((s) => {
     const matchFilter = filter === "all" || s.status === filter;
@@ -98,7 +114,10 @@ export function CohortDetail({
           <p className="text-sm text-gray-500 mt-1 max-w-xl">{cohort.description}</p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 text-sm text-gray-400 hover:text-white border border-white/10 hover:border-white/30 px-4 py-2 rounded-lg transition-all">
+          <button
+            onClick={handleExportCSV}
+            className="flex items-center gap-2 text-sm text-gray-400 hover:text-white border border-white/10 hover:border-white/30 px-4 py-2 rounded-lg transition-all"
+          >
             📊 Exporter CSV
           </button>
           <button className="flex items-center gap-2 text-sm text-white bg-primary hover:bg-primary-dark px-4 py-2 rounded-lg transition-colors shadow-lg shadow-primary/20">
