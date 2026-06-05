@@ -223,7 +223,7 @@ export default function MyLearningPage() {
           progress: [], badges: [], certificates: [],
           in_progress: [], completed: [],
         });
-        setBadges({ earned: [], locked: [], total: 0 });
+        setBadges({ earned: [], locked: [] });
       })
       .finally(() => setLoading(false));
   }, []);
