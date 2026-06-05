@@ -42,12 +42,14 @@ def test_request_code_invalid_domain():
 
 
 def test_request_code_valid_domain():
-    """Valid institutional email should trigger OTP flow and return 200."""
-    # Patch at the import site inside routers.auth (not the service module directly)
-    with patch("routers.auth.send_otp_email", return_value=True):
+    """Allowed domain + working email service → 200."""
+    # Mock both the domain check and the email call to isolate this unit test
+    # from runtime configuration (settings singleton loaded before env vars in tests)
+    with patch("routers.auth._is_domain_allowed", return_value=True), \
+         patch("routers.auth.send_otp_email", return_value=True):
         response = client.post(
             "/api/v1/auth/request-code",
-            json={"email": "user@test.com"},
+            json={"email": "user@polytechnique.edu"},
         )
     assert response.status_code == 200
 
