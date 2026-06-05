@@ -40,8 +40,13 @@ class MOOCModule(Base):
     title: Mapped[str] = mapped_column(String(300))
     position: Mapped[int] = mapped_column(Integer)
 
+    # Phase 5.2 — Conditional unlock (prerequisites)
+    min_score_to_unlock: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    prerequisite_module_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("mooc_modules.id"), nullable=True)
+
     mooc = relationship("MOOC", back_populates="modules")
     courses = relationship("MOOCModuleCourse", back_populates="module", cascade="all, delete-orphan", order_by="MOOCModuleCourse.position")
+    prerequisite = relationship("MOOCModule", remote_side="MOOCModule.id", foreign_keys=[prerequisite_module_id])
 
 
 class MOOCModuleCourse(Base):

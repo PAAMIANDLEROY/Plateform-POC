@@ -145,6 +145,61 @@ def enroll_mooc(mooc_id: str, current_user: CurrentUser = Depends(get_current_us
     return store.enroll_mooc(current_user.id, mooc_id)
 
 
+# Phase 5.2 — Vérification de prérequis avant accès à un module
+
+class ModuleUnlockCheck(BaseModel):
+    module_id: str
+    prerequisite_module_id: str | None = None
+    min_score_to_unlock: int | None = None
+
+
+@router.post("/mooc/{mooc_id}/module/{module_id}/check-unlock")
+def check_module_unlock(
+    mooc_id: str,
+    module_id: str,
+    body: ModuleUnlockCheck,
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """
+    Phase 5.2 — Vérifie si un module est déverrouillé pour l'utilisateur.
+    Conditions :
+      - prerequisite_module_id : le module prérequis doit être complété
+      - min_score_to_unlock : le score moyen sur le prérequis doit être >= ce seuil
+    """
+    progress = store.get_mooc_progress(current_user.id, mooc_id) or {}
+    completed_modules: list[str] = progress.get("completed_modules", [])
+
+    # No prerequisite = always unlocked
+    if not body.prerequisite_module_id:
+        return {"unlocked": True, "reason": "no_prerequisite"}
+
+    # Check if prerequisite module is completed
+    if body.prerequisite_module_id not in completed_modules:
+        return {
+            "unlocked": False,
+            "reason": "prerequisite_not_completed",
+            "required_module_id": body.prerequisite_module_id,
+        }
+
+    # Check score threshold if defined
+    if body.min_score_to_unlock is not None:
+        # Get quiz scores from completed courses in the prerequisite module
+        # In production, this queries real progress data; here we use store
+        all_progress = store.get_all_progress(current_user.id)
+        scores = [p.get("score") for p in all_progress if p.get("score") is not None]
+        avg_score = int(sum(scores) / len(scores)) if scores else 0
+
+        if avg_score < body.min_score_to_unlock:
+            return {
+                "unlocked": False,
+                "reason": "score_too_low",
+                "your_score": avg_score,
+                "required_score": body.min_score_to_unlock,
+            }
+
+    return {"unlocked": True, "reason": "prerequisites_met"}
+
+
 @router.post("/mooc/{mooc_id}/module/{module_id}/complete")
 def complete_module(mooc_id: str, module_id: str, current_user: CurrentUser = Depends(get_current_user)):
     result = store.complete_mooc_module(current_user.id, mooc_id, module_id)

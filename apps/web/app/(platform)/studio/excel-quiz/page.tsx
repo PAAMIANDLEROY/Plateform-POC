@@ -204,9 +204,28 @@ export default function ExcelQuizPage() {
 
   async function publish() {
     if (!quiz) return;
-    // Simulated publish — will hit the real API when DB is ready
-    await new Promise((r) => setTimeout(r, 800));
-    setStep("published");
+    setError("");
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/api/v1/studio/save-quiz`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            course_id: selectedCourse || "standalone",
+            quiz,
+          }),
+        }
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ detail: "Erreur serveur" }));
+        throw new Error(body.detail ?? "Erreur lors de la publication");
+      }
+      setStep("published");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Une erreur est survenue lors de la publication");
+    }
   }
 
   return (
@@ -322,6 +341,11 @@ export default function ExcelQuizPage() {
       {/* ── Étape 3 : Prévisualisation ── */}
       {step === "preview" && quiz && (
         <div className="space-y-6">
+          {error && (
+            <div className="bg-danger/10 border border-danger/30 text-danger text-sm rounded-xl px-4 py-3">
+              {error}
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-400">{quiz.questions.length} questions générées — éditez avant de publier</p>
             <button onClick={() => setStep("upload")} className="text-xs text-gray-500 hover:text-white transition-colors">
