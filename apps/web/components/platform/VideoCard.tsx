@@ -43,7 +43,7 @@ export function VideoCard({
     <Link
       href={`/tube/${id}`}
       className={clsx(
-        "group bg-gray-900 border border-white/10 rounded-xl overflow-hidden hover:border-primary/40 transition-all block",
+        "group bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-primary/30 hover:shadow-card-hover transition-all block shadow-card",
         className
       )}
     >
@@ -55,22 +55,22 @@ export function VideoCard({
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <div className="w-full h-full bg-gray-800 flex items-center justify-center text-4xl">▶</div>
+          <div className="w-full h-full bg-gray-100 flex items-center justify-center text-4xl text-gray-300">▶</div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
         {duration_seconds > 0 && (
-          <span className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1.5 py-0.5 rounded font-mono">
+          <span className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded font-mono">
             {formatDuration(duration_seconds)}
           </span>
         )}
         {category && (
-          <span className="absolute top-2 left-2 text-xs font-medium bg-primary/80 backdrop-blur text-white px-2 py-0.5 rounded-full">
+          <span className="absolute top-2 left-2 text-xs font-semibold bg-primary text-white px-2.5 py-0.5 rounded-full shadow-sm">
             {category}
           </span>
         )}
       </div>
       <div className="p-4">
-        <h3 className="font-semibold text-white text-sm leading-snug group-hover:text-primary transition-colors mb-2 line-clamp-2">
+        <h3 className="font-semibold text-gray-900 text-sm leading-snug group-hover:text-primary transition-colors mb-2 line-clamp-2">
           {title}
         </h3>
         {tags.length > 0 && (
@@ -80,7 +80,7 @@ export function VideoCard({
             ))}
           </div>
         )}
-        <div className="flex items-center justify-between text-xs text-gray-600 border-t border-white/5 pt-2.5">
+        <div className="flex items-center justify-between text-xs text-gray-400 border-t border-gray-100 pt-2.5">
           <span>{school ?? ""}</span>
           <span>{view_count.toLocaleString("fr-FR")} vues</span>
         </div>

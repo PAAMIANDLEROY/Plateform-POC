@@ -35,16 +35,16 @@ function KpiCard({ icon, label, value, sub, accent }: {
 }) {
   const valueColor =
     accent === "danger" ? "text-danger" :
-    accent === "green"  ? "text-green-400" :
-    accent === "purple" ? "text-purple-400" :
-    "text-white";
+    accent === "green"  ? "text-emerald-600" :
+    accent === "purple" ? "text-purple-600" :
+    "text-primary";
   const borderColor =
     accent === "danger" ? "border-danger/20 bg-danger/5" :
-    accent === "green"  ? "border-green-500/20 bg-green-500/5" :
-    "border-white/10";
+    accent === "green"  ? "border-emerald-200 bg-emerald-50" :
+    "border-gray-200";
 
   return (
-    <div className={`bg-gray-900 border rounded-xl p-5 ${borderColor}`}>
+    <div className={`bg-white border rounded-xl p-5 shadow-card ${borderColor}`}>
       <div className="text-2xl mb-2">{icon}</div>
       <div className={`text-2xl font-extrabold mb-0.5 ${valueColor}`}>{value}</div>
       <div className="text-xs text-gray-500">{label}</div>
@@ -89,7 +89,7 @@ export default function AdminDashboardPage() {
       <div className="flex items-start justify-between mb-8 flex-wrap gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-3xl font-bold text-white">Administration</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Administration</h1>
             <span className="text-xs font-medium bg-purple-600/20 text-purple-400 border border-purple-600/30 px-2.5 py-0.5 rounded-full">
               Admin
             </span>
@@ -98,14 +98,14 @@ export default function AdminDashboardPage() {
         </div>
         <button
           onClick={exportGlobalCSV}
-          className="flex items-center gap-2 text-sm text-gray-400 hover:text-white border border-white/10 hover:border-white/30 px-4 py-2.5 rounded-xl transition-all"
+          className="flex items-center gap-2 text-sm text-gray-400 hover:text-white border border-gray-200 hover:border-gray-300 px-4 py-2.5 rounded-xl transition-all shadow-sm"
         >
           📊 Exporter rapport CSV
         </button>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-900 border border-white/10 rounded-xl p-1 mb-8 w-fit">
+      <div className="flex gap-1 bg-white border border-gray-200 rounded-xl p-1 mb-8 w-fit">
         {([
           { key: "overview", label: "Vue d'ensemble" },
           { key: "cohorts",  label: "Cohortes" },
@@ -118,7 +118,7 @@ export default function AdminDashboardPage() {
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === tab.key
                 ? "bg-primary text-white shadow-sm shadow-primary/30"
-                : "text-gray-400 hover:text-white"
+                : "text-gray-400 hover:text-gray-900"
             }`}
           >
             {tab.label}
@@ -147,15 +147,15 @@ export default function AdminDashboardPage() {
           {/* Cohort health + at-risk */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Completion overview */}
-            <div className="lg:col-span-2 bg-gray-900 border border-white/10 rounded-xl p-6">
-              <h2 className="text-sm font-semibold text-white mb-1">Santé des cohortes actives</h2>
+            <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-6">
+              <h2 className="text-sm font-semibold text-gray-900 mb-1">Santé des cohortes actives</h2>
               <p className="text-xs text-gray-500 mb-5">Taux de complétion et score moyen par cohorte</p>
               <div className="flex flex-col gap-5">
                 {activeCohorts.map((c) => (
                   <div key={c.id}>
                     <div className="flex items-center justify-between mb-1.5">
                       <div>
-                        <p className="text-sm font-medium text-white">{c.name}</p>
+                        <p className="text-sm font-medium text-gray-900">{c.name}</p>
                         <p className="text-xs text-gray-600">{c.school} · {c.enrolledCount} apprenants</p>
                       </div>
                       <div className="text-right">
@@ -187,7 +187,7 @@ export default function AdminDashboardPage() {
                 <div className="flex-1">
                   <MiniBar pct={avgPlatformCompletion} />
                 </div>
-                <div className="text-sm font-bold text-white">{avgPlatformCompletion}%</div>
+                <div className="text-sm font-bold text-gray-900">{avgPlatformCompletion}%</div>
               </div>
             </div>
 
@@ -195,7 +195,7 @@ export default function AdminDashboardPage() {
             <div className="flex flex-col gap-5">
               {/* At-risk */}
               <div className="bg-gray-900 border border-danger/20 rounded-xl p-5">
-                <h3 className="text-sm font-semibold text-white mb-1">
+                <h3 className="text-sm font-semibold text-gray-900 mb-1">
                   ⚠️ Apprenants à risque
                 </h3>
                 <p className="text-xs text-gray-500 mb-4">{atRiskStudents.length} sur {MOCK_STUDENTS.length} étudiants suivis</p>
@@ -210,7 +210,7 @@ export default function AdminDashboardPage() {
                         {s.initials}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-white group-hover:text-orange-300 transition-colors truncate">{s.name}</p>
+                        <p className="text-xs font-medium text-gray-900 group-hover:text-orange-600 transition-colors truncate">{s.name}</p>
                         <p className="text-xs text-gray-600">{s.daysInactive}j inactif</p>
                       </div>
                     </Link>
@@ -224,8 +224,8 @@ export default function AdminDashboardPage() {
               </div>
 
               {/* Platform metrics */}
-              <div className="bg-gray-900 border border-white/10 rounded-xl p-5">
-                <h3 className="text-sm font-semibold text-white mb-4">Métriques globales</h3>
+              <div className="bg-white border border-gray-200 rounded-xl p-5">
+                <h3 className="text-sm font-semibold text-gray-900 mb-4">Métriques globales</h3>
                 <div className="flex flex-col gap-3">
                   {[
                     { label: "Enrollements total",    value: MOCK_COHORTS.reduce((a, c) => a + c.enrolledCount, 0) },
@@ -236,7 +236,7 @@ export default function AdminDashboardPage() {
                   ].map((item) => (
                     <div key={item.label} className="flex items-center justify-between text-sm">
                       <span className="text-gray-500">{item.label}</span>
-                      <span className="font-semibold text-white">{item.value}</span>
+                      <span className="font-semibold text-gray-900">{item.value}</span>
                     </div>
                   ))}
                 </div>
@@ -248,7 +248,7 @@ export default function AdminDashboardPage() {
 
       {/* ── Cohorts tab ── */}
       {activeTab === "cohorts" && (
-        <div className="bg-gray-900 border border-white/10 rounded-xl overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/10">
@@ -263,7 +263,7 @@ export default function AdminDashboardPage() {
               {MOCK_COHORTS.map((c) => (
                 <tr key={c.id} className="hover:bg-white/[0.02] transition-colors">
                   <td className="px-6 py-4">
-                    <p className="text-sm font-semibold text-white">{c.name}</p>
+                    <p className="text-sm font-semibold text-gray-900">{c.name}</p>
                     <p className="text-xs text-gray-600">{c.startDate} → {c.endDate}</p>
                   </td>
                   <td className="px-5 py-4 text-sm text-gray-400">{c.school}</td>
@@ -276,7 +276,7 @@ export default function AdminDashboardPage() {
                       {c.status === "active" ? "Actif" : c.status === "draft" ? "Brouillon" : "Archivé"}
                     </span>
                   </td>
-                  <td className="px-5 py-4 text-sm font-semibold text-white">{c.enrolledCount}</td>
+                  <td className="px-5 py-4 text-sm font-semibold text-gray-900">{c.enrolledCount}</td>
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-2">
                       <div className="w-20">
@@ -285,10 +285,10 @@ export default function AdminDashboardPage() {
                           color={c.completionRate >= 80 ? "bg-green-500" : c.completionRate >= 50 ? "bg-primary" : "bg-orange-500"}
                         />
                       </div>
-                      <span className="text-sm font-semibold text-white">{c.completionRate}%</span>
+                      <span className="text-sm font-semibold text-gray-900">{c.completionRate}%</span>
                     </div>
                   </td>
-                  <td className="px-5 py-4 text-sm text-white">{c.avgScore}/100</td>
+                  <td className="px-5 py-4 text-sm text-gray-700">{c.avgScore}/100</td>
                   <td className="px-5 py-4 text-sm text-gray-400">{Math.floor(c.avgTimeSpent / 60)}h</td>
                   <td className="px-5 py-4">
                     {c.status !== "archived" && (
@@ -308,8 +308,8 @@ export default function AdminDashboardPage() {
       {activeTab === "users" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Role distribution */}
-          <div className="bg-gray-900 border border-white/10 rounded-xl p-6">
-            <h2 className="text-sm font-semibold text-white mb-5">Répartition par rôle</h2>
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <h2 className="text-sm font-semibold text-gray-900 mb-5">Répartition par rôle</h2>
             <div className="flex flex-col gap-4">
               {([
                 { role: "Étudiants",    count: PLATFORM_USERS.student,    color: "bg-primary",    pct: Math.round((PLATFORM_USERS.student    / PLATFORM_USERS.total) * 100) },
@@ -320,7 +320,7 @@ export default function AdminDashboardPage() {
                 <div key={r.role}>
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-sm text-gray-300">{r.role}</span>
-                    <span className="text-sm font-bold text-white">{r.count} <span className="text-xs font-normal text-gray-500">({r.pct}%)</span></span>
+                    <span className="text-sm font-bold text-gray-900">{r.count} <span className="text-xs font-normal text-gray-500">({r.pct}%)</span></span>
                   </div>
                   <MiniBar pct={r.pct} color={r.color} />
                 </div>
@@ -332,8 +332,8 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Enrollment by school */}
-          <div className="bg-gray-900 border border-white/10 rounded-xl p-6">
-            <h2 className="text-sm font-semibold text-white mb-5">Apprenants par école</h2>
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <h2 className="text-sm font-semibold text-gray-900 mb-5">Apprenants par école</h2>
             <div className="flex flex-col gap-4">
               {([
                 { school: "Polytechnique",  count: 98,  pct: 34 },
@@ -345,7 +345,7 @@ export default function AdminDashboardPage() {
                 <div key={s.school}>
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-sm text-gray-300">{s.school}</span>
-                    <span className="text-sm font-bold text-white">{s.count} <span className="text-xs font-normal text-gray-500">({s.pct}%)</span></span>
+                    <span className="text-sm font-bold text-gray-900">{s.count} <span className="text-xs font-normal text-gray-500">({s.pct}%)</span></span>
                   </div>
                   <MiniBar pct={s.pct} />
                 </div>
@@ -359,8 +359,8 @@ export default function AdminDashboardPage() {
       {activeTab === "content" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Top videos by views */}
-          <div className="bg-gray-900 border border-white/10 rounded-xl p-6">
-            <h2 className="text-sm font-semibold text-white mb-5">Top vidéos (vues)</h2>
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <h2 className="text-sm font-semibold text-gray-900 mb-5">Top vidéos (vues)</h2>
             <div className="flex flex-col gap-3">
               {[...MOCK_VIDEOS]
                 .sort((a, b) => b.views - a.views)
@@ -369,7 +369,7 @@ export default function AdminDashboardPage() {
                   <div key={v.id} className="flex items-center gap-3">
                     <span className="text-xs font-bold text-gray-600 w-4">{i + 1}</span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-white truncate">{v.title}</p>
+                      <p className="text-xs font-medium text-gray-900 truncate">{v.title}</p>
                       <p className="text-xs text-gray-600">{v.school}</p>
                     </div>
                     <span className="text-xs text-gray-400 shrink-0">{v.views.toLocaleString("fr-FR")} vues</span>
@@ -379,8 +379,8 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Content summary */}
-          <div className="bg-gray-900 border border-white/10 rounded-xl p-6">
-            <h2 className="text-sm font-semibold text-white mb-5">Catalogue — Résumé</h2>
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <h2 className="text-sm font-semibold text-gray-900 mb-5">Catalogue — Résumé</h2>
             <div className="flex flex-col gap-4">
               {[
                 { icon: "▶",  label: "Vidéos",      total: MOCK_VIDEOS.length,                                           published: MOCK_VIDEOS.length,                                           draft: 0 },
@@ -392,10 +392,10 @@ export default function AdminDashboardPage() {
                 <div key={c.label} className="flex items-center gap-3">
                   <span className="text-lg w-6 text-center">{c.icon}</span>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-white">{c.label}</p>
+                    <p className="text-sm font-medium text-gray-900">{c.label}</p>
                   </div>
                   <div className="text-right">
-                    <span className="text-sm font-bold text-white">{c.total}</span>
+                    <span className="text-sm font-bold text-gray-900">{c.total}</span>
                     {c.draft > 0 && <span className="text-xs text-yellow-500 ml-2">({c.draft} brouillons)</span>}
                   </div>
                 </div>

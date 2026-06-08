@@ -21,9 +21,9 @@ function getCourseTitle(courseId: string) {
 
 function StatCard({ icon, value, label }: { icon: string; value: number; label: string }) {
   return (
-    <div className="bg-gray-900 border border-white/10 rounded-2xl p-5 text-center">
+    <div className="bg-white border border-gray-200 rounded-2xl p-5 text-center">
       <div className="text-3xl mb-2">{icon}</div>
-      <div className="text-2xl font-extrabold text-white">{value}</div>
+      <div className="text-2xl font-extrabold text-gray-900">{value}</div>
       <div className="text-xs text-gray-500 mt-0.5">{label}</div>
     </div>
   );
@@ -40,7 +40,7 @@ function ProgressTab({ progress, onComplete, onIssue }: {
     return (
       <div className="text-center py-16">
         <div className="text-5xl mb-4">📖</div>
-        <p className="text-white font-semibold mb-1">Aucun cours commencé</p>
+        <p className="text-gray-900 font-semibold mb-1">Aucun cours commencé</p>
         <p className="text-gray-500 text-sm mb-5">Explorez le catalogue pour commencer à apprendre.</p>
         <Link href="/learning-ai/courses" className="bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary-dark transition-colors">
           Explorer les cours →
@@ -54,10 +54,10 @@ function ProgressTab({ progress, onComplete, onIssue }: {
       {progress.map((p) => {
         const title = getCourseTitle(p.course_id);
         return (
-          <div key={p.course_id} className="bg-gray-900 border border-white/10 rounded-2xl p-5">
+          <div key={p.course_id} className="bg-white border border-gray-200 rounded-2xl p-5">
             <div className="flex items-start justify-between gap-4 mb-4">
               <div className="flex-1">
-                <Link href={`/courses/${p.course_id}`} className="font-semibold text-white hover:text-primary transition-colors">
+                <Link href={`/courses/${p.course_id}`} className="font-semibold text-gray-900 hover:text-primary transition-colors">
                   {title}
                 </Link>
                 {p.completed && p.completed_at && (
@@ -116,9 +116,9 @@ function BadgesTab({ earned, locked }: { earned: Badge[]; locked: Badge[] }) {
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {earned.map((b) => (
-              <div key={b.id} className="bg-gray-900 border border-primary/30 rounded-2xl p-5 text-center">
+              <div key={b.id} className="bg-white border border-primary/20 rounded-2xl p-5 text-center shadow-card">
                 <div className="text-4xl mb-2">{b.icon}</div>
-                <p className="text-sm font-bold text-white mb-1">{b.name}</p>
+                <p className="text-sm font-bold text-gray-900 mb-1">{b.name}</p>
                 <p className="text-xs text-gray-500">{b.description}</p>
                 {b.awarded_at && (
                   <p className="text-xs text-primary mt-2">{formatDate(b.awarded_at)}</p>
@@ -136,10 +136,10 @@ function BadgesTab({ earned, locked }: { earned: Badge[]; locked: Badge[] }) {
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {locked.map((b) => (
-              <div key={b.id} className="bg-gray-900 border border-white/5 rounded-2xl p-5 text-center opacity-50 grayscale">
+              <div key={b.id} className="bg-white border border-gray-100 rounded-2xl p-5 text-center opacity-50 grayscale shadow-card">
                 <div className="text-4xl mb-2">{b.icon}</div>
                 <p className="text-sm font-bold text-gray-400 mb-1">{b.name}</p>
-                <p className="text-xs text-gray-600">{b.description}</p>
+                <p className="text-xs text-gray-400">{b.description}</p>
               </div>
             ))}
           </div>
@@ -149,7 +149,7 @@ function BadgesTab({ earned, locked }: { earned: Badge[]; locked: Badge[] }) {
       {earned.length === 0 && locked.length === 0 && (
         <div className="text-center py-16">
           <div className="text-5xl mb-4">🏅</div>
-          <p className="text-white font-semibold">Aucun badge disponible</p>
+          <p className="text-gray-900 font-semibold">Aucun badge disponible</p>
         </div>
       )}
     </div>
@@ -166,7 +166,7 @@ function CertificatesTab({ certs, onDownload }: {
     return (
       <div className="text-center py-16">
         <div className="text-5xl mb-4">🏆</div>
-        <p className="text-white font-semibold mb-1">Aucun certificat encore</p>
+        <p className="text-gray-900 font-semibold mb-1">Aucun certificat encore</p>
         <p className="text-gray-500 text-sm">Complétez un cours pour obtenir votre premier certificat.</p>
       </div>
     );
@@ -175,12 +175,12 @@ function CertificatesTab({ certs, onDownload }: {
   return (
     <div className="space-y-4">
       {certs.map((c) => (
-        <div key={c.id} className="bg-gray-900 border border-white/10 rounded-2xl p-5 flex items-center gap-4">
+        <div key={c.id} className="bg-white border border-gray-200 rounded-2xl p-5 flex items-center gap-4">
           <div className="w-12 h-12 bg-primary/20 border border-primary/30 rounded-xl flex items-center justify-center text-2xl shrink-0">
             🏆
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-white line-clamp-1">{c.course_title}</p>
+            <p className="font-semibold text-gray-900 line-clamp-1">{c.course_title}</p>
             <p className="text-xs text-gray-500 mt-0.5">Délivré le {formatDate(c.issued_at)}</p>
             <Link href={c.verification_url} target="_blank"
               className="text-xs text-primary hover:text-primary-light transition-colors">
@@ -283,7 +283,7 @@ export default function MyLearningPage() {
 
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-extrabold text-white mb-1">Mon parcours</h1>
+        <h1 className="text-2xl font-extrabold text-gray-900 mb-1">Mon parcours</h1>
         <p className="text-gray-500 text-sm">Bonjour{user ? ` ${user.first_name}` : ""} — voici votre progression sur Hi! Platform</p>
       </div>
 
@@ -298,11 +298,11 @@ export default function MyLearningPage() {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-900 border border-white/10 rounded-2xl p-1.5 mb-6 w-fit">
+      <div className="flex gap-1 bg-white border border-gray-200 rounded-2xl p-1.5 mb-6 w-fit">
         {tabs.map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-              tab === t.key ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-gray-400 hover:text-white hover:bg-white/5"
+              tab === t.key ? "bg-primary text-white shadow-md" : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
             }`}
           >
             <span>{t.icon}</span>

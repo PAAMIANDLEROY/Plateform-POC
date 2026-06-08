@@ -6,10 +6,10 @@ import Link from "next/link";
 // Cette page est conservée pour rétrocompatibilité avec d'anciens liens.
 export default function VerifyEmailPage() {
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-gray-950 border border-white/10 rounded-2xl p-8 text-center">
+    <div className="min-h-screen bg-surface flex items-center justify-center px-4">
+      <div className="w-full max-w-md bg-white border border-gray-200 rounded-2xl p-8 text-center shadow-card">
         <div className="text-4xl mb-4">🔑</div>
-        <h2 className="text-xl font-bold text-white mb-2">Authentification par code</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Authentification par code</h2>
         <p className="text-gray-400 text-sm mb-6">
           Hi! Platform utilise désormais un code à 6 chiffres envoyé par email.
           Connectez-vous directement depuis la page de connexion.

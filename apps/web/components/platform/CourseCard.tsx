@@ -52,7 +52,7 @@ export function CourseCard({
     <Link
       href={`/courses/${id}`}
       className={clsx(
-        "group bg-gray-900 border border-white/10 rounded-xl overflow-hidden hover:border-primary/40 hover:bg-gray-800 transition-all block",
+        "group bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-primary/30 hover:shadow-card-hover transition-all block shadow-card",
         className
       )}
     >
@@ -65,13 +65,18 @@ export function CourseCard({
           />
         </div>
       )}
+      {!cover_url && (
+        <div className="h-24 bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+          <span className="text-4xl">📖</span>
+        </div>
+      )}
       <div className="p-5">
         <div className="flex items-center gap-2 mb-3 flex-wrap">
           {category && <Badge variant="primary">{category}</Badge>}
           <Badge variant={levelVariant[level] ?? "neutral"}>{levelLabel[level] ?? level}</Badge>
           {status === "draft" && <Badge variant="warning">Brouillon</Badge>}
         </div>
-        <h3 className="font-semibold text-white text-sm leading-snug group-hover:text-primary transition-colors mb-1.5 line-clamp-2">
+        <h3 className="font-semibold text-gray-900 text-sm leading-snug group-hover:text-primary transition-colors mb-1.5 line-clamp-2">
           {title}
         </h3>
         {description && (
@@ -84,7 +89,7 @@ export function CourseCard({
             ))}
           </div>
         )}
-        <div className="flex items-center gap-2 text-xs text-gray-500 border-t border-white/5 pt-3">
+        <div className="flex items-center gap-2 text-xs text-gray-400 border-t border-gray-100 pt-3">
           {school && <span>{school}</span>}
           {school && estimated_duration_minutes > 0 && <span>·</span>}
           {estimated_duration_minutes > 0 && <span>{formatDuration(estimated_duration_minutes)}</span>}

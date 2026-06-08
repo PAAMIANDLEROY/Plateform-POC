@@ -45,15 +45,15 @@ const LEARNING_SECTIONS = [
   },
 ];
 
-const roleVariant: Record<string, string> = {
-  admin:     "bg-danger text-white",
-  superuser: "bg-purple-600 text-white",
-  teacher:   "bg-primary text-white",
-  student:   "bg-white/10 text-gray-300",
-  public:    "bg-white/10 text-gray-300",
+const roleChip: Record<string, string> = {
+  admin:     "bg-danger/10 text-danger border border-danger/20",
+  superuser: "bg-purple-100 text-purple-700 border border-purple-200",
+  teacher:   "bg-primary/10 text-primary border border-primary/20",
+  student:   "bg-gray-100 text-gray-600 border border-gray-200",
+  public:    "bg-gray-100 text-gray-600 border border-gray-200",
 };
 
-// ─── Dropdown with fixed positioning (fixes overflow-x clipping bug) ──────────
+// ─── Dropdown with fixed positioning (fixes overflow clipping) ────────────────
 
 function NavDropdown({
   label,
@@ -79,7 +79,7 @@ function NavDropdown({
   function handleToggle() {
     if (!isOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
-      setDropPos({ top: rect.bottom + 8, left: rect.left });
+      setDropPos({ top: rect.bottom + 6, left: rect.left });
     }
     onToggle(slug);
   }
@@ -91,15 +91,15 @@ function NavDropdown({
         onClick={handleToggle}
         aria-expanded={isOpen}
         className={clsx(
-          "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap",
+          "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
           isActive
-            ? "bg-primary text-white shadow-lg shadow-primary/20"
-            : "text-gray-400 hover:text-white hover:bg-white/10"
+            ? "bg-primary/10 text-primary font-semibold"
+            : "text-gray-600 hover:text-primary hover:bg-primary/5"
         )}
       >
         {label}
         <svg
-          className={clsx("w-3 h-3 transition-transform shrink-0", isOpen && "rotate-180")}
+          className={clsx("w-3 h-3 transition-transform shrink-0 opacity-60", isOpen && "rotate-180")}
           fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -109,12 +109,12 @@ function NavDropdown({
       {isOpen && (
         <div
           style={{ position: "fixed", top: dropPos.top, left: dropPos.left }}
-          className="w-72 bg-gray-950 border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[200]"
+          className="w-72 bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden z-[200]"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="px-4 pt-4 pb-2 border-b border-white/5">
-            <p className="text-xs font-semibold text-white uppercase tracking-wider">{label}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{description}</p>
+          <div className="px-4 pt-4 pb-2.5 border-b border-gray-100">
+            <p className="text-xs font-bold text-gray-900 uppercase tracking-wider">{label}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{description}</p>
           </div>
           <div className="p-2">
             {items.map((item) => (
@@ -125,14 +125,14 @@ function NavDropdown({
                 className={clsx(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group",
                   pathname.startsWith(item.href)
-                    ? "bg-primary/15 text-white"
-                    : "hover:bg-white/5 text-gray-400 hover:text-white"
+                    ? "bg-primary/8 text-primary"
+                    : "hover:bg-gray-50 text-gray-600 hover:text-primary"
                 )}
               >
                 <span className="text-xl w-7 text-center shrink-0">{item.icon}</span>
                 <div>
                   <p className="text-sm font-semibold leading-none mb-0.5">{item.label}</p>
-                  <p className="text-xs text-gray-500">{item.desc}</p>
+                  <p className="text-xs text-gray-400">{item.desc}</p>
                 </div>
               </Link>
             ))}
@@ -183,7 +183,7 @@ export function Nav() {
 
   return (
     <>
-      {/* Invisible backdrop — captures outside clicks to close dropdown */}
+      {/* Backdrop — closes dropdown on outside click */}
       {openDropdown && (
         <div
           className="fixed inset-0 z-[150]"
@@ -192,24 +192,26 @@ export function Nav() {
         />
       )}
 
-      <header className="bg-black border-b border-white/10 sticky top-0 z-[160] backdrop-blur-md">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-[160]">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center gap-2">
 
-          {/* Logo */}
-          <Link href="/dashboard" className="text-xl font-bold text-white shrink-0 tracking-tight mr-3">
-            Hi! <span className="text-primary">Platform</span>
+          {/* Logo — style Hi! PARIS */}
+          <Link href="/dashboard" className="shrink-0 mr-4 flex items-center gap-0 select-none">
+            <span className="text-xl font-extrabold text-primary tracking-tight">Hi!</span>
+            <span className="text-xl font-extrabold text-gray-900 tracking-tight"> Platform</span>
           </Link>
 
           {/* Navigation */}
-          <nav className="flex items-center gap-0.5 flex-1 min-w-0">
+          <nav className="flex items-center gap-0.5 flex-1 min-w-0 overflow-x-auto">
+
             {/* Insights */}
             <Link
               href="/insights"
               className={clsx(
-                "px-3 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap",
+                "px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
                 pathname.startsWith("/insights")
-                  ? "bg-primary text-white shadow-lg shadow-primary/20"
-                  : "text-gray-400 hover:text-white hover:bg-white/10"
+                  ? "bg-primary/10 text-primary font-semibold"
+                  : "text-gray-600 hover:text-primary hover:bg-primary/5"
               )}
             >
               Insights
@@ -229,10 +231,10 @@ export function Nav() {
             <Link
               href="/my-learning"
               className={clsx(
-                "px-3 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap",
+                "px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
                 pathname.startsWith("/my-learning")
-                  ? "bg-primary text-white shadow-lg shadow-primary/20"
-                  : "text-gray-400 hover:text-white hover:bg-white/10"
+                  ? "bg-primary/10 text-primary font-semibold"
+                  : "text-gray-600 hover:text-primary hover:bg-primary/5"
               )}
             >
               Mon parcours
@@ -241,11 +243,14 @@ export function Nav() {
             {/* Teacher tools */}
             {isTeacher && (
               <>
+                <div className="w-px h-5 bg-gray-200 mx-1 shrink-0" />
                 <Link
                   href="/studio"
                   className={clsx(
-                    "px-3 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap",
-                    pathname.startsWith("/studio") ? "bg-danger text-white" : "text-gray-400 hover:text-white hover:bg-white/10"
+                    "px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
+                    pathname.startsWith("/studio")
+                      ? "bg-danger/10 text-danger font-semibold"
+                      : "text-gray-600 hover:text-danger hover:bg-danger/5"
                   )}
                 >
                   Studio
@@ -253,8 +258,10 @@ export function Nav() {
                 <Link
                   href="/lms"
                   className={clsx(
-                    "px-3 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap",
-                    pathname.startsWith("/lms") ? "bg-danger text-white" : "text-gray-400 hover:text-white hover:bg-white/10"
+                    "px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
+                    pathname.startsWith("/lms")
+                      ? "bg-danger/10 text-danger font-semibold"
+                      : "text-gray-600 hover:text-danger hover:bg-danger/5"
                   )}
                 >
                   LMS
@@ -267,10 +274,10 @@ export function Nav() {
               <Link
                 href="/admin"
                 className={clsx(
-                  "px-3 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap",
+                  "px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
                   pathname.startsWith("/admin")
-                    ? "bg-purple-600 text-white"
-                    : "text-gray-400 hover:text-white hover:bg-white/10"
+                    ? "bg-purple-100 text-purple-700 font-semibold"
+                    : "text-gray-600 hover:text-purple-700 hover:bg-purple-50"
                 )}
               >
                 Admin
@@ -280,45 +287,49 @@ export function Nav() {
 
           {/* User menu */}
           {user ? (
-            <div ref={userMenuRef} className="relative shrink-0">
+            <div ref={userMenuRef} className="relative shrink-0 ml-2">
               <button
                 onClick={() => setUserMenuOpen((o) => !o)}
-                className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
+                className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-gray-50 transition-colors"
               >
                 <div className="hidden sm:block text-right">
-                  <p className="text-sm font-medium text-white leading-none">
+                  <p className="text-sm font-semibold text-gray-900 leading-none">
                     {user.first_name} {user.last_name}
                   </p>
-                  <p className="text-xs text-gray-500 mt-0.5">{user.email}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{user.email}</p>
                 </div>
                 <Avatar name={`${user.first_name} ${user.last_name}`} size="sm" />
-                <span className={clsx("text-xs font-semibold px-2 py-0.5 rounded-full hidden sm:inline", roleVariant[user.role] ?? roleVariant.student)}>
+                <span className={clsx("text-xs font-semibold px-2 py-0.5 rounded-full hidden sm:inline", roleChip[user.role] ?? roleChip.student)}>
                   {user.role}
                 </span>
               </button>
 
               {userMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-gray-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden z-[200]">
-                  <Link href="/profile" onClick={() => setUserMenuOpen(false)} className="block px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors">
+                <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden z-[200]">
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <p className="text-sm font-semibold text-gray-900">{user.first_name} {user.last_name}</p>
+                    <p className="text-xs text-gray-400 mt-0.5 truncate">{user.email}</p>
+                  </div>
+                  <Link href="/profile" onClick={() => setUserMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
                     Mon profil
                   </Link>
-                  <Link href="/my-learning" onClick={() => setUserMenuOpen(false)} className="block px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors">
+                  <Link href="/my-learning" onClick={() => setUserMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
                     Mon parcours
                   </Link>
                   {isAdmin && (
-                    <Link href="/admin" onClick={() => setUserMenuOpen(false)} className="block px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors">
+                    <Link href="/admin" onClick={() => setUserMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
                       Administration
                     </Link>
                   )}
-                  <div className="border-t border-white/10" />
-                  <button onClick={handleLogout} className="w-full text-left px-4 py-3 text-sm text-danger hover:bg-danger/10 transition-colors">
+                  <div className="border-t border-gray-100" />
+                  <button onClick={handleLogout} className="w-full text-left px-4 py-2.5 text-sm text-danger hover:bg-danger/5 transition-colors">
                     Se déconnecter
                   </button>
                 </div>
               )}
             </div>
           ) : (
-            <Link href="/login" className="shrink-0 text-sm font-semibold bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors">
+            <Link href="/login" className="shrink-0 text-sm font-semibold bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors shadow-sm">
               Connexion
             </Link>
           )}

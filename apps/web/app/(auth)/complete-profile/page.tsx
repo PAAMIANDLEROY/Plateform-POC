@@ -58,16 +58,16 @@ export default function CompleteProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-surface flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-lg">
 
         <div className="text-center mb-8">
           <div className="text-4xl mb-3">👋</div>
-          <h1 className="text-2xl font-extrabold text-white">Bienvenue sur Hi! Platform</h1>
+          <h1 className="text-2xl font-extrabold text-gray-900">Bienvenue sur Hi! Platform</h1>
           <p className="text-gray-500 text-sm mt-2">Complétez votre profil pour commencer.</p>
         </div>
 
-        <div className="bg-gray-950 border border-white/10 rounded-2xl p-8">
+        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-card">
 
           {error && (
             <div className="bg-danger/10 border border-danger/30 text-danger text-sm rounded-lg px-4 py-3 mb-5">

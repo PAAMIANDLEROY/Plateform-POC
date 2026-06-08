@@ -65,7 +65,6 @@ export function AppCard({
   githubRepo,
   className,
 }: AppCardProps) {
-  // Resolve GitHub repo from URL if not explicitly provided
   const resolvedRepo = githubRepo ?? (url ? parseGitHubRepo(url) : null);
   const ghMeta = useGitHubMeta(resolvedRepo);
 
@@ -73,19 +72,22 @@ export function AppCard({
   const isExternal = url && !url.startsWith("/");
 
   return (
-    <div className={clsx("group bg-gray-900 border border-white/10 rounded-xl overflow-hidden hover:border-primary/40 transition-all flex flex-col", className)}>
+    <div className={clsx(
+      "group bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-primary/30 hover:shadow-card-hover transition-all flex flex-col shadow-card",
+      className
+    )}>
       {thumbnail_url ? (
         <div className="h-32 overflow-hidden">
           <img src={thumbnail_url} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
         </div>
       ) : (
-        <div className="h-28 bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+        <div className="h-28 bg-gradient-to-br from-primary/8 to-primary/3 flex items-center justify-center">
           <span className="text-4xl">{isGitHub ? "🐙" : "⚡"}</span>
         </div>
       )}
 
       <div className="p-4 flex flex-col flex-1">
-        <h3 className="font-semibold text-white text-sm leading-snug group-hover:text-primary-light transition-colors mb-1.5 line-clamp-1">
+        <h3 className="font-semibold text-gray-900 text-sm leading-snug group-hover:text-primary transition-colors mb-1.5 line-clamp-1">
           {title}
         </h3>
 
@@ -104,14 +106,14 @@ export function AppCard({
         <div className="mt-auto">
           {/* GitHub metadata */}
           {ghMeta && (
-            <div className="flex items-center gap-3 text-xs text-gray-500 mb-3 pb-3 border-b border-white/5">
+            <div className="flex items-center gap-3 text-xs text-gray-400 mb-3 pb-3 border-b border-gray-100">
               <span className="flex items-center gap-1">
                 <span>⭐</span>
                 <span>{ghMeta.stars.toLocaleString("fr-FR")}</span>
               </span>
               {ghMeta.language && (
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />
+                  <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
                   <span>{ghMeta.language}</span>
                 </span>
               )}
@@ -121,7 +123,7 @@ export function AppCard({
 
           {/* School + open button */}
           <div className="flex items-center justify-between">
-            {school && <span className="text-xs text-gray-600">{school}</span>}
+            {school && <span className="text-xs text-gray-400">{school}</span>}
             <div className="flex gap-2 ml-auto">
               {url && isExternal && (
                 <a
@@ -129,14 +131,14 @@ export function AppCard({
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="text-xs font-semibold text-primary hover:text-primary-light transition-colors"
+                  className="text-xs font-semibold text-primary hover:text-primary-dark transition-colors"
                 >
                   Ouvrir ↗
                 </a>
               )}
               <Link
                 href={`/apps/${id}`}
-                className="text-xs text-gray-500 hover:text-white transition-colors"
+                className="text-xs text-gray-400 hover:text-gray-900 transition-colors"
               >
                 Détails
               </Link>

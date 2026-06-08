@@ -90,12 +90,12 @@ export function SectionCatalogue({ section, activeModule }: SectionCatalogueProp
     <div className="max-w-7xl mx-auto px-6 py-10">
       {/* Section header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-white mb-1">{section.label}</h1>
-        <p className="text-gray-400">{section.description}</p>
+        <h1 className="text-3xl font-extrabold text-gray-900 mb-1">{section.label}</h1>
+        <p className="text-gray-500">{section.description}</p>
       </div>
 
       {/* Module tabs */}
-      <div className="flex items-center gap-2 mb-6 border-b border-white/10 pb-0">
+      <div className="flex items-center gap-1 mb-6 border-b border-gray-200 pb-0">
         {tabs.map((tab) => (
           <Link
             key={tab.key}
@@ -104,8 +104,8 @@ export function SectionCatalogue({ section, activeModule }: SectionCatalogueProp
             className={clsx(
               "flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-t-lg border-b-2 transition-all -mb-px",
               activeModule === tab.key
-                ? "border-primary text-white bg-primary/10"
-                : "border-transparent text-gray-500 hover:text-gray-300 hover:border-white/20"
+                ? "border-primary text-primary bg-primary/5"
+                : "border-transparent text-gray-500 hover:text-gray-900 hover:border-gray-300"
             )}
           >
             <span>{tab.icon}</span>
@@ -121,14 +121,14 @@ export function SectionCatalogue({ section, activeModule }: SectionCatalogueProp
           placeholder={`Rechercher dans ${activeModule === "tube" ? "les vidéos" : activeModule === "courses" ? "les cours" : activeModule === "moocs" ? "les MOOCs" : "les apps"}…`}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="bg-gray-900 border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-primary/50 transition-colors w-64"
+          className="bg-white border border-gray-300 rounded-xl px-4 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors w-64 shadow-sm"
         />
 
         {showCategories && (
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="bg-gray-900 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50 transition-colors"
+            className="bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm text-gray-700 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors shadow-sm"
           >
             {categoryOptions.map((c) => (
               <option key={c} value={c}>{c}</option>
@@ -144,8 +144,8 @@ export function SectionCatalogue({ section, activeModule }: SectionCatalogueProp
                 onClick={() => setLevel(l)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                   level === l
-                    ? "bg-primary text-white"
-                    : "bg-gray-900 border border-white/10 text-gray-400 hover:text-white hover:border-white/30"
+                    ? "bg-primary text-white shadow-sm"
+                    : "bg-white border border-gray-200 text-gray-600 hover:border-primary/40 hover:text-primary shadow-sm"
                 }`}
               >
                 {l}
@@ -157,7 +157,7 @@ export function SectionCatalogue({ section, activeModule }: SectionCatalogueProp
         {(search || level !== "Tous" || category !== "Tous") && (
           <button
             onClick={() => { setSearch(""); setLevel("Tous"); setCategory("Tous"); }}
-            className="text-xs text-gray-500 hover:text-white px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/30 transition-all"
+            className="text-xs text-gray-500 hover:text-gray-900 px-3 py-1.5 rounded-lg border border-gray-200 hover:border-gray-300 transition-all bg-white shadow-sm"
           >
             ✕ Réinitialiser
           </button>

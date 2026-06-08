@@ -70,7 +70,7 @@ export default function LMSPage() {
       <div className="flex items-start justify-between mb-10 flex-wrap gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-3xl font-bold text-white">LMS</h1>
+            <h1 className="text-3xl font-bold text-gray-900">LMS</h1>
             <span className="text-xs font-medium bg-danger/15 text-danger border border-danger/25 px-2.5 py-0.5 rounded-full">
               Superuser
             </span>
@@ -80,13 +80,13 @@ export default function LMSPage() {
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => setShowConfig((v) => !v)}
-            className="flex items-center gap-2 text-sm text-gray-400 hover:text-white border border-white/10 hover:border-white/30 px-4 py-2.5 rounded-xl transition-all"
+            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 hover:border-gray-300 px-4 py-2.5 rounded-xl transition-all shadow-sm"
           >
             ⚙️ Seuils d'alerte
           </button>
           <button
             onClick={() => exportStudentsCSV(inactivityDays, scoreThreshold)}
-            className="flex items-center gap-2 text-sm text-gray-400 hover:text-white border border-white/10 hover:border-white/30 px-4 py-2.5 rounded-xl transition-all"
+            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 hover:border-gray-300 px-4 py-2.5 rounded-xl transition-all shadow-sm"
           >
             📊 Exporter CSV
           </button>
@@ -98,8 +98,8 @@ export default function LMSPage() {
 
       {/* Alert threshold configuration panel */}
       {showConfig && (
-        <div className="bg-gray-900 border border-white/10 rounded-xl p-5 mb-8">
-          <h3 className="text-sm font-semibold text-white mb-4">⚙️ Configuration des seuils d'alerte</h3>
+        <div className="bg-white border border-gray-200 rounded-xl p-5 mb-8">
+          <h3 className="text-sm font-semibold text-gray-900 mb-4">⚙️ Configuration des seuils d'alerte</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -154,7 +154,7 @@ export default function LMSPage() {
             }`}
           >
             <div className="text-2xl mb-2">{s.icon}</div>
-            <div className={`text-2xl font-extrabold mb-1 ${s.danger ? "text-danger" : "text-white"}`}>
+            <div className={`text-2xl font-extrabold mb-1 ${s.danger ? "text-danger" : "text-gray-900"}`}>
               {s.value}
             </div>
             <div className="text-xs text-gray-500">{s.label}</div>
@@ -170,12 +170,12 @@ export default function LMSPage() {
             {MOCK_COHORTS.map((cohort) => (
               <div
                 key={cohort.id}
-                className="bg-gray-900 border border-white/10 rounded-xl p-6 hover:border-white/20 transition-all"
+                className="bg-white border border-gray-200 rounded-xl p-6 hover:border-white/20 transition-all"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <div className="flex items-center gap-2.5 mb-1">
-                      <h3 className="font-bold text-white text-base">{cohort.name}</h3>
+                      <h3 className="font-bold text-gray-900 text-base">{cohort.name}</h3>
                       <StatusBadge status={cohort.status} />
                     </div>
                     <p className="text-xs text-gray-500">
@@ -197,7 +197,7 @@ export default function LMSPage() {
                 <div className="mb-4">
                   <div className="flex justify-between text-xs text-gray-500 mb-1.5">
                     <span>Complétion globale</span>
-                    <span className="font-semibold text-white">{cohort.completionRate}%</span>
+                    <span className="font-semibold text-gray-900">{cohort.completionRate}%</span>
                   </div>
                   <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
                     <div
@@ -238,7 +238,7 @@ export default function LMSPage() {
               <span className="text-xs text-gray-600">seuil : {inactivityDays}j / {scoreThreshold}pts</span>
             </div>
             {atRiskStudents.length === 0 ? (
-              <p className="text-sm text-gray-600 bg-gray-900 border border-white/10 rounded-xl p-4">
+              <p className="text-sm text-gray-600 bg-white border border-gray-200 rounded-xl p-4">
                 Aucun étudiant ne dépasse les seuils configurés.
               </p>
             ) : (
@@ -254,7 +254,7 @@ export default function LMSPage() {
                         {s.initials}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-white group-hover:text-orange-300 transition-colors truncate">
+                        <p className="text-sm font-semibold text-gray-900 group-hover:text-orange-600 transition-colors truncate">
                           {s.name}
                         </p>
                         <p className="text-xs text-gray-500">
@@ -290,8 +290,8 @@ export default function LMSPage() {
           </div>
 
           {/* Quick actions */}
-          <div className="bg-gray-900 border border-white/10 rounded-xl p-5">
-            <h3 className="text-sm font-semibold text-white mb-4">Actions rapides</h3>
+          <div className="bg-white border border-gray-200 rounded-xl p-5">
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">Actions rapides</h3>
             <div className="flex flex-col gap-1">
               {[
                 { icon: "📧", label: "Notifier les étudiants à risque" },
@@ -303,7 +303,7 @@ export default function LMSPage() {
                 <button
                   key={action.label}
                   onClick={action.action}
-                  className="flex items-center gap-3 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg px-3 py-2.5 transition-all text-left w-full"
+                  className="flex items-center gap-3 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg px-3 py-2.5 transition-all text-left w-full"
                 >
                   <span className="shrink-0">{action.icon}</span>
                   <span>{action.label}</span>
@@ -313,8 +313,8 @@ export default function LMSPage() {
           </div>
 
           {/* Platform stats */}
-          <div className="bg-gray-900 border border-white/10 rounded-xl p-5">
-            <h3 className="text-sm font-semibold text-white mb-4">Plateforme — Cumul</h3>
+          <div className="bg-white border border-gray-200 rounded-xl p-5">
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">Plateforme — Cumul</h3>
             <div className="flex flex-col gap-3">
               {[
                 { label: "Cohortes total",              value: MOCK_COHORTS.length },
@@ -324,7 +324,7 @@ export default function LMSPage() {
               ].map((item) => (
                 <div key={item.label} className="flex items-center justify-between text-sm">
                   <span className="text-gray-500">{item.label}</span>
-                  <span className="font-semibold text-white">{item.value}</span>
+                  <span className="font-semibold text-gray-900">{item.value}</span>
                 </div>
               ))}
             </div>

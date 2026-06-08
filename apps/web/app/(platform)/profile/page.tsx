@@ -113,7 +113,7 @@ export default function ProfilePage() {
 
       {/* Lecture seule */}
       {!editing && (
-        <div className="bg-gray-950 border border-white/10 rounded-2xl divide-y divide-white/5 mb-8">
+        <div className="bg-white border border-gray-200 rounded-2xl divide-y divide-white/5 mb-8">
           <Row label="Prénom" value={user.first_name || "—"} />
           <Row label="Nom" value={user.last_name || "—"} />
           <Row label="Email" value={user.email} />
@@ -126,7 +126,7 @@ export default function ProfilePage() {
 
       {/* Formulaire d'édition */}
       {editing && (
-        <form onSubmit={handleSave} className="bg-gray-950 border border-white/10 rounded-2xl p-7 flex flex-col gap-5 mb-8">
+        <form onSubmit={handleSave} className="bg-white border border-gray-200 rounded-2xl p-7 flex flex-col gap-5 mb-8">
           {error && <div className="bg-danger/10 border border-danger/30 text-danger text-sm rounded-lg px-4 py-3">{error}</div>}
           <div className="grid grid-cols-2 gap-3">
             <Input label="Prénom *" value={form.first_name} onChange={set("first_name")} required />
@@ -134,14 +134,14 @@ export default function ProfilePage() {
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-gray-300">Institution</label>
-            <select value={form.school} onChange={set("school")} className="w-full px-4 py-2.5 bg-gray-900 border border-white/10 text-white rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+            <select value={form.school} onChange={set("school")} className="w-full px-4 py-2.5 bg-white border border-gray-300 text-gray-900 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
               <option value="">— Sélectionner —</option>
               {SCHOOLS.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-gray-300">Biographie</label>
-            <textarea value={form.bio} onChange={set("bio")} rows={3} className="w-full px-4 py-2.5 bg-gray-900 border border-white/10 text-white rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none placeholder-gray-600" />
+            <textarea value={form.bio} onChange={set("bio")} rows={3} className="w-full px-4 py-2.5 bg-white border border-gray-300 text-gray-900 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none placeholder-gray-600" />
           </div>
           <Input label="URL photo de profil" value={form.avatar_url} onChange={set("avatar_url")} placeholder="https://..." />
           <Input label="LinkedIn" value={form.linkedin} onChange={set("linkedin")} />
@@ -156,7 +156,7 @@ export default function ProfilePage() {
       )}
 
       {/* RGPD */}
-      <div className="bg-gray-950 border border-white/10 rounded-2xl p-6">
+      <div className="bg-white border border-gray-200 rounded-2xl p-6">
         <h2 className="text-base font-bold text-white mb-4">Vos données & vie privée</h2>
         <div className="space-y-3">
           <RgpdRow
@@ -194,7 +194,7 @@ function RgpdRow({ title, desc, action, danger }: { title: string; desc: string;
   return (
     <div className="flex items-center justify-between gap-4 py-3 border-t border-white/5 first:border-t-0 first:pt-0">
       <div>
-        <p className={`text-sm font-medium ${danger ? "text-danger" : "text-white"}`}>{title}</p>
+        <p className={`text-sm font-medium ${danger ? "text-danger" : "text-gray-900"}`}>{title}</p>
         <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
       </div>
       {action}

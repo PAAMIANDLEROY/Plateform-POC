@@ -31,8 +31,8 @@ const MODE_TABS: { key: Mode; label: string; icon: string; desc: string }[] = [
 
 // ─── Shared UI helpers ────────────────────────────────────────────────────────
 
-const INP = "w-full bg-gray-800 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-primary/50 transition-colors";
-const SEL = "w-full bg-gray-800 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition-colors";
+const INP = "w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors";
+const SEL = "w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-700 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors";
 const TXA = `${INP} resize-none`;
 
 function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
@@ -105,7 +105,7 @@ function CourseEditor() {
     <div className="flex gap-6">
       {/* Block palette */}
       <aside className="w-48 shrink-0">
-        <div className="bg-gray-900 border border-white/10 rounded-xl p-4 sticky top-24">
+        <div className="bg-white border border-gray-200 rounded-xl p-4 sticky top-24">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Blocs</p>
           <div className="grid grid-cols-2 gap-2">
             {BLOCK_TYPES.map((bt) => (
@@ -125,7 +125,7 @@ function CourseEditor() {
       {/* Main editor */}
       <div className="flex-1 min-w-0">
         {/* Metadata */}
-        <div className="bg-gray-900 border border-white/10 rounded-xl p-5 mb-4 grid grid-cols-3 gap-4">
+        <div className="bg-white border border-gray-200 rounded-xl p-5 mb-4 grid grid-cols-3 gap-4">
           <Field label="Catégorie">
             <select value={category} onChange={(e) => setCategory(e.target.value)} className={SEL}>
               {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
@@ -148,13 +148,13 @@ function CourseEditor() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Titre du cours..."
-          className="w-full text-2xl font-extrabold text-white bg-transparent border-b-2 border-white/10 focus:border-primary focus:outline-none px-1 py-2 mb-5 transition-colors"
+          className="w-full text-2xl font-extrabold text-gray-900 bg-transparent border-b-2 border-gray-200 focus:border-primary focus:outline-none px-1 py-2 mb-5 transition-colors"
         />
 
         {/* Blocks */}
         <div className="flex flex-col gap-3">
           {blocks.map((block) => (
-            <div key={block.id} className="bg-gray-900 border border-white/10 rounded-xl p-4 group">
+            <div key={block.id} className="bg-white border border-gray-200 rounded-xl p-4 group">
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-xs font-semibold text-gray-600 bg-white/5 px-2 py-0.5 rounded uppercase tracking-wide">
                   {block.type}
@@ -240,7 +240,7 @@ function MOOCEditor() {
     <div className="flex gap-6">
       {/* Course picker */}
       <aside className="w-64 shrink-0">
-        <div className="bg-gray-900 border border-white/10 rounded-xl p-4 sticky top-24">
+        <div className="bg-white border border-gray-200 rounded-xl p-4 sticky top-24">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
             Cours disponibles
           </p>
@@ -271,10 +271,10 @@ function MOOCEditor() {
       <div className="flex-1 min-w-0 flex flex-col gap-5">
         <input value={title} onChange={(e) => setTitle(e.target.value)}
           placeholder="Titre du parcours..."
-          className="w-full text-2xl font-extrabold text-white bg-transparent border-b-2 border-white/10 focus:border-primary focus:outline-none px-1 py-2 transition-colors"
+          className="w-full text-2xl font-extrabold text-gray-900 bg-transparent border-b-2 border-gray-200 focus:border-primary focus:outline-none px-1 py-2 transition-colors"
         />
 
-        <div className="bg-gray-900 border border-white/10 rounded-xl p-5 grid grid-cols-2 gap-4">
+        <div className="bg-white border border-gray-200 rounded-xl p-5 grid grid-cols-2 gap-4">
           <Field label="École">
             <select value={school} onChange={(e) => setSchool(e.target.value)} className={SEL}>
               {SCHOOLS.map((s) => <option key={s}>{s}</option>)}
@@ -295,7 +295,7 @@ function MOOCEditor() {
         </div>
 
         {/* Sequenced courses */}
-        <div className="bg-gray-900 border border-white/10 rounded-xl p-5">
+        <div className="bg-white border border-gray-200 rounded-xl p-5">
           <p className="text-sm font-semibold text-white mb-4">
             Séquence du parcours
             {ordered.length > 0 && (
@@ -354,7 +354,7 @@ function VideoEditor() {
     <div className="flex gap-6">
       {/* Live preview */}
       <aside className="w-72 shrink-0">
-        <div className="bg-gray-900 border border-white/10 rounded-xl overflow-hidden sticky top-24">
+        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden sticky top-24">
           <div className="aspect-video bg-gray-800 flex items-center justify-center relative overflow-hidden">
             {thumbSrc ? (
               <img src={thumbSrc} alt="Miniature" className="w-full h-full object-cover" />
@@ -389,10 +389,10 @@ function VideoEditor() {
       <div className="flex-1 min-w-0 flex flex-col gap-5">
         <input value={title} onChange={(e) => setTitle(e.target.value)}
           placeholder="Titre de la vidéo..."
-          className="w-full text-2xl font-extrabold text-white bg-transparent border-b-2 border-white/10 focus:border-primary focus:outline-none px-1 py-2 transition-colors"
+          className="w-full text-2xl font-extrabold text-gray-900 bg-transparent border-b-2 border-gray-200 focus:border-primary focus:outline-none px-1 py-2 transition-colors"
         />
 
-        <div className="bg-gray-900 border border-white/10 rounded-xl p-5 flex flex-col gap-4">
+        <div className="bg-white border border-gray-200 rounded-xl p-5 flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-4">
             <Field label="Catégorie">
               <select value={category} onChange={(e) => setCategory(e.target.value)} className={SEL}>
@@ -451,7 +451,7 @@ function AppEditor() {
     <div className="flex gap-6">
       {/* Card preview */}
       <aside className="w-72 shrink-0">
-        <div className="bg-gray-900 border border-white/10 rounded-xl p-5 sticky top-24">
+        <div className="bg-white border border-gray-200 rounded-xl p-5 sticky top-24">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Aperçu de la carte</p>
           <div className="bg-gray-800 border border-white/10 rounded-xl p-4 mb-3">
             <h4 className="font-bold text-white text-sm mb-1 line-clamp-1">
@@ -488,10 +488,10 @@ function AppEditor() {
       <div className="flex-1 min-w-0 flex flex-col gap-5">
         <input value={title} onChange={(e) => setTitle(e.target.value)}
           placeholder="Nom de l'application..."
-          className="w-full text-2xl font-extrabold text-white bg-transparent border-b-2 border-white/10 focus:border-primary focus:outline-none px-1 py-2 transition-colors"
+          className="w-full text-2xl font-extrabold text-gray-900 bg-transparent border-b-2 border-gray-200 focus:border-primary focus:outline-none px-1 py-2 transition-colors"
         />
 
-        <div className="bg-gray-900 border border-white/10 rounded-xl p-5 flex flex-col gap-4">
+        <div className="bg-white border border-gray-200 rounded-xl p-5 flex flex-col gap-4">
           <Field label="URL de l'application *" hint="Streamlit, Gradio, Observable, Colab, etc.">
             <input value={url} onChange={(e) => setUrl(e.target.value)}
               placeholder="https://mon-app.streamlit.app"
@@ -547,7 +547,7 @@ function AIStudio() {
   return (
     <div className="max-w-3xl">
       <div className="mb-8">
-        <h2 className="text-xl font-bold text-white mb-1">Studio de création IA</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-1">Studio de création IA</h2>
         <p className="text-sm text-gray-400">
           Générez automatiquement des contenus pédagogiques à partir de vos fichiers existants,
           grâce à Claude (Anthropic).
@@ -555,7 +555,7 @@ function AIStudio() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         {pipelines.map((p) => (
-          <div key={p.href} className="bg-gray-900 border border-white/10 rounded-2xl p-6 flex flex-col gap-4 hover:border-white/20 transition-all">
+          <div key={p.href} className="bg-white border border-gray-200 rounded-2xl p-6 flex flex-col gap-4 hover:border-white/20 transition-all">
             <div className="text-4xl">{p.icon}</div>
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -591,7 +591,7 @@ export default function StudioPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-2xl font-extrabold text-white">Hi! Studio</h1>
+            <h1 className="text-2xl font-extrabold text-gray-900">Hi! Studio</h1>
             <span className="text-xs font-medium bg-primary/15 text-primary border border-primary/25 px-2.5 py-0.5 rounded-full">
               Enseignant
             </span>
@@ -601,14 +601,14 @@ export default function StudioPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="text-sm text-gray-400 border border-white/10 hover:border-white/30 hover:text-white px-4 py-2 rounded-lg transition-all">
+          <button className="text-sm text-gray-600 border border-gray-200 hover:border-gray-300 hover:text-gray-900 px-4 py-2 rounded-lg transition-all shadow-sm">
             Prévisualiser
           </button>
           <button onClick={save}
-            className={`text-sm border px-4 py-2 rounded-lg transition-all ${
+            className={`text-sm border px-4 py-2 rounded-lg transition-all shadow-sm ${
               saved
-                ? "border-green-500/40 text-green-400 bg-green-500/10"
-                : "border-white/10 hover:border-white/30 text-white"
+                ? "border-emerald-500/40 text-emerald-700 bg-emerald-50"
+                : "border-gray-200 hover:border-gray-300 text-gray-700"
             }`}
           >
             {saved ? "✓ Sauvegardé" : "Sauvegarder"}
@@ -620,13 +620,13 @@ export default function StudioPage() {
       </div>
 
       {/* Mode tabs */}
-      <div className="flex gap-1.5 mb-8 bg-gray-900 border border-white/10 rounded-2xl p-1.5 w-fit">
+      <div className="flex gap-1.5 mb-8 bg-white border border-gray-200 rounded-2xl p-1.5 w-fit">
         {MODE_TABS.map((tab) => (
           <button key={tab.key} onClick={() => setMode(tab.key)}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
               mode === tab.key
                 ? "bg-primary text-white shadow-lg shadow-primary/25"
-                : "text-gray-400 hover:text-white hover:bg-white/5"
+                : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
             }`}
           >
             <span>{tab.icon}</span>
