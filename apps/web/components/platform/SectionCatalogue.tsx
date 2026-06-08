@@ -305,7 +305,7 @@ export function SectionCatalogue({ section, activeModule }: SectionCatalogueProp
                   title={c.title}
                   description={c.description}
                   category={c.category}
-                  {/* Mapping label français (mock.ts) → clé interne (CourseCard) */}
+                  // Mapping label français (mock.ts) → clé interne (CourseCard)
                   level={c.level === "Débutant" ? "beginner" : c.level === "Avancé" ? "advanced" : "intermediate"}
                   school={c.school}
                   estimated_duration_minutes={c.duration}
