@@ -240,7 +240,7 @@ export default function DashboardPage() {
               title={c.title}
               description={c.description}
               category={c.category}
-              {/* Mapping label FR (mock) → clé EN (CourseCard) */}
+              // Mapping label FR (mock) → clé EN (CourseCard)
               level={c.level === "Débutant" ? "beginner" : c.level === "Avancé" ? "advanced" : "intermediate"}
               school={c.school}
               estimated_duration_minutes={c.duration}

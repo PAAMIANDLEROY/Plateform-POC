@@ -192,7 +192,8 @@ export function SectionCatalogue({ section, activeModule }: SectionCatalogueProp
           <Link
             key={tab.key}
             href={`${base}/${tab.key}`}
-            onClick={handleModuleChange} {/* Réinitialise les filtres à chaque changement d'onglet */}
+            // Réinitialise les filtres à chaque changement d'onglet
+            onClick={handleModuleChange}
             className={clsx(
               "flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-t-lg border-b-2 transition-all -mb-px",
               // Branche onglet actif : fond bleu léger + bordure bleue + texte bleu

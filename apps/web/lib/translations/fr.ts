@@ -181,8 +181,7 @@ export const fr = {
   // ── Page de connexion (flux OTP) ──────────────────────────────────────────────
   login: {
     tagline:       "Plateforme pédagogique Hi! PARIS",
-    quote:
-      ""La plateforme qui réunit la recherche en IA et la formation de demain."",
+    quote: '"La plateforme qui réunit la recherche en IA et la formation de demain."',
     title:         "Connexion",
     subtitle:
       "Entrez votre email institutionnel pour recevoir un code à 6 chiffres.",

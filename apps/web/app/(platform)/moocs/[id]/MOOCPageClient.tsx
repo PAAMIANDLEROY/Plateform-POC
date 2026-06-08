@@ -140,7 +140,7 @@ export function MOOCPageClient({ mooc }: { mooc: MockMOOC }) {
                     <CourseCard
                       key={c.id} id={c.id} title={c.title} description={c.description}
                       category={c.category}
-                      {/* Conversion du niveau français → anglais attendu par CourseCard */}
+                      // Conversion du niveau français → anglais attendu par CourseCard
                       level={c.level === "Avance" ? "advanced" : c.level === "Intermediaire" ? "intermediate" : "beginner"}
                       school={c.school} estimated_duration_minutes={c.duration}
                     />
