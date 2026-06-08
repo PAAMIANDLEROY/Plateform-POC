@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, FormEvent } from "react";
 import { authApi, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { useLanguage } from "@/lib/i18n";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
@@ -22,6 +23,7 @@ const SCHOOLS = [
 export default function CompleteProfilePage() {
   const router = useRouter();
   const { setUser } = useAuth();
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -41,7 +43,7 @@ export default function CompleteProfilePage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!form.first_name.trim() || !form.last_name.trim()) {
-      setError("Le prénom et le nom sont requis.");
+      setError(t.completeProfile.requiredError);
       return;
     }
     setError("");
@@ -51,7 +53,7 @@ export default function CompleteProfilePage() {
       setUser(updated);
       router.push("/dashboard");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Une erreur est survenue");
+      setError(err instanceof ApiError ? err.message : t.common.error);
     } finally {
       setLoading(false);
     }
@@ -63,8 +65,8 @@ export default function CompleteProfilePage() {
 
         <div className="text-center mb-8">
           <div className="text-4xl mb-3">👋</div>
-          <h1 className="text-2xl font-extrabold text-gray-900">Bienvenue sur Hi! Platform</h1>
-          <p className="text-gray-500 text-sm mt-2">Complétez votre profil pour commencer.</p>
+          <h1 className="text-2xl font-extrabold text-gray-900">{t.completeProfile.title}</h1>
+          <p className="text-gray-500 text-sm mt-2">{t.completeProfile.subtitle}</p>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-card">
@@ -79,31 +81,33 @@ export default function CompleteProfilePage() {
 
             <div className="grid grid-cols-2 gap-3">
               <Input
-                label="Prénom *"
+                label={t.completeProfile.firstName}
                 value={form.first_name}
                 onChange={set("first_name")}
-                placeholder="Marie"
+                placeholder={t.completeProfile.firstNamePlaceholder}
                 required
                 autoComplete="given-name"
               />
               <Input
-                label="Nom *"
+                label={t.completeProfile.lastName}
                 value={form.last_name}
                 onChange={set("last_name")}
-                placeholder="Curie"
+                placeholder={t.completeProfile.lastNamePlaceholder}
                 required
                 autoComplete="family-name"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-300">École / Institution</label>
+              <label className="text-sm font-medium text-gray-700">
+                {t.completeProfile.school}
+              </label>
               <select
                 value={form.school}
                 onChange={set("school")}
-                className="w-full px-4 py-2.5 bg-gray-900 border border-white/10 text-white rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                className="w-full px-4 py-2.5 bg-white border border-gray-300 text-gray-900 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
               >
-                <option value="">— Sélectionner —</option>
+                <option value="">{t.completeProfile.selectSchool}</option>
                 {SCHOOLS.map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
@@ -111,34 +115,40 @@ export default function CompleteProfilePage() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-300">Biographie <span className="text-gray-600">(optionnel)</span></label>
+              <label className="text-sm font-medium text-gray-700">
+                {t.completeProfile.bio}{" "}
+                <span className="text-gray-400 font-normal">{t.completeProfile.optional}</span>
+              </label>
               <textarea
                 value={form.bio}
                 onChange={set("bio")}
-                placeholder="Quelques mots sur vous, vos centres d'intérêt..."
+                placeholder={t.completeProfile.bioPlaceholder}
                 rows={3}
-                className="w-full px-4 py-2.5 bg-gray-900 border border-white/10 text-white rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none placeholder-gray-600"
+                className="w-full px-4 py-2.5 bg-white border border-gray-300 text-gray-900 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none placeholder-gray-400"
               />
             </div>
 
-            <div className="border-t border-white/5 pt-4 flex flex-col gap-4">
-              <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Réseaux <span className="normal-case">(optionnel)</span></p>
+            <div className="border-t border-gray-100 pt-4 flex flex-col gap-4">
+              <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
+                {t.completeProfile.networks}{" "}
+                <span className="normal-case font-normal">{t.completeProfile.optional}</span>
+              </p>
               <Input
                 label="LinkedIn"
                 value={form.linkedin}
                 onChange={set("linkedin")}
-                placeholder="linkedin.com/in/marie-curie"
+                placeholder={t.completeProfile.linkedinPlaceholder}
               />
               <Input
                 label="GitHub"
                 value={form.github}
                 onChange={set("github")}
-                placeholder="github.com/marie-curie"
+                placeholder={t.completeProfile.githubPlaceholder}
               />
             </div>
 
             <Button type="submit" loading={loading} className="mt-2">
-              Accéder à la plateforme →
+              {t.completeProfile.submit}
             </Button>
           </form>
         </div>

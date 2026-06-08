@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
+import { useLanguage } from "@/lib/i18n";
 import { authApi } from "@/lib/api";
 
 const COOKIE_KEY = "hi_consent_v1";
@@ -32,6 +33,7 @@ function writeConsent(c: Consent) {
 
 export function CookieBanner() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [show, setShow] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [analytics, setAnalytics] = useState(false);
@@ -44,12 +46,12 @@ export function CookieBanner() {
     }
   }, []);
 
-  async function save(a: boolean, t: boolean) {
-    const consent: Consent = { necessary: true, analytics: a, tracking: t, decided: true };
+  async function save(a: boolean, tk: boolean) {
+    const consent: Consent = { necessary: true, analytics: a, tracking: tk, decided: true };
     writeConsent(consent);
     setShow(false);
     if (user) {
-      try { await authApi.updateConsent(a, t); } catch {}
+      try { await authApi.updateConsent(a, tk); } catch {}
     }
   }
 
@@ -61,10 +63,10 @@ export function CookieBanner() {
         {!showDetails ? (
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div className="flex-1">
-              <p className="text-sm font-semibold text-white mb-1">🍪 Cookies & confidentialité</p>
+              <p className="text-sm font-semibold text-white mb-1">{t.cookie.title}</p>
               <p className="text-xs text-gray-400">
-                Nous utilisons des cookies nécessaires au fonctionnement de la plateforme. Avec votre accord, nous collectons aussi des données d'usage anonymisées pour améliorer votre expérience.{" "}
-                <Link href="/privacy" className="text-primary underline">Politique de confidentialité</Link>
+                {t.cookie.description}{" "}
+                <Link href="/privacy" className="text-primary underline">{t.cookie.privacyLink}</Link>
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0 flex-wrap">
@@ -72,41 +74,41 @@ export function CookieBanner() {
                 onClick={() => setShowDetails(true)}
                 className="text-xs text-gray-400 hover:text-white border border-white/10 px-4 py-2 rounded-lg transition-colors"
               >
-                Personnaliser
+                {t.cookie.customize}
               </button>
               <button
                 onClick={() => save(false, false)}
                 className="text-xs text-gray-300 border border-white/20 px-4 py-2 rounded-lg hover:bg-white/5 transition-colors"
               >
-                Refuser tout
+                {t.cookie.refuseAll}
               </button>
               <button
                 onClick={() => save(true, true)}
                 className="text-xs bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors font-semibold"
               >
-                Accepter tout
+                {t.cookie.acceptAll}
               </button>
             </div>
           </div>
         ) : (
           <div>
-            <p className="text-sm font-semibold text-white mb-4">Gérer mes préférences</p>
+            <p className="text-sm font-semibold text-white mb-4">{t.cookie.preferences}</p>
             <div className="space-y-3 mb-5">
               <ConsentRow
-                title="Cookies nécessaires"
-                desc="Authentification, sécurité, session. Obligatoires au fonctionnement."
+                title={t.cookie.necessary.title}
+                desc={t.cookie.necessary.desc}
                 checked={true}
                 disabled
               />
               <ConsentRow
-                title="Cookies analytiques"
-                desc="Statistiques d'usage anonymisées (pages vues, temps passé). 6 mois."
+                title={t.cookie.analytics.title}
+                desc={t.cookie.analytics.desc}
                 checked={analytics}
                 onChange={setAnalytics}
               />
               <ConsentRow
-                title="Tracking comportemental"
-                desc="Suivi détaillé de votre parcours d'apprentissage. 6 mois max."
+                title={t.cookie.tracking.title}
+                desc={t.cookie.tracking.desc}
                 checked={tracking}
                 onChange={setTracking}
               />
@@ -116,7 +118,7 @@ export function CookieBanner() {
                 onClick={() => save(analytics, tracking)}
                 className="text-sm bg-primary text-white px-5 py-2 rounded-lg hover:bg-primary-dark transition-colors font-semibold"
               >
-                Enregistrer mes choix
+                {t.cookie.saveChoices}
               </button>
             </div>
           </div>

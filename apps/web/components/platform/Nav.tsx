@@ -4,46 +4,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { clsx } from "clsx";
 import { useAuth } from "@/lib/auth";
+import { useLanguage } from "@/lib/i18n";
 import { Avatar } from "@/components/ui/Avatar";
 import { useState, useRef, useEffect } from "react";
-
-// ─── Structure des menus ──────────────────────────────────────────────────────
-
-const LEARNING_SECTIONS = [
-  {
-    label: "Learning AI",
-    slug: "learning-ai",
-    description: "Fondamentaux et recherche en IA",
-    items: [
-      { href: "/learning-ai/tube",    icon: "▶",  label: "Hi! Tube",   desc: "Vidéothèque pédagogique" },
-      { href: "/learning-ai/courses", icon: "📖", label: "Hi! Course", desc: "Cours interactifs" },
-      { href: "/learning-ai/moocs",   icon: "🎓", label: "Hi! MOOC",   desc: "Parcours structurés" },
-      { href: "/learning-ai/apps",    icon: "⚡", label: "Hi! App",    desc: "Applications interactives" },
-    ],
-  },
-  {
-    label: "Learning With AI",
-    slug: "learning-with-ai",
-    description: "Apprendre en utilisant l'IA comme outil",
-    items: [
-      { href: "/learning-with-ai/tube",    icon: "▶",  label: "Hi! Tube",   desc: "Vidéothèque pédagogique" },
-      { href: "/learning-with-ai/courses", icon: "📖", label: "Hi! Course", desc: "Cours interactifs" },
-      { href: "/learning-with-ai/moocs",   icon: "🎓", label: "Hi! MOOC",   desc: "Parcours structurés" },
-      { href: "/learning-with-ai/apps",    icon: "⚡", label: "Hi! App",    desc: "Applications interactives" },
-    ],
-  },
-  {
-    label: "Learning at the Edge",
-    slug: "learning-edge-ai",
-    description: "Frontières et enjeux de l'IA",
-    items: [
-      { href: "/learning-edge-ai/tube",    icon: "▶",  label: "Hi! Tube",   desc: "Vidéothèque pédagogique" },
-      { href: "/learning-edge-ai/courses", icon: "📖", label: "Hi! Course", desc: "Cours interactifs" },
-      { href: "/learning-edge-ai/moocs",   icon: "🎓", label: "Hi! MOOC",   desc: "Parcours structurés" },
-      { href: "/learning-edge-ai/apps",    icon: "⚡", label: "Hi! App",    desc: "Applications interactives" },
-    ],
-  },
-];
 
 const roleChip: Record<string, string> = {
   admin:     "bg-danger/10 text-danger border border-danger/20",
@@ -53,13 +16,13 @@ const roleChip: Record<string, string> = {
   public:    "bg-gray-100 text-gray-600 border border-gray-200",
 };
 
-// ─── Dropdown with fixed positioning (fixes overflow clipping) ────────────────
+// ─── Dropdown with fixed positioning ─────────────────────────────────────────
 
 function NavDropdown({
   label,
-  items,
   description,
   slug,
+  items,
   isOpen,
   onToggle,
 }: {
@@ -143,15 +106,85 @@ function NavDropdown({
   );
 }
 
+// ─── Language switcher ────────────────────────────────────────────────────────
+
+function LangSwitcher() {
+  const { locale, setLocale } = useLanguage();
+  return (
+    <div className="flex items-center gap-0.5 shrink-0 border border-gray-200 rounded-lg overflow-hidden">
+      <button
+        onClick={() => setLocale("fr")}
+        className={clsx(
+          "text-xs px-2.5 py-1.5 font-semibold transition-colors",
+          locale === "fr"
+            ? "bg-primary text-white"
+            : "text-gray-400 hover:text-gray-700 hover:bg-gray-50"
+        )}
+      >
+        FR
+      </button>
+      <button
+        onClick={() => setLocale("en")}
+        className={clsx(
+          "text-xs px-2.5 py-1.5 font-semibold transition-colors",
+          locale === "en"
+            ? "bg-primary text-white"
+            : "text-gray-400 hover:text-gray-700 hover:bg-gray-50"
+        )}
+      >
+        EN
+      </button>
+    </div>
+  );
+}
+
 // ─── Nav principale ───────────────────────────────────────────────────────────
 
 export function Nav() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Build translated learning sections
+  const LEARNING_SECTIONS = [
+    {
+      label: t.nav.sections.learningAI.label,
+      slug: "learning-ai",
+      description: t.nav.sections.learningAI.description,
+      items: [
+        { href: "/learning-ai/tube",    icon: "▶",  label: "Hi! Tube",   desc: t.nav.items.tube },
+        { href: "/learning-ai/courses", icon: "📖", label: "Hi! Course", desc: t.nav.items.course },
+        { href: "/learning-ai/moocs",   icon: "🎓", label: "Hi! MOOC",   desc: t.nav.items.mooc },
+        { href: "/learning-ai/apps",    icon: "⚡", label: "Hi! App",    desc: t.nav.items.app },
+      ],
+    },
+    {
+      label: t.nav.sections.learningWith.label,
+      slug: "learning-with-ai",
+      description: t.nav.sections.learningWith.description,
+      items: [
+        { href: "/learning-with-ai/tube",    icon: "▶",  label: "Hi! Tube",   desc: t.nav.items.tube },
+        { href: "/learning-with-ai/courses", icon: "📖", label: "Hi! Course", desc: t.nav.items.course },
+        { href: "/learning-with-ai/moocs",   icon: "🎓", label: "Hi! MOOC",   desc: t.nav.items.mooc },
+        { href: "/learning-with-ai/apps",    icon: "⚡", label: "Hi! App",    desc: t.nav.items.app },
+      ],
+    },
+    {
+      label: t.nav.sections.learningEdge.label,
+      slug: "learning-edge-ai",
+      description: t.nav.sections.learningEdge.description,
+      items: [
+        { href: "/learning-edge-ai/tube",    icon: "▶",  label: "Hi! Tube",   desc: t.nav.items.tube },
+        { href: "/learning-edge-ai/courses", icon: "📖", label: "Hi! Course", desc: t.nav.items.course },
+        { href: "/learning-edge-ai/moocs",   icon: "🎓", label: "Hi! MOOC",   desc: t.nav.items.mooc },
+        { href: "/learning-edge-ai/apps",    icon: "⚡", label: "Hi! App",    desc: t.nav.items.app },
+      ],
+    },
+  ];
 
   // Close everything on route change
   useEffect(() => {
@@ -183,7 +216,7 @@ export function Nav() {
 
   return (
     <>
-      {/* Backdrop — closes dropdown on outside click */}
+      {/* Backdrop */}
       {openDropdown && (
         <div
           className="fixed inset-0 z-[150]"
@@ -195,7 +228,7 @@ export function Nav() {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-[160]">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center gap-2">
 
-          {/* Logo — style Hi! PARIS */}
+          {/* Logo */}
           <Link href="/dashboard" className="shrink-0 mr-4 flex items-center gap-0 select-none">
             <span className="text-xl font-extrabold text-primary tracking-tight">Hi!</span>
             <span className="text-xl font-extrabold text-gray-900 tracking-tight"> Platform</span>
@@ -204,7 +237,6 @@ export function Nav() {
           {/* Navigation */}
           <nav className="flex items-center gap-0.5 flex-1 min-w-0 overflow-x-auto">
 
-            {/* Insights */}
             <Link
               href="/insights"
               className={clsx(
@@ -214,10 +246,9 @@ export function Nav() {
                   : "text-gray-600 hover:text-primary hover:bg-primary/5"
               )}
             >
-              Insights
+              {t.nav.insights}
             </Link>
 
-            {/* Three learning dropdowns */}
             {LEARNING_SECTIONS.map((section) => (
               <NavDropdown
                 key={section.slug}
@@ -227,7 +258,6 @@ export function Nav() {
               />
             ))}
 
-            {/* Mon parcours */}
             <Link
               href="/my-learning"
               className={clsx(
@@ -237,10 +267,9 @@ export function Nav() {
                   : "text-gray-600 hover:text-primary hover:bg-primary/5"
               )}
             >
-              Mon parcours
+              {t.nav.myLearning}
             </Link>
 
-            {/* Teacher tools */}
             {isTeacher && (
               <>
                 <div className="w-px h-5 bg-gray-200 mx-1 shrink-0" />
@@ -253,7 +282,7 @@ export function Nav() {
                       : "text-gray-600 hover:text-danger hover:bg-danger/5"
                   )}
                 >
-                  Studio
+                  {t.nav.studio}
                 </Link>
                 <Link
                   href="/lms"
@@ -264,12 +293,11 @@ export function Nav() {
                       : "text-gray-600 hover:text-danger hover:bg-danger/5"
                   )}
                 >
-                  LMS
+                  {t.nav.lms}
                 </Link>
               </>
             )}
 
-            {/* Admin */}
             {isAdmin && (
               <Link
                 href="/admin"
@@ -280,59 +308,63 @@ export function Nav() {
                     : "text-gray-600 hover:text-purple-700 hover:bg-purple-50"
                 )}
               >
-                Admin
+                {t.nav.admin}
               </Link>
             )}
           </nav>
 
-          {/* User menu */}
-          {user ? (
-            <div ref={userMenuRef} className="relative shrink-0 ml-2">
-              <button
-                onClick={() => setUserMenuOpen((o) => !o)}
-                className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-gray-50 transition-colors"
-              >
-                <div className="hidden sm:block text-right">
-                  <p className="text-sm font-semibold text-gray-900 leading-none">
-                    {user.first_name} {user.last_name}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-0.5">{user.email}</p>
-                </div>
-                <Avatar name={`${user.first_name} ${user.last_name}`} size="sm" />
-                <span className={clsx("text-xs font-semibold px-2 py-0.5 rounded-full hidden sm:inline", roleChip[user.role] ?? roleChip.student)}>
-                  {user.role}
-                </span>
-              </button>
+          {/* Right side: lang switcher + user */}
+          <div className="flex items-center gap-3 shrink-0 ml-2">
+            <LangSwitcher />
 
-              {userMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden z-[200]">
-                  <div className="px-4 py-3 border-b border-gray-100">
-                    <p className="text-sm font-semibold text-gray-900">{user.first_name} {user.last_name}</p>
-                    <p className="text-xs text-gray-400 mt-0.5 truncate">{user.email}</p>
+            {user ? (
+              <div ref={userMenuRef} className="relative">
+                <button
+                  onClick={() => setUserMenuOpen((o) => !o)}
+                  className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-gray-50 transition-colors"
+                >
+                  <div className="hidden sm:block text-right">
+                    <p className="text-sm font-semibold text-gray-900 leading-none">
+                      {user.first_name} {user.last_name}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">{user.email}</p>
                   </div>
-                  <Link href="/profile" onClick={() => setUserMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
-                    Mon profil
-                  </Link>
-                  <Link href="/my-learning" onClick={() => setUserMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
-                    Mon parcours
-                  </Link>
-                  {isAdmin && (
-                    <Link href="/admin" onClick={() => setUserMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
-                      Administration
+                  <Avatar name={`${user.first_name} ${user.last_name}`} size="sm" />
+                  <span className={clsx("text-xs font-semibold px-2 py-0.5 rounded-full hidden sm:inline", roleChip[user.role] ?? roleChip.student)}>
+                    {t.roles[user.role as keyof typeof t.roles] ?? user.role}
+                  </span>
+                </button>
+
+                {userMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden z-[200]">
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <p className="text-sm font-semibold text-gray-900">{user.first_name} {user.last_name}</p>
+                      <p className="text-xs text-gray-400 mt-0.5 truncate">{user.email}</p>
+                    </div>
+                    <Link href="/profile" onClick={() => setUserMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
+                      {t.nav.profile}
                     </Link>
-                  )}
-                  <div className="border-t border-gray-100" />
-                  <button onClick={handleLogout} className="w-full text-left px-4 py-2.5 text-sm text-danger hover:bg-danger/5 transition-colors">
-                    Se déconnecter
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <Link href="/login" className="shrink-0 text-sm font-semibold bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors shadow-sm">
-              Connexion
-            </Link>
-          )}
+                    <Link href="/my-learning" onClick={() => setUserMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
+                      {t.nav.myLearning}
+                    </Link>
+                    {isAdmin && (
+                      <Link href="/admin" onClick={() => setUserMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
+                        {t.nav.administration}
+                      </Link>
+                    )}
+                    <div className="border-t border-gray-100" />
+                    <button onClick={handleLogout} className="w-full text-left px-4 py-2.5 text-sm text-danger hover:bg-danger/5 transition-colors">
+                      {t.nav.logout}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link href="/login" className="text-sm font-semibold bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors shadow-sm">
+                {t.nav.login}
+              </Link>
+            )}
+          </div>
         </div>
       </header>
     </>

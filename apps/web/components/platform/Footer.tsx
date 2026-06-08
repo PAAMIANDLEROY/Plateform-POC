@@ -1,6 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { useLanguage } from "@/lib/i18n";
 
 export function Footer() {
+  const { t } = useLanguage();
+
   return (
     <footer className="bg-navy text-white mt-auto">
       <div className="max-w-7xl mx-auto px-6 pt-12 pb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -12,8 +17,7 @@ export function Footer() {
             <span className="text-2xl font-extrabold text-white tracking-tight"> Platform</span>
           </div>
           <p className="text-sm text-gray-400 leading-relaxed max-w-xs">
-            Plateforme pédagogique mutualisée Hi! PARIS — Institut Polytechnique de Paris,
-            HEC Paris, Télécom Paris, ENSAE.
+            {t.footer.description}
           </p>
           <div className="flex items-center gap-3 mt-5">
             <a
@@ -28,21 +32,23 @@ export function Footer() {
               href="mailto:contact@hi-paris.fr"
               className="text-xs font-medium text-gray-400 hover:text-white transition-colors border border-white/10 px-3 py-1.5 rounded-lg hover:border-white/30"
             >
-              Contact
+              {t.footer.contact}
             </a>
           </div>
         </div>
 
-        {/* Plateforme */}
+        {/* Platform links */}
         <div>
-          <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Plateforme</h4>
+          <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">
+            {t.footer.sections.platform}
+          </h4>
           <ul className="space-y-2.5">
             {[
-              { label: "Insights",    href: "/insights" },
-              { label: "Vidéos",      href: "/tube" },
-              { label: "Cours",       href: "/courses" },
-              { label: "MOOCs",       href: "/moocs" },
-              { label: "Applications",href: "/apps" },
+              { label: t.footer.links.insights,    href: "/insights" },
+              { label: t.footer.links.videos,      href: "/tube" },
+              { label: t.footer.links.courses,     href: "/courses" },
+              { label: t.footer.links.moocs,       href: "/moocs" },
+              { label: t.footer.links.apps,        href: "/apps" },
             ].map((l) => (
               <li key={l.href}>
                 <Link href={l.href} className="text-sm text-gray-400 hover:text-white transition-colors">
@@ -53,15 +59,17 @@ export function Footer() {
           </ul>
         </div>
 
-        {/* Légal */}
+        {/* Info links */}
         <div>
-          <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Informations</h4>
+          <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">
+            {t.footer.sections.info}
+          </h4>
           <ul className="space-y-2.5">
             {[
-              { label: "Confidentialité", href: "/privacy" },
-              { label: "CGU",             href: "/cgu" },
-              { label: "Mon compte",      href: "/profile" },
-              { label: "Mon parcours",    href: "/my-learning" },
+              { label: t.footer.links.privacy,    href: "/privacy" },
+              { label: t.footer.links.cgu,        href: "/cgu" },
+              { label: t.footer.links.account,    href: "/profile" },
+              { label: t.footer.links.myLearning, href: "/my-learning" },
             ].map((l) => (
               <li key={l.href}>
                 <Link href={l.href} className="text-sm text-gray-400 hover:text-white transition-colors">
@@ -76,7 +84,7 @@ export function Footer() {
       {/* Bottom bar */}
       <div className="border-t border-white/8">
         <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-600">
-          <p>© {new Date().getFullYear()} Hi! PARIS — HEC Paris & Institut Polytechnique de Paris. Tous droits réservés.</p>
+          <p>© {new Date().getFullYear()} Hi! PARIS — HEC Paris & Institut Polytechnique de Paris. {t.footer.copyright}</p>
           <div className="flex items-center gap-4">
             <span className="text-gray-700">IP Paris</span>
             <span className="text-gray-700">·</span>

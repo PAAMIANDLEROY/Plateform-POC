@@ -2,47 +2,49 @@
 
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
+import { useLanguage } from "@/lib/i18n";
 import { VideoCard } from "@/components/platform/VideoCard";
 import { CourseCard } from "@/components/platform/CourseCard";
 import { MOCK_VIDEOS, MOCK_COURSES, MOCK_INSIGHTS } from "@/lib/mock";
 
-const modules = [
-  { name: "Insights",     desc: "Recherche & actualité",    icon: "🔬", href: "/insights", iconCls: "bg-danger/10 border-danger/20",   textCls: "text-danger"   },
-  { name: "Hi! Tube",     desc: "Vidéothèque pédagogique",  icon: "▶",  href: "/tube",     iconCls: "bg-primary/10 border-primary/20", textCls: "text-primary"  },
-  { name: "Hi! Course",   desc: "Cours interactifs",        icon: "📖", href: "/courses",  iconCls: "bg-primary/10 border-primary/20", textCls: "text-primary"  },
-  { name: "Hi! MOOC",     desc: "Parcours structurés",      icon: "🎓", href: "/moocs",    iconCls: "bg-primary/10 border-primary/20", textCls: "text-primary"  },
-  { name: "Hi! App",      desc: "Applications interactives",icon: "⚡", href: "/apps",     iconCls: "bg-amber-50 border-amber-200",    textCls: "text-amber-700"},
-];
-
-const highlightBanners = [
-  {
-    title: "Recherche & Insights Hi! PARIS",
-    desc: "Articles interactifs publiés par les chercheurs de Hi! PARIS, Polytechnique, Télécom Paris et HEC.",
-    href: "/insights",
-    cta: "Lire les Insights",
-    bg: "bg-gradient-to-br from-danger to-[#A01E2A]",
-    icon: "🔬",
-  },
-  {
-    title: "Apprenez les fondamentaux de l'IA",
-    desc: "Des cours conçus par les chercheurs de Hi! PARIS, Polytechnique et Télécom Paris.",
-    href: "/courses",
-    cta: "Explorer les cours",
-    bg: "bg-gradient-to-br from-primary to-primary-dark",
-    icon: "📖",
-  },
-  {
-    title: "Expérimentez en temps réel",
-    desc: "Accédez à des applications interactives pour tester vos modèles directement dans le navigateur.",
-    href: "/apps",
-    cta: "Lancer une app",
-    bg: "bg-gradient-to-br from-gray-700 to-gray-900",
-    icon: "⚡",
-  },
-];
-
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
+
+  const modules = [
+    { name: t.dashboard.modules.insights.name, desc: t.dashboard.modules.insights.desc, icon: "🔬", href: "/insights", iconCls: "bg-danger/10 border-danger/20",   textCls: "text-danger"    },
+    { name: t.dashboard.modules.tube.name,     desc: t.dashboard.modules.tube.desc,     icon: "▶",  href: "/tube",     iconCls: "bg-primary/10 border-primary/20", textCls: "text-primary"   },
+    { name: t.dashboard.modules.course.name,   desc: t.dashboard.modules.course.desc,   icon: "📖", href: "/courses",  iconCls: "bg-primary/10 border-primary/20", textCls: "text-primary"   },
+    { name: t.dashboard.modules.mooc.name,     desc: t.dashboard.modules.mooc.desc,     icon: "🎓", href: "/moocs",    iconCls: "bg-primary/10 border-primary/20", textCls: "text-primary"   },
+    { name: t.dashboard.modules.app.name,      desc: t.dashboard.modules.app.desc,      icon: "⚡", href: "/apps",     iconCls: "bg-amber-50 border-amber-200",    textCls: "text-amber-700" },
+  ];
+
+  const highlightBanners = [
+    {
+      title: t.dashboard.banners.insights.title,
+      desc:  t.dashboard.banners.insights.desc,
+      href:  "/insights",
+      cta:   t.dashboard.banners.insights.cta,
+      bg:    "bg-gradient-to-br from-danger to-[#A01E2A]",
+      icon:  "🔬",
+    },
+    {
+      title: t.dashboard.banners.courses.title,
+      desc:  t.dashboard.banners.courses.desc,
+      href:  "/courses",
+      cta:   t.dashboard.banners.courses.cta,
+      bg:    "bg-gradient-to-br from-primary to-primary-dark",
+      icon:  "📖",
+    },
+    {
+      title: t.dashboard.banners.apps.title,
+      desc:  t.dashboard.banners.apps.desc,
+      href:  "/apps",
+      cta:   t.dashboard.banners.apps.cta,
+      bg:    "bg-gradient-to-br from-gray-700 to-gray-900",
+      icon:  "⚡",
+    },
+  ];
 
   return (
     <>
@@ -53,24 +55,21 @@ export default function DashboardPage() {
           alt="Intelligence Artificielle"
           className="absolute inset-0 w-full h-full object-cover"
         />
-        {/* Blue-tinted overlay aligned with Hi! PARIS brand */}
         <div className="absolute inset-0 bg-gradient-to-r from-navy via-navy/85 to-primary/60" />
         <div className="absolute inset-0 bg-gradient-to-t from-navy/60 via-transparent to-transparent" />
 
         <div className="relative max-w-7xl mx-auto px-6 py-24 flex flex-col justify-center">
-          {/* Hi! PARIS badge */}
           <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur border border-white/25 text-white text-xs font-semibold px-4 py-1.5 rounded-full mb-6 w-fit tracking-wide uppercase">
-            Hi! PARIS · Hi! PACE
+            {t.dashboard.hero.badge}
           </div>
 
           <h1 className="text-5xl md:text-6xl font-extrabold text-white leading-tight mb-4 max-w-2xl">
-            La recherche IA<br />
-            <span className="text-[#6C9EF5]">à votre portée</span>
+            {t.dashboard.hero.title}<br />
+            <span className="text-[#6C9EF5]">{t.dashboard.hero.titleAccent}</span>
           </h1>
 
           <p className="text-lg text-white/75 max-w-xl mb-8 leading-relaxed">
-            Articles de recherche, cours, vidéos et MOOCs produits par les
-            chercheurs de Hi! PARIS — tout en un seul endroit.
+            {t.dashboard.hero.description}
           </p>
 
           <div className="flex items-center gap-4 flex-wrap">
@@ -78,13 +77,13 @@ export default function DashboardPage() {
               href="/insights"
               className="bg-danger text-white px-7 py-3 rounded-xl font-semibold text-base hover:bg-danger-dark transition-colors shadow-lg"
             >
-              Découvrir les Insights
+              {t.dashboard.hero.discoverInsights}
             </Link>
             <Link
               href="/courses"
               className="bg-white/15 backdrop-blur border border-white/30 text-white px-7 py-3 rounded-xl font-semibold text-base hover:bg-white/25 transition-colors"
             >
-              Explorer les cours
+              {t.dashboard.hero.exploreCourses}
             </Link>
           </div>
         </div>
@@ -95,7 +94,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {highlightBanners.map((b) => (
             <Link
-              key={b.title}
+              key={b.href}
               href={b.href}
               className={`group relative overflow-hidden rounded-2xl ${b.bg} p-6 hover:scale-[1.02] transition-all shadow-lg`}
             >
@@ -113,12 +112,12 @@ export default function DashboardPage() {
       {/* ── Accès rapide ─────────────────────────────────────────────── */}
       <section className="max-w-7xl mx-auto px-6 mb-16">
         <h2 className="text-xl font-bold text-gray-900 mb-5">
-          Bonjour{user ? `, ${user.first_name}` : ""} 👋
+          {t.dashboard.greeting}{user ? `, ${user.first_name}` : ""} 👋
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           {modules.map((m) => (
             <Link
-              key={m.name}
+              key={m.href}
               href={m.href}
               className="group bg-white border border-gray-200 rounded-xl p-5 hover:border-primary/30 hover:shadow-card-hover transition-all shadow-card"
             >
@@ -136,11 +135,11 @@ export default function DashboardPage() {
       <section className="max-w-7xl mx-auto px-6 mb-16">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Derniers Insights</h2>
-            <p className="text-sm text-gray-400 mt-0.5">Articles publiés par Hi! PARIS</p>
+            <h2 className="text-xl font-bold text-gray-900">{t.dashboard.sections.latestInsights}</h2>
+            <p className="text-sm text-gray-400 mt-0.5">{t.dashboard.sections.insightsSubtitle}</p>
           </div>
           <Link href="/insights" className="text-sm text-danger hover:text-danger-dark transition-colors font-semibold">
-            Voir tout →
+            {t.common.seeAll} →
           </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -167,13 +166,13 @@ export default function DashboardPage() {
                 </h3>
                 <p className="text-xs text-gray-500 line-clamp-2 mb-3">{article.abstract}</p>
                 <div className="flex flex-wrap gap-1 mb-3">
-                  {article.tags.slice(0, 2).map((t) => (
-                    <span key={t} className="text-xs bg-gray-50 border border-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{t}</span>
+                  {article.tags.slice(0, 2).map((tag) => (
+                    <span key={tag} className="text-xs bg-gray-50 border border-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{tag}</span>
                   ))}
                 </div>
                 <div className="flex items-center justify-between text-xs text-gray-400 border-t border-gray-100 pt-2.5">
                   <span>{article.authors[0]}</span>
-                  <span>{article.read_time} min · {article.school}</span>
+                  <span>{article.read_time} {t.common.min} · {article.school}</span>
                 </div>
               </div>
             </Link>
@@ -184,9 +183,9 @@ export default function DashboardPage() {
       {/* ── Vidéos populaires ─────────────────────────────────────────── */}
       <section className="max-w-7xl mx-auto px-6 mb-16">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900">Vidéos populaires</h2>
+          <h2 className="text-xl font-bold text-gray-900">{t.dashboard.sections.popularVideos}</h2>
           <Link href="/tube" className="text-sm text-primary hover:text-primary-dark transition-colors font-semibold">
-            Voir tout →
+            {t.common.seeAll} →
           </Link>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -209,9 +208,9 @@ export default function DashboardPage() {
       {/* ── Cours récents ─────────────────────────────────────────────── */}
       <section className="max-w-7xl mx-auto px-6 pb-20">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900">Cours récents</h2>
+          <h2 className="text-xl font-bold text-gray-900">{t.dashboard.sections.recentCourses}</h2>
           <Link href="/courses" className="text-sm text-primary hover:text-primary-dark transition-colors font-semibold">
-            Voir tout →
+            {t.common.seeAll} →
           </Link>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">

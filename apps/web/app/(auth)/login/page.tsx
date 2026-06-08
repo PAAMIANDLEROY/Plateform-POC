@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, FormEvent, useRef } from "react";
 import { authApi, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { useLanguage } from "@/lib/i18n";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
@@ -13,6 +14,7 @@ type Step = "email" | "code";
 export default function LoginPage() {
   const router = useRouter();
   const { setUser } = useAuth();
+  const { t } = useLanguage();
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState(["", "", "", "", "", ""]);
@@ -29,7 +31,7 @@ export default function LoginPage() {
       setStep("code");
       setTimeout(() => inputRefs.current[0]?.focus(), 100);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Une erreur est survenue");
+      setError(err instanceof ApiError ? err.message : t.login.errorDefault);
     } finally {
       setLoading(false);
     }
@@ -46,7 +48,7 @@ export default function LoginPage() {
       setUser(data.user);
       router.push(data.is_new || !data.user.is_profile_complete ? "/complete-profile" : "/dashboard");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Code invalide ou expiré");
+      setError(err instanceof ApiError ? err.message : t.login.errorCode);
       setCode(["", "", "", "", "", ""]);
       setTimeout(() => inputRefs.current[0]?.focus(), 50);
     } finally {
@@ -85,7 +87,6 @@ export default function LoginPage() {
 
       {/* ── Left panel — branding ─────────────────────────────────── */}
       <div className="hidden lg:flex lg:w-1/2 bg-navy flex-col justify-between p-12 relative overflow-hidden">
-        {/* Decorative pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 left-0 w-96 h-96 bg-primary rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-danger rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
@@ -96,13 +97,13 @@ export default function LoginPage() {
             <span className="text-3xl font-extrabold text-primary-light">Hi!</span>
             <span className="text-3xl font-extrabold text-white"> Platform</span>
           </div>
-          <p className="text-white/50 text-sm">Plateforme pédagogique Hi! PARIS</p>
+          <p className="text-white/50 text-sm">{t.login.tagline}</p>
         </div>
 
         <div className="relative space-y-8">
           <blockquote className="border-l-2 border-primary-light pl-6">
             <p className="text-xl font-light text-white/90 leading-relaxed italic">
-              "La plateforme qui réunit la recherche en IA et la formation de demain."
+              {t.login.quote}
             </p>
           </blockquote>
           <div className="flex items-center gap-6 flex-wrap">
@@ -127,17 +128,15 @@ export default function LoginPage() {
               <span className="text-2xl font-extrabold text-primary">Hi!</span>
               <span className="text-2xl font-extrabold text-gray-900"> Platform</span>
             </Link>
-            <p className="mt-1 text-sm text-gray-400">Plateforme pédagogique Hi! PARIS</p>
+            <p className="mt-1 text-sm text-gray-400">{t.login.tagline}</p>
           </div>
 
           <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-card">
 
             {step === "email" ? (
               <>
-                <h1 className="text-2xl font-bold text-gray-900 mb-1">Connexion</h1>
-                <p className="text-sm text-gray-500 mb-6">
-                  Entrez votre email institutionnel pour recevoir un code à 6 chiffres.
-                </p>
+                <h1 className="text-2xl font-bold text-gray-900 mb-1">{t.login.title}</h1>
+                <p className="text-sm text-gray-500 mb-6">{t.login.subtitle}</p>
 
                 {error && (
                   <div className="bg-danger/5 border border-danger/20 text-danger text-sm rounded-xl px-4 py-3 mb-4">
@@ -147,21 +146,21 @@ export default function LoginPage() {
 
                 <form onSubmit={handleRequestCode} className="flex flex-col gap-4">
                   <Input
-                    label="Email institutionnel"
+                    label={t.login.emailLabel}
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="prenom.nom@ip-paris.fr"
+                    placeholder={t.login.emailPlaceholder}
                     required
                     autoComplete="email"
                   />
                   <Button type="submit" loading={loading} className="mt-2">
-                    Recevoir le code
+                    {t.login.sendCode}
                   </Button>
                 </form>
 
                 <p className="mt-6 text-center text-xs text-gray-400">
-                  Réservé aux membres des institutions partenaires d'Hi! PARIS.
+                  {t.login.disclaimer}
                 </p>
               </>
             ) : (
@@ -174,9 +173,9 @@ export default function LoginPage() {
                     ←
                   </button>
                   <div>
-                    <h1 className="text-xl font-bold text-gray-900">Code envoyé ✓</h1>
+                    <h1 className="text-xl font-bold text-gray-900">{t.login.codeSentTitle}</h1>
                     <p className="text-sm text-gray-500">
-                      Code envoyé à <span className="text-gray-900 font-medium">{email}</span>
+                      {t.login.codeSentTo} <span className="text-gray-900 font-medium">{email}</span>
                     </p>
                   </div>
                 </div>
@@ -205,7 +204,7 @@ export default function LoginPage() {
                   </div>
 
                   <Button type="submit" loading={loading} disabled={code.join("").length < 6}>
-                    Vérifier
+                    {t.login.verify}
                   </Button>
                 </form>
 
@@ -214,7 +213,7 @@ export default function LoginPage() {
                   disabled={loading}
                   className="mt-4 w-full text-center text-sm text-gray-400 hover:text-primary transition-colors"
                 >
-                  Renvoyer le code
+                  {t.login.resend}
                 </button>
               </>
             )}
