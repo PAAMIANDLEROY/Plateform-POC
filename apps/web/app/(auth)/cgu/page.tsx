@@ -1,14 +1,49 @@
+/**
+ * @file (auth)/cgu/page.tsx
+ * @description Page des Conditions Générales d'Utilisation de Hi! Platform "/cgu".
+ *
+ * Composant serveur (pas de "use client") — contenu statique, pas d'état interactif.
+ * Thème sombre (`bg-black`) cohérent avec les pages légales.
+ *
+ * Contenu structuré en sections numérotées (1–9) via le composant `Section` interne.
+ * Lien croisé vers `/privacy` dans la section 5 (Données personnelles).
+ * Contact : contact@hi-paris.fr
+ *
+ * Composant `Section` :
+ *   Encapsule un titre h2 et un contenu enfant (paragraphe, liste, etc.).
+ */
+
 import Link from "next/link";
 
+/**
+ * Composant de section légale avec titre h2 et contenu enfant.
+ *
+ * @property title    - Titre de la section (ex. "1. Objet").
+ * @property children - Contenu de la section (p, ul, etc.).
+ */
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section>
+      <h2 className="text-lg font-bold text-white mb-3 pb-2 border-b border-white/10">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+/**
+ * Page des Conditions Générales d'Utilisation.
+ */
 export default function CGUPage() {
   return (
     <div className="min-h-screen bg-black py-16 px-4">
       <div className="max-w-3xl mx-auto">
+        {/* Lien retour dashboard */}
         <Link href="/dashboard" className="text-sm text-gray-500 hover:text-white transition-colors mb-8 inline-block">
           ← Retour
         </Link>
 
         <h1 className="text-3xl font-extrabold text-white mb-2">Conditions Générales d'Utilisation</h1>
+        {/* Version et date des CGU */}
         <p className="text-gray-500 text-sm mb-10">Hi! Platform — Hi! PARIS · Version 1.0 · Juin 2026</p>
 
         <div className="space-y-8 text-gray-300 text-sm">
@@ -26,6 +61,7 @@ export default function CGUPage() {
           </Section>
 
           <Section title="4. Comportement des utilisateurs">
+            {/* Liste des règles de bonne conduite */}
             <ul className="list-disc list-inside space-y-1">
               <li>Ne pas partager ses identifiants d'accès</li>
               <li>Ne pas publier de contenu illégal, diffamatoire ou offensant</li>
@@ -35,6 +71,7 @@ export default function CGUPage() {
           </Section>
 
           <Section title="5. Données personnelles">
+            {/* Lien croisé vers la politique de confidentialité */}
             <p>Le traitement des données personnelles est régi par notre <Link href="/privacy" className="text-primary underline">Politique de confidentialité</Link>, conforme au RGPD (UE 2016/679).</p>
           </Section>
 
@@ -56,14 +93,5 @@ export default function CGUPage() {
         </div>
       </div>
     </div>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section>
-      <h2 className="text-lg font-bold text-white mb-3 pb-2 border-b border-white/10">{title}</h2>
-      {children}
-    </section>
   );
 }

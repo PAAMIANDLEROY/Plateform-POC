@@ -1,3 +1,34 @@
+/**
+ * @file (platform)/admin/page.tsx
+ * @description Dashboard d'administration de la plateforme "/admin".
+ *
+ * Accessible uniquement aux utilisateurs avec les rôles `admin` ou `superuser`
+ * (vérification côté API — le frontend ne bloque pas l'accès dans le MVP).
+ *
+ * 4 onglets :
+ *   1. Vue d'ensemble — KPIs globaux, santé des cohortes, apprenants à risque.
+ *   2. Cohortes — tableau de toutes les cohortes avec leurs métriques.
+ *   3. Utilisateurs — répartition par rôle + par école (barres horizontales).
+ *   4. Contenus — catalogue résumé + top vidéos par vues.
+ *
+ * KPIs calculés statiquement depuis `MOCK_*` :
+ *   - `publishedCourses` : filtre `status === "published"`.
+ *   - `activeCohorts`    : filtre `status === "active"`.
+ *   - `atRiskStudents`   : filtre `status === "at-risk" || "inactive"`.
+ *   - `avgPlatformCompletion` : moyenne des `completionRate` de toutes les cohortes.
+ *
+ * `PLATFORM_USERS` : données statiques (nombre total d'utilisateurs par rôle).
+ * En production, ces chiffres viendraient de `analyticsApi.platformKPIs()`.
+ *
+ * Composants internes :
+ *   - `KpiCard`  : carte KPI avec icône, valeur colorée, label et sous-texte.
+ *   - `MiniBar`  : barre de progression horizontale CSS (pas de SVG).
+ *
+ * Export CSV :
+ *   Bouton "Exporter rapport CSV" → `downloadCSV()` avec les données de toutes les cohortes.
+ *   Nom du fichier : `admin-plateforme-YYYY-MM-DD.csv`.
+ */
+
 "use client";
 
 import { useState } from "react";
@@ -5,27 +36,54 @@ import Link from "next/link";
 import { MOCK_COHORTS, MOCK_STUDENTS, MOCK_VIDEOS, MOCK_COURSES, MOCK_MOOCS, MOCK_APPS, MOCK_INSIGHTS } from "@/lib/mock";
 import { downloadCSV, todayStamp } from "@/lib/export";
 
-// ─── Platform stats derived from mock data ─────────────────────────────────
+// ─── Statistiques de plateforme (statiques dans le MVP) ──────────────────────
 
+/**
+ * Statistiques globales d'utilisateurs.
+ * En production : appel à `analyticsApi.platformKPIs()`.
+ */
 const PLATFORM_USERS = {
-  total: 287,
-  student: 241,
-  teacher: 35,
-  admin: 8,
-  superuser: 3,
+  total:       287,
+  student:     241,
+  teacher:     35,
+  admin:       8,
+  superuser:   3,
   activeToday: 48,
   newThisWeek: 12,
 };
 
+/** Nombre de cours publiés (status !== "draft"). */
 const publishedCourses = MOCK_COURSES.filter((c) => c.status === "published").length;
-const activeCohorts    = MOCK_COHORTS.filter((c) => c.status === "active");
-const atRiskStudents   = MOCK_STUDENTS.filter((s) => s.status === "at-risk" || s.status === "inactive");
+
+/** Cohortes actives uniquement (status === "active"). */
+const activeCohorts = MOCK_COHORTS.filter((c) => c.status === "active");
+
+/**
+ * Apprenants à risque ou inactifs.
+ * Candidats à une relance automatique ou une intervention enseignant.
+ */
+const atRiskStudents = MOCK_STUDENTS.filter((s) => s.status === "at-risk" || s.status === "inactive");
+
+/**
+ * Taux de complétion moyen sur l'ensemble des cohortes (active + archivée).
+ * Arrondi à l'entier le plus proche.
+ */
 const avgPlatformCompletion = Math.round(
   MOCK_COHORTS.reduce((a, c) => a + c.completionRate, 0) / MOCK_COHORTS.length
 );
 
-// ─── KPI section ──────────────────────────────────────────────────────────────
+// ─── Composants internes ──────────────────────────────────────────────────────
 
+/**
+ * Carte KPI avec valeur colorée.
+ *
+ * @property icon    - Emoji ou caractère de l'icône.
+ * @property label   - Libellé descriptif.
+ * @property value   - Valeur à afficher (peut être un nombre ou une chaîne formatée).
+ * @property sub     - Texte secondaire optionnel (ex. "+12 cette semaine").
+ * @property accent  - Couleur de la valeur : `"danger"` (rouge), `"green"` (vert),
+ *                     `"purple"` (violet) ou défaut (bleu primaire).
+ */
 function KpiCard({ icon, label, value, sub, accent }: {
   icon: string;
   label: string;
@@ -33,11 +91,14 @@ function KpiCard({ icon, label, value, sub, accent }: {
   sub?: string;
   accent?: "danger" | "green" | "purple";
 }) {
+  // Couleur de la valeur selon l'accent
   const valueColor =
     accent === "danger" ? "text-danger" :
     accent === "green"  ? "text-emerald-600" :
     accent === "purple" ? "text-purple-600" :
     "text-primary";
+
+  // Couleur de la bordure et du fond de la carte selon l'accent
   const borderColor =
     accent === "danger" ? "border-danger/20 bg-danger/5" :
     accent === "green"  ? "border-emerald-200 bg-emerald-50" :
@@ -53,8 +114,12 @@ function KpiCard({ icon, label, value, sub, accent }: {
   );
 }
 
-// ─── Mini sparkline (CSS-based) ───────────────────────────────────────────────
-
+/**
+ * Mini barre de progression horizontale (CSS uniquement).
+ *
+ * @property pct   - Pourcentage de remplissage (0–100).
+ * @property color - Classe Tailwind de couleur de fond (défaut : `"bg-primary"`).
+ */
 function MiniBar({ pct, color = "bg-primary" }: { pct: number; color?: string }) {
   return (
     <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden flex-1">
@@ -63,29 +128,41 @@ function MiniBar({ pct, color = "bg-primary" }: { pct: number; color?: string })
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// ─── Page principale ──────────────────────────────────────────────────────────
 
+/** Types d'onglets disponibles dans l'admin. */
+type AdminTab = "overview" | "cohorts" | "users" | "content";
+
+/**
+ * Dashboard d'administration de la plateforme.
+ */
 export default function AdminDashboardPage() {
-  const [activeTab, setActiveTab] = useState<"overview" | "cohorts" | "users" | "content">("overview");
+  /** Onglet actif — "overview" par défaut. */
+  const [activeTab, setActiveTab] = useState<AdminTab>("overview");
 
+  /**
+   * Exporte un rapport CSV de toutes les cohortes.
+   * Nom de fichier horodaté via `todayStamp()`.
+   */
   function exportGlobalCSV() {
     const rows = MOCK_COHORTS.map((c) => ({
-      "Cohorte": c.name,
-      "École": c.school,
-      "Statut": c.status,
-      "Apprenants": c.enrolledCount,
-      "Complétion (%)": c.completionRate,
-      "Score moyen": c.avgScore,
+      "Cohorte":           c.name,
+      "École":             c.school,
+      "Statut":            c.status,
+      "Apprenants":        c.enrolledCount,
+      "Complétion (%)":    c.completionRate,
+      "Score moyen":       c.avgScore,
       "Temps moyen (min)": c.avgTimeSpent,
-      "Début": c.startDate,
-      "Fin": c.endDate,
+      "Début":             c.startDate,
+      "Fin":               c.endDate,
     }));
     downloadCSV(rows, `admin-plateforme-${todayStamp()}.csv`);
   }
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-10">
-      {/* Header */}
+
+      {/* En-tête avec badge "Admin" et bouton export CSV */}
       <div className="flex items-start justify-between mb-8 flex-wrap gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
@@ -96,15 +173,13 @@ export default function AdminDashboardPage() {
           </div>
           <p className="text-gray-400">KPIs globaux · Hi! PARIS Platform</p>
         </div>
-        <button
-          onClick={exportGlobalCSV}
-          className="flex items-center gap-2 text-sm text-gray-400 hover:text-white border border-gray-200 hover:border-gray-300 px-4 py-2.5 rounded-xl transition-all shadow-sm"
-        >
+        <button onClick={exportGlobalCSV}
+          className="flex items-center gap-2 text-sm text-gray-400 hover:text-white border border-gray-200 hover:border-gray-300 px-4 py-2.5 rounded-xl transition-all shadow-sm">
           📊 Exporter rapport CSV
         </button>
       </div>
 
-      {/* Tabs */}
+      {/* Sélecteur d'onglets */}
       <div className="flex gap-1 bg-white border border-gray-200 rounded-xl p-1 mb-8 w-fit">
         {([
           { key: "overview", label: "Vue d'ensemble" },
@@ -112,31 +187,29 @@ export default function AdminDashboardPage() {
           { key: "users",    label: "Utilisateurs" },
           { key: "content",  label: "Contenus" },
         ] as const).map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
+          <button key={tab.key} onClick={() => setActiveTab(tab.key)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              // Branche onglet actif : fond bleu + ombre
               activeTab === tab.key
                 ? "bg-primary text-white shadow-sm shadow-primary/30"
                 : "text-gray-400 hover:text-gray-900"
-            }`}
-          >
+            }`}>
             {tab.label}
           </button>
         ))}
       </div>
 
-      {/* ── Overview tab ── */}
+      {/* ── Onglet Vue d'ensemble ── */}
       {activeTab === "overview" && (
         <>
-          {/* Primary KPIs */}
+          {/* KPIs primaires : utilisateurs, actifs, cours, cohortes */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <KpiCard icon="👤" label="Utilisateurs total" value={PLATFORM_USERS.total}    sub={`+${PLATFORM_USERS.newThisWeek} cette semaine`} />
             <KpiCard icon="🟢" label="Actifs aujourd'hui" value={PLATFORM_USERS.activeToday} accent="green" />
             <KpiCard icon="📖" label="Cours publiés"      value={publishedCourses}        sub={`/${MOCK_COURSES.length} total`} />
             <KpiCard icon="🎓" label="Cohortes actives"   value={activeCohorts.length}    sub={`/${MOCK_COHORTS.length} total`} />
           </div>
-
+          {/* KPIs secondaires : contenu catalogue */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
             <KpiCard icon="▶"  label="Vidéos"           value={MOCK_VIDEOS.length} />
             <KpiCard icon="🔀" label="MOOCs"             value={MOCK_MOOCS.length} />
@@ -144,9 +217,9 @@ export default function AdminDashboardPage() {
             <KpiCard icon="📰" label="Articles Insights" value={MOCK_INSIGHTS.length} />
           </div>
 
-          {/* Cohort health + at-risk */}
+          {/* Santé cohortes (2/3) + À risque et métriques (1/3) */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Completion overview */}
+            {/* Taux de complétion par cohorte active */}
             <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-6">
               <h2 className="text-sm font-semibold text-gray-900 mb-1">Santé des cohortes actives</h2>
               <p className="text-xs text-gray-500 mb-5">Taux de complétion et score moyen par cohorte</p>
@@ -159,6 +232,7 @@ export default function AdminDashboardPage() {
                         <p className="text-xs text-gray-600">{c.school} · {c.enrolledCount} apprenants</p>
                       </div>
                       <div className="text-right">
+                        {/* Couleur du taux selon seuil : vert ≥80%, jaune ≥50%, orange <50% */}
                         <span className={`text-sm font-bold ${
                           c.completionRate >= 80 ? "text-green-400" :
                           c.completionRate >= 50 ? "text-yellow-400" : "text-orange-400"
@@ -169,10 +243,8 @@ export default function AdminDashboardPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <MiniBar
-                        pct={c.completionRate}
-                        color={c.completionRate >= 80 ? "bg-green-500" : c.completionRate >= 50 ? "bg-primary" : "bg-orange-500"}
-                      />
+                      <MiniBar pct={c.completionRate}
+                        color={c.completionRate >= 80 ? "bg-green-500" : c.completionRate >= 50 ? "bg-primary" : "bg-orange-500"} />
                       <Link href={`/lms/${c.id}`} className="text-xs text-primary hover:text-primary-light whitespace-nowrap">
                         Gérer →
                       </Link>
@@ -180,32 +252,23 @@ export default function AdminDashboardPage() {
                   </div>
                 ))}
               </div>
-
-              {/* Platform average */}
+              {/* Moyenne plateforme en bas du bloc */}
               <div className="mt-6 pt-4 border-t border-white/5 flex items-center gap-4">
                 <div className="text-xs text-gray-500">Complétion moyenne plateforme</div>
-                <div className="flex-1">
-                  <MiniBar pct={avgPlatformCompletion} />
-                </div>
+                <div className="flex-1"><MiniBar pct={avgPlatformCompletion} /></div>
                 <div className="text-sm font-bold text-gray-900">{avgPlatformCompletion}%</div>
               </div>
             </div>
 
-            {/* At-risk + recent activity */}
             <div className="flex flex-col gap-5">
-              {/* At-risk */}
+              {/* Liste apprenants à risque (max 4 + lien "Voir tous") */}
               <div className="bg-gray-900 border border-danger/20 rounded-xl p-5">
-                <h3 className="text-sm font-semibold text-gray-900 mb-1">
-                  ⚠️ Apprenants à risque
-                </h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-1">⚠️ Apprenants à risque</h3>
                 <p className="text-xs text-gray-500 mb-4">{atRiskStudents.length} sur {MOCK_STUDENTS.length} étudiants suivis</p>
                 <div className="flex flex-col gap-2">
                   {atRiskStudents.slice(0, 4).map((s) => (
-                    <Link
-                      key={s.userId}
-                      href={`/lms/${s.cohortId}/student/${s.userId}`}
-                      className="flex items-center gap-2.5 hover:bg-white/5 rounded-lg px-2 py-1.5 transition-all group"
-                    >
+                    <Link key={s.userId} href={`/lms/${s.cohortId}/student/${s.userId}`}
+                      className="flex items-center gap-2.5 hover:bg-white/5 rounded-lg px-2 py-1.5 transition-all group">
                       <div className="w-7 h-7 rounded-full bg-orange-500/20 flex items-center justify-center text-xs font-bold text-orange-400 shrink-0">
                         {s.initials}
                       </div>
@@ -215,6 +278,7 @@ export default function AdminDashboardPage() {
                       </div>
                     </Link>
                   ))}
+                  {/* Lien "Voir tous" si plus de 4 apprenants à risque */}
                   {atRiskStudents.length > 4 && (
                     <Link href="/lms" className="text-xs text-primary hover:text-primary-light text-center py-1">
                       Voir tous ({atRiskStudents.length}) →
@@ -223,16 +287,16 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              {/* Platform metrics */}
+              {/* Métriques globales statiques */}
               <div className="bg-white border border-gray-200 rounded-xl p-5">
                 <h3 className="text-sm font-semibold text-gray-900 mb-4">Métriques globales</h3>
                 <div className="flex flex-col gap-3">
                   {[
-                    { label: "Enrollements total",    value: MOCK_COHORTS.reduce((a, c) => a + c.enrolledCount, 0) },
-                    { label: "Certificats émis",      value: 34 },
-                    { label: "Badges attribués",      value: 128 },
-                    { label: "Vues vidéos (total)",   value: MOCK_VIDEOS.reduce((a, v) => a + v.views, 0).toLocaleString("fr-FR") },
-                    { label: "Taux rétention moy.",   value: "74%" },
+                    { label: "Enrollements total",  value: MOCK_COHORTS.reduce((a, c) => a + c.enrolledCount, 0) },
+                    { label: "Certificats émis",    value: 34 },
+                    { label: "Badges attribués",    value: 128 },
+                    { label: "Vues vidéos (total)", value: MOCK_VIDEOS.reduce((a, v) => a + v.views, 0).toLocaleString("fr-FR") },
+                    { label: "Taux rétention moy.", value: "74%" },
                   ].map((item) => (
                     <div key={item.label} className="flex items-center justify-between text-sm">
                       <span className="text-gray-500">{item.label}</span>
@@ -246,16 +310,14 @@ export default function AdminDashboardPage() {
         </>
       )}
 
-      {/* ── Cohorts tab ── */}
+      {/* ── Onglet Cohortes — tableau complet ── */}
       {activeTab === "cohorts" && (
         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/10">
                 {["Cohorte", "École", "Statut", "Apprenants", "Complétion", "Score moy.", "Temps moy.", "Actions"].map((h) => (
-                  <th key={h} className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-5 py-3.5 first:pl-6">
-                    {h}
-                  </th>
+                  <th key={h} className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-5 py-3.5 first:pl-6">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -268,6 +330,7 @@ export default function AdminDashboardPage() {
                   </td>
                   <td className="px-5 py-4 text-sm text-gray-400">{c.school}</td>
                   <td className="px-5 py-4">
+                    {/* Badge statut coloré selon l'état */}
                     <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full border ${
                       c.status === "active" ? "bg-green-500/15 text-green-400 border-green-500/25" :
                       c.status === "draft"  ? "bg-yellow-500/15 text-yellow-400 border-yellow-500/25" :
@@ -280,17 +343,17 @@ export default function AdminDashboardPage() {
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-2">
                       <div className="w-20">
-                        <MiniBar
-                          pct={c.completionRate}
-                          color={c.completionRate >= 80 ? "bg-green-500" : c.completionRate >= 50 ? "bg-primary" : "bg-orange-500"}
-                        />
+                        <MiniBar pct={c.completionRate}
+                          color={c.completionRate >= 80 ? "bg-green-500" : c.completionRate >= 50 ? "bg-primary" : "bg-orange-500"} />
                       </div>
                       <span className="text-sm font-semibold text-gray-900">{c.completionRate}%</span>
                     </div>
                   </td>
                   <td className="px-5 py-4 text-sm text-gray-700">{c.avgScore}/100</td>
+                  {/* Temps en heures (converti depuis les minutes) */}
                   <td className="px-5 py-4 text-sm text-gray-400">{Math.floor(c.avgTimeSpent / 60)}h</td>
                   <td className="px-5 py-4">
+                    {/* Lien Gérer masqué pour les cohortes archivées */}
                     {c.status !== "archived" && (
                       <Link href={`/lms/${c.id}`} className="text-xs text-primary hover:text-primary-light font-semibold">
                         Gérer →
@@ -304,18 +367,18 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* ── Users tab ── */}
+      {/* ── Onglet Utilisateurs ── */}
       {activeTab === "users" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Role distribution */}
+          {/* Répartition par rôle */}
           <div className="bg-white border border-gray-200 rounded-xl p-6">
             <h2 className="text-sm font-semibold text-gray-900 mb-5">Répartition par rôle</h2>
             <div className="flex flex-col gap-4">
               {([
-                { role: "Étudiants",    count: PLATFORM_USERS.student,    color: "bg-primary",    pct: Math.round((PLATFORM_USERS.student    / PLATFORM_USERS.total) * 100) },
-                { role: "Enseignants",  count: PLATFORM_USERS.teacher,    color: "bg-blue-500",   pct: Math.round((PLATFORM_USERS.teacher    / PLATFORM_USERS.total) * 100) },
-                { role: "Admins",       count: PLATFORM_USERS.admin,      color: "bg-danger",     pct: Math.round((PLATFORM_USERS.admin      / PLATFORM_USERS.total) * 100) },
-                { role: "Superusers",   count: PLATFORM_USERS.superuser,  color: "bg-purple-500", pct: Math.round((PLATFORM_USERS.superuser  / PLATFORM_USERS.total) * 100) },
+                { role: "Étudiants",  count: PLATFORM_USERS.student,   color: "bg-primary",    pct: Math.round((PLATFORM_USERS.student   / PLATFORM_USERS.total) * 100) },
+                { role: "Enseignants",count: PLATFORM_USERS.teacher,   color: "bg-blue-500",   pct: Math.round((PLATFORM_USERS.teacher   / PLATFORM_USERS.total) * 100) },
+                { role: "Admins",     count: PLATFORM_USERS.admin,     color: "bg-danger",     pct: Math.round((PLATFORM_USERS.admin     / PLATFORM_USERS.total) * 100) },
+                { role: "Superusers", count: PLATFORM_USERS.superuser, color: "bg-purple-500", pct: Math.round((PLATFORM_USERS.superuser / PLATFORM_USERS.total) * 100) },
               ]).map((r) => (
                 <div key={r.role}>
                   <div className="flex items-center justify-between mb-1.5">
@@ -331,16 +394,16 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* Enrollment by school */}
+          {/* Apprenants par école */}
           <div className="bg-white border border-gray-200 rounded-xl p-6">
             <h2 className="text-sm font-semibold text-gray-900 mb-5">Apprenants par école</h2>
             <div className="flex flex-col gap-4">
               {([
-                { school: "Polytechnique",  count: 98,  pct: 34 },
-                { school: "Télécom Paris",  count: 74,  pct: 26 },
-                { school: "HEC Paris",      count: 54,  pct: 19 },
-                { school: "ENSAE",          count: 38,  pct: 13 },
-                { school: "Autres",         count: 23,  pct: 8  },
+                { school: "Polytechnique", count: 98, pct: 34 },
+                { school: "Télécom Paris", count: 74, pct: 26 },
+                { school: "HEC Paris",     count: 54, pct: 19 },
+                { school: "ENSAE",         count: 38, pct: 13 },
+                { school: "Autres",        count: 23, pct: 8  },
               ]).map((s) => (
                 <div key={s.school}>
                   <div className="flex items-center justify-between mb-1.5">
@@ -355,15 +418,15 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* ── Content tab ── */}
+      {/* ── Onglet Contenus ── */}
       {activeTab === "content" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Top videos by views */}
+          {/* Top 6 vidéos par nombre de vues */}
           <div className="bg-white border border-gray-200 rounded-xl p-6">
             <h2 className="text-sm font-semibold text-gray-900 mb-5">Top vidéos (vues)</h2>
             <div className="flex flex-col gap-3">
               {[...MOCK_VIDEOS]
-                .sort((a, b) => b.views - a.views)
+                .sort((a, b) => b.views - a.views) // Tri décroissant par vues
                 .slice(0, 6)
                 .map((v, i) => (
                   <div key={v.id} className="flex items-center gap-3">
@@ -378,16 +441,16 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* Content summary */}
+          {/* Résumé du catalogue par type de contenu */}
           <div className="bg-white border border-gray-200 rounded-xl p-6">
             <h2 className="text-sm font-semibold text-gray-900 mb-5">Catalogue — Résumé</h2>
             <div className="flex flex-col gap-4">
               {[
-                { icon: "▶",  label: "Vidéos",      total: MOCK_VIDEOS.length,                                           published: MOCK_VIDEOS.length,                                           draft: 0 },
-                { icon: "📖", label: "Cours",        total: MOCK_COURSES.length,                                          published: publishedCourses,                                             draft: MOCK_COURSES.length - publishedCourses },
-                { icon: "🎓", label: "MOOCs",        total: MOCK_MOOCS.length,                                            published: MOCK_MOOCS.length,                                            draft: 0 },
-                { icon: "⚡", label: "Applications", total: MOCK_APPS.length,                                             published: MOCK_APPS.length,                                             draft: 0 },
-                { icon: "📰", label: "Insights",     total: MOCK_INSIGHTS.length,                                         published: MOCK_INSIGHTS.length,                                         draft: 0 },
+                { icon: "▶",  label: "Vidéos",      total: MOCK_VIDEOS.length,   published: MOCK_VIDEOS.length,   draft: 0 },
+                { icon: "📖", label: "Cours",        total: MOCK_COURSES.length,  published: publishedCourses,     draft: MOCK_COURSES.length - publishedCourses },
+                { icon: "🎓", label: "MOOCs",        total: MOCK_MOOCS.length,    published: MOCK_MOOCS.length,    draft: 0 },
+                { icon: "⚡", label: "Applications", total: MOCK_APPS.length,     published: MOCK_APPS.length,     draft: 0 },
+                { icon: "📰", label: "Insights",     total: MOCK_INSIGHTS.length, published: MOCK_INSIGHTS.length, draft: 0 },
               ].map((c) => (
                 <div key={c.label} className="flex items-center gap-3">
                   <span className="text-lg w-6 text-center">{c.icon}</span>
@@ -396,12 +459,13 @@ export default function AdminDashboardPage() {
                   </div>
                   <div className="text-right">
                     <span className="text-sm font-bold text-gray-900">{c.total}</span>
+                    {/* Badge brouillon — affiché uniquement si > 0 */}
                     {c.draft > 0 && <span className="text-xs text-yellow-500 ml-2">({c.draft} brouillons)</span>}
                   </div>
                 </div>
               ))}
             </div>
-
+            {/* Cours les plus populaires (par durée — proxy en l'absence de vraies analytics) */}
             <div className="mt-6 pt-4 border-t border-white/5">
               <p className="text-xs text-gray-500 mb-3">Cours les plus populaires</p>
               {MOCK_COURSES.slice(0, 3).map((c) => (

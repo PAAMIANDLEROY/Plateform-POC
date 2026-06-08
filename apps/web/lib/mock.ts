@@ -1,12 +1,51 @@
+/**
+ * @file mock.ts
+ * @description Données de démonstration statiques pour le développement et les tests E2E.
+ *
+ * Ce module exporte TOUTES les données fictives utilisées en mode développement
+ * (quand l'API FastAPI n'est pas disponible). Il ne doit jamais être importé
+ * dans du code de production — remplacer par les appels API correspondants.
+ *
+ * Collections exportées :
+ *   - `MOCK_USER`      — Un utilisateur admin connecté.
+ *   - `MOCK_VIDEOS`    — 9 vidéos Hi! Tube.
+ *   - `MOCK_COURSES`   — 12 cours Hi! Course (publiés + brouillons).
+ *   - `MOCK_MOOCS`     — 3 parcours Hi! MOOC.
+ *   - `MOCK_APPS`      — 8 applications Hi! App (dont 4 avec repos GitHub réels).
+ *   - `MOCK_COHORTS`   — 4 cohortes LMS (3 actives + 1 archivée).
+ *   - `MOCK_STUDENTS`  — 6 apprenants dans la cohorte "1" (tous statuts représentés).
+ *   - `MOCK_INSIGHTS`  — 4 articles Hi! Insights avec blocs de contenu structurés.
+ *
+ * IDs des entités :
+ *   Tous les IDs sont des chaînes de chiffres ("1"–"12" pour les cours, etc.)
+ *   pour simplifier les comparaisons sans conversion `parseInt`.
+ */
+
+// ─── Utilisateur ─────────────────────────────────────────────────────────────
+
+/**
+ * Utilisateur administrateur de démonstration.
+ * Utilisé par `AuthProvider` en mode dev pour simuler une session connectée.
+ */
 export const MOCK_USER = {
   id: "mock-admin-1",
   first_name: "Admin",
   last_name: "Démo",
   email: "admin@polytechnique.edu",
-  role: "admin",
-  is_verified: true,
+  role: "admin",       // Accès complet — toutes les pages admin sont visibles
+  is_verified: true,   // Email vérifié — pas de bannière de vérification affichée
 };
 
+// ─── Vidéos Hi! Tube ─────────────────────────────────────────────────────────
+
+/**
+ * 9 vidéos de démonstration couvrant 4 catégories.
+ *
+ * Catégories représentées : "IA & Data" (×6), "Mathématiques" (×2), "Finance" (×1).
+ * Durées : format "mm:ss" ou "h:mm:ss" (chaînes — non converties en secondes pour les mocks).
+ * Vues : de 412 à 3200.
+ * `youtubeId` : IDs YouTube publics valides pour le rendu du lecteur.
+ */
 export const MOCK_VIDEOS = [
   {
     id: "1",
@@ -136,27 +175,63 @@ export const MOCK_VIDEOS = [
   },
 ];
 
+// ─── Cours Hi! Course ─────────────────────────────────────────────────────────
+
+/**
+ * 12 cours de démonstration.
+ *
+ * Niveaux utilisés (labels français, mappés → clés EN dans `SectionCatalogue`) :
+ *   "Débutant" | "Intermédiaire" | "Avancé"
+ *
+ * Statuts : "published" (10 cours) | "draft" (2 cours : IDs "5" et "11").
+ * Les cours brouillons sont visibles uniquement en admin / Studio.
+ *
+ * `duration` : durée en minutes (utilisé par `formatDuration` dans `CourseCard`).
+ * `blocks`   : nombre de blocs de contenu (section, quiz, etc.) — affiché sur la page détail.
+ */
 export const MOCK_COURSES = [
-  { id: "1", title: "Fondamentaux du ML", description: "Régression, classification, évaluation de modèles.", category: "IA & Data", level: "Débutant", school: "Polytechnique", duration: 180, blocks: 12, status: "published" },
-  { id: "2", title: "Python pour la Data Science", description: "NumPy, Pandas, Matplotlib, Scikit-learn.", category: "Programmation", level: "Débutant", school: "Télécom Paris", duration: 240, blocks: 18, status: "published" },
-  { id: "3", title: "Réseaux de neurones profonds", description: "Architectures CNN, RNN, Transformer.", category: "IA & Data", level: "Avancé", school: "Polytechnique", duration: 360, blocks: 24, status: "published" },
-  { id: "4", title: "Séries temporelles", description: "ARIMA, Prophet, forecasting avec ML.", category: "IA & Data", level: "Intermédiaire", school: "ENSAE", duration: 150, blocks: 10, status: "published" },
-  { id: "5", title: "Introduction à R", description: "Analyse statistique et visualisation avec R.", category: "Statistiques", level: "Débutant", school: "ENSAE", duration: 120, blocks: 8, status: "draft" },
-  { id: "6", title: "Cloud Computing & MLOps", description: "Docker, Kubernetes, pipelines CI/CD ML.", category: "DevOps", level: "Avancé", school: "Télécom Paris", duration: 300, blocks: 20, status: "published" },
-  { id: "7", title: "Reinforcement Learning", description: "Q-Learning, Policy Gradients, AlphaGo et applications modernes.", category: "IA & Data", level: "Avancé", school: "Polytechnique", duration: 270, blocks: 18, status: "published" },
-  { id: "8", title: "Computer Vision avancée", description: "Détection d'objets, segmentation, YOLO et Vision Transformers.", category: "IA & Data", level: "Intermédiaire", school: "Télécom Paris", duration: 210, blocks: 14, status: "published" },
-  { id: "9", title: "NLP from Scratch", description: "Tokenisation, embeddings, attention et construction d'un LLM miniature.", category: "IA & Data", level: "Intermédiaire", school: "Télécom Paris", duration: 240, blocks: 16, status: "published" },
-  { id: "10", title: "Éthique et gouvernance de l'IA", description: "Biais algorithmiques, RGPD, explicabilité et régulation européenne.", category: "Société & Éthique", level: "Débutant", school: "HEC", duration: 90, blocks: 6, status: "published" },
-  { id: "11", title: "Modèles génératifs & diffusion", description: "GANs, VAEs, diffusion models et leurs applications en génération de données.", category: "IA & Data", level: "Avancé", school: "ENSAE", duration: 330, blocks: 22, status: "draft" },
-  { id: "12", title: "LLMs — Fine-tuning & mise en prod", description: "LoRA, QLoRA, RLHF, DPO et déploiement GPU sur cloud.", category: "IA & Data", level: "Avancé", school: "Polytechnique", duration: 360, blocks: 24, status: "published" },
+  { id: "1",  title: "Fondamentaux du ML",              description: "Régression, classification, évaluation de modèles.",                                               category: "IA & Data",       level: "Débutant",      school: "Polytechnique", duration: 180, blocks: 12, status: "published" },
+  { id: "2",  title: "Python pour la Data Science",     description: "NumPy, Pandas, Matplotlib, Scikit-learn.",                                                        category: "Programmation",   level: "Débutant",      school: "Télécom Paris", duration: 240, blocks: 18, status: "published" },
+  { id: "3",  title: "Réseaux de neurones profonds",    description: "Architectures CNN, RNN, Transformer.",                                                            category: "IA & Data",       level: "Avancé",        school: "Polytechnique", duration: 360, blocks: 24, status: "published" },
+  { id: "4",  title: "Séries temporelles",              description: "ARIMA, Prophet, forecasting avec ML.",                                                            category: "IA & Data",       level: "Intermédiaire", school: "ENSAE",         duration: 150, blocks: 10, status: "published" },
+  { id: "5",  title: "Introduction à R",                description: "Analyse statistique et visualisation avec R.",                                                    category: "Statistiques",    level: "Débutant",      school: "ENSAE",         duration: 120, blocks: 8,  status: "draft"     },
+  { id: "6",  title: "Cloud Computing & MLOps",         description: "Docker, Kubernetes, pipelines CI/CD ML.",                                                         category: "DevOps",          level: "Avancé",        school: "Télécom Paris", duration: 300, blocks: 20, status: "published" },
+  { id: "7",  title: "Reinforcement Learning",          description: "Q-Learning, Policy Gradients, AlphaGo et applications modernes.",                                 category: "IA & Data",       level: "Avancé",        school: "Polytechnique", duration: 270, blocks: 18, status: "published" },
+  { id: "8",  title: "Computer Vision avancée",         description: "Détection d'objets, segmentation, YOLO et Vision Transformers.",                                  category: "IA & Data",       level: "Intermédiaire", school: "Télécom Paris", duration: 210, blocks: 14, status: "published" },
+  { id: "9",  title: "NLP from Scratch",                description: "Tokenisation, embeddings, attention et construction d'un LLM miniature.",                         category: "IA & Data",       level: "Intermédiaire", school: "Télécom Paris", duration: 240, blocks: 16, status: "published" },
+  { id: "10", title: "Éthique et gouvernance de l'IA", description: "Biais algorithmiques, RGPD, explicabilité et régulation européenne.",                             category: "Société & Éthique", level: "Débutant",    school: "HEC",           duration: 90,  blocks: 6,  status: "published" },
+  { id: "11", title: "Modèles génératifs & diffusion",  description: "GANs, VAEs, diffusion models et leurs applications en génération de données.",                    category: "IA & Data",       level: "Avancé",        school: "ENSAE",         duration: 330, blocks: 22, status: "draft"     },
+  { id: "12", title: "LLMs — Fine-tuning & mise en prod", description: "LoRA, QLoRA, RLHF, DPO et déploiement GPU sur cloud.",                                         category: "IA & Data",       level: "Avancé",        school: "Polytechnique", duration: 360, blocks: 24, status: "published" },
 ];
 
+// ─── Parcours Hi! MOOC ────────────────────────────────────────────────────────
+
+/**
+ * 3 parcours MOOC multi-cours.
+ *
+ * `courses`  : nombre de cours inclus dans le parcours.
+ * `enrolled` : nombre d'apprenants inscrits (utilisé dans `MOOCCard`).
+ */
 export const MOCK_MOOCS = [
-  { id: "1", title: "Parcours Data Scientist", description: "De Python aux modèles en production. 6 cours, ~40h.", school: "Polytechnique", courses: 6, enrolled: 320, status: "published" },
-  { id: "2", title: "IA pour les managers", description: "Comprendre l'IA sans coder. Idéal pour les décideurs.", school: "HEC", courses: 4, enrolled: 510, status: "published" },
-  { id: "3", title: "MLOps & mise en production", description: "Déployer et monitorer des modèles ML en entreprise.", school: "Télécom Paris", courses: 5, enrolled: 180, status: "published" },
+  { id: "1", title: "Parcours Data Scientist",    description: "De Python aux modèles en production. 6 cours, ~40h.",               school: "Polytechnique", courses: 6, enrolled: 320, status: "published" },
+  { id: "2", title: "IA pour les managers",       description: "Comprendre l'IA sans coder. Idéal pour les décideurs.",              school: "HEC",           courses: 4, enrolled: 510, status: "published" },
+  { id: "3", title: "MLOps & mise en production", description: "Déployer et monitorer des modèles ML en entreprise.",                school: "Télécom Paris", courses: 5, enrolled: 180, status: "published" },
 ];
 
+// ─── Applications Hi! App ────────────────────────────────────────────────────
+
+/**
+ * Type d'une application Hi! App.
+ *
+ * @property id          - UUID de l'app.
+ * @property title       - Nom de l'application.
+ * @property description - Description courte.
+ * @property url         - URL externe de l'application (Streamlit, Hugging Face, etc.).
+ * @property tags        - Tags fonctionnels.
+ * @property school      - École propriétaire.
+ * @property githubRepo  - Identifiant `owner/repo` GitHub (optionnel).
+ *                         Si fourni, `AppCard` récupère les métadonnées du repo en temps réel.
+ */
 export interface MockApp {
   id: string;
   title: string;
@@ -167,19 +242,42 @@ export interface MockApp {
   githubRepo?: string;
 }
 
+/**
+ * 8 applications de démonstration.
+ *
+ * 4 ont un `githubRepo` réel → `AppCard` affichera les étoiles, le langage et la date.
+ * 4 pointent vers des URLs externes sans repo (playground, HuggingFace Spaces, etc.).
+ */
 export const MOCK_APPS: MockApp[] = [
-  { id: "1", title: "Playground ML", description: "Entraîne et visualise des modèles interactivement.", url: "https://playground.tensorflow.org", tags: ["ML", "Visualisation"], school: "Polytechnique" },
-  { id: "2", title: "Explorateur de datasets", description: "Analyse statistique et visualisation de jeux de données CSV.", url: "https://github.com/simonw/datasette", githubRepo: "simonw/datasette", tags: ["Data", "Statistiques"], school: "ENSAE" },
-  { id: "3", title: "NLP Demo", description: "Testez des modèles de traitement du langage naturel.", url: "https://huggingface.co/spaces", tags: ["NLP", "Transformers"], school: "Télécom Paris" },
-  { id: "4", title: "Chatbot RAG", description: "Posez des questions sur vos documents grâce à un chatbot avec Retrieval-Augmented Generation.", url: "https://github.com/langchain-ai/langchain", githubRepo: "langchain-ai/langchain", tags: ["RAG", "NLP", "Génération"], school: "Télécom Paris" },
-  { id: "5", title: "Classifieur CNN Interactif", description: "Entraînez et évaluez un CNN sur vos propres images directement dans le navigateur.", url: "https://github.com/googlecreativelab/teachablemachine-community", githubRepo: "googlecreativelab/teachablemachine-community", tags: ["CNN", "Computer Vision", "Classification"], school: "Polytechnique" },
-  { id: "6", title: "Générateur d'images IA", description: "Générez des images à partir d'une description textuelle avec Stable Diffusion.", url: "https://github.com/AUTOMATIC1111/stable-diffusion-webui", githubRepo: "AUTOMATIC1111/stable-diffusion-webui", tags: ["Diffusion", "Génération", "Multimodal"], school: "ENSAE" },
-  { id: "7", title: "Détecteur d'anomalies", description: "Identifiez des valeurs aberrantes dans vos datasets avec des algorithmes non-supervisés.", url: "https://playground.tensorflow.org", tags: ["Anomaly Detection", "Non-supervisé", "Data"], school: "ENSAE" },
-  { id: "8", title: "Visualiseur d'embeddings", description: "Explorez les espaces vectoriels de vos modèles NLP avec des projections t-SNE et UMAP.", url: "https://github.com/tensorflow/embedding-projector-standalone", githubRepo: "tensorflow/embedding-projector-standalone", tags: ["Embeddings", "NLP", "Visualisation"], school: "Polytechnique" },
+  { id: "1", title: "Playground ML",               description: "Entraîne et visualise des modèles interactivement.",                                                                    url: "https://playground.tensorflow.org",                        tags: ["ML", "Visualisation"],                         school: "Polytechnique" },
+  { id: "2", title: "Explorateur de datasets",     description: "Analyse statistique et visualisation de jeux de données CSV.",                                                          url: "https://github.com/simonw/datasette",                      githubRepo: "simonw/datasette",                                tags: ["Data", "Statistiques"],                        school: "ENSAE"         },
+  { id: "3", title: "NLP Demo",                    description: "Testez des modèles de traitement du langage naturel.",                                                                  url: "https://huggingface.co/spaces",                            tags: ["NLP", "Transformers"],                         school: "Télécom Paris" },
+  { id: "4", title: "Chatbot RAG",                 description: "Posez des questions sur vos documents grâce à un chatbot avec Retrieval-Augmented Generation.",                        url: "https://github.com/langchain-ai/langchain",                githubRepo: "langchain-ai/langchain",                          tags: ["RAG", "NLP", "Génération"],                    school: "Télécom Paris" },
+  { id: "5", title: "Classifieur CNN Interactif",  description: "Entraînez et évaluez un CNN sur vos propres images directement dans le navigateur.",                                   url: "https://github.com/googlecreativelab/teachablemachine-community", githubRepo: "googlecreativelab/teachablemachine-community", tags: ["CNN", "Computer Vision", "Classification"],    school: "Polytechnique" },
+  { id: "6", title: "Générateur d'images IA",      description: "Générez des images à partir d'une description textuelle avec Stable Diffusion.",                                       url: "https://github.com/AUTOMATIC1111/stable-diffusion-webui",  githubRepo: "AUTOMATIC1111/stable-diffusion-webui",            tags: ["Diffusion", "Génération", "Multimodal"],       school: "ENSAE"         },
+  { id: "7", title: "Détecteur d'anomalies",        description: "Identifiez des valeurs aberrantes dans vos datasets avec des algorithmes non-supervisés.",                             url: "https://playground.tensorflow.org",                        tags: ["Anomaly Detection", "Non-supervisé", "Data"],  school: "ENSAE"         },
+  { id: "8", title: "Visualiseur d'embeddings",    description: "Explorez les espaces vectoriels de vos modèles NLP avec des projections t-SNE et UMAP.",                               url: "https://github.com/tensorflow/embedding-projector-standalone", githubRepo: "tensorflow/embedding-projector-standalone",      tags: ["Embeddings", "NLP", "Visualisation"],          school: "Polytechnique" },
 ];
 
-// ─── LMS / Cohort management ────────────────────────────────────────────────
+// ─── LMS / Gestion de cohortes ───────────────────────────────────────────────
 
+/**
+ * Type d'une cohorte (groupe d'apprenants inscrits à un ensemble de cours).
+ *
+ * @property id               - UUID de la cohorte.
+ * @property name             - Nom affiché de la cohorte.
+ * @property description      - Description longue (visible en Admin/LMS).
+ * @property school           - École organisatrice.
+ * @property status           - `"active"` (en cours), `"archived"` (terminée), `"draft"` (non ouverte).
+ * @property createdAt        - Date de création ISO ("YYYY-MM-DD").
+ * @property startDate        - Date de début formatée (ex. "3 févr. 2026").
+ * @property endDate          - Date de fin formatée.
+ * @property enrolledCount    - Nombre d'apprenants inscrits.
+ * @property completionRate   - Taux de complétion global en % (0–100).
+ * @property avgScore         - Score moyen des quiz en % (0–100).
+ * @property avgTimeSpent     - Temps moyen passé en minutes.
+ * @property assignedCourseIds - IDs des cours assignés à cette cohorte.
+ */
 export interface Cohort {
   id: string;
   name: string;
@@ -196,6 +294,15 @@ export interface Cohort {
   assignedCourseIds: string[];
 }
 
+/**
+ * Progression d'un apprenant sur un cours spécifique.
+ *
+ * @property courseId    - ID du cours.
+ * @property title       - Titre du cours (dénormalisé pour affichage sans join).
+ * @property progress    - Pourcentage de progression (0–100).
+ * @property score       - Score quiz (0–100), `null` si aucun quiz complété.
+ * @property completedAt - Date de complétion formatée, `null` si non complété.
+ */
 export interface CourseProgress {
   courseId: string;
   title: string;
@@ -204,11 +311,23 @@ export interface CourseProgress {
   completedAt: string | null;
 }
 
+/**
+ * Données complètes d'un apprenant inscrit à une cohorte.
+ *
+ * Statuts possibles :
+ *   - `"active"`    : actif récemment (< 7 jours d'inactivité).
+ *   - `"at-risk"`   : inactif depuis 7–21 jours sans avoir complété.
+ *   - `"completed"` : tous les cours complétés.
+ *   - `"inactive"`  : inactif > 21 jours.
+ *
+ * @property daysInactive - Nombre de jours depuis la dernière activité.
+ * @property timeSpent    - Temps total passé sur la plateforme en minutes.
+ */
 export interface StudentEnrollment {
   userId: string;
   cohortId: string;
   name: string;
-  initials: string;
+  initials: string;       // Initiales pour l'Avatar — 2 lettres (ex. "AM")
   email: string;
   school: string;
   enrolledAt: string;
@@ -218,12 +337,16 @@ export interface StudentEnrollment {
   totalCourses: number;
   videosWatched: number;
   totalVideos: number;
-  quizAvg: number;
-  timeSpent: number;
+  quizAvg: number;        // Moyenne des scores quiz, 0 si aucun quiz passé
+  timeSpent: number;      // En minutes
   status: "active" | "at-risk" | "completed" | "inactive";
   courseProgress: CourseProgress[];
 }
 
+/**
+ * 4 cohortes : 3 actives (Polytechnique, HEC, Télécom Paris) + 1 archivée (ENSAE).
+ * Représente différents niveaux d'avancement (34 % à 92 % de complétion).
+ */
 export const MOCK_COHORTS: Cohort[] = [
   {
     id: "1",
@@ -275,7 +398,7 @@ export const MOCK_COHORTS: Cohort[] = [
     name: "ML Fondamentaux — Automne 2025",
     description: "Cohorte archivée. 92 % de taux de complétion final, meilleure promotion à ce jour.",
     school: "ENSAE",
-    status: "archived",
+    status: "archived",  // Terminée — visible en lecture seule dans l'interface admin
     createdAt: "2025-09-01",
     startDate: "15 sept. 2025",
     endDate: "31 janv. 2026",
@@ -287,6 +410,16 @@ export const MOCK_COHORTS: Cohort[] = [
   },
 ];
 
+/**
+ * 6 apprenants de la cohorte "1" (Master IA — Promo 2026).
+ * Chaque statut est représenté pour tester tous les états d'affichage :
+ *   - u1 (Alice)  : active   — 2/3 cours complétés, bonne progression
+ *   - u2 (Thomas) : active   — 1/3 cours complétés, progression moyenne
+ *   - u3 (Sofia)  : at-risk  — 13 jours d'inactivité, très peu de progression
+ *   - u4 (Julien) : completed — tous les cours complétés, meilleur élève
+ *   - u5 (Inès)   : inactive — 22 jours d'inactivité, quasi aucune activité
+ *   - u6 (Marc)   : active   — 2/3 cours complétés, progression régulière
+ */
 export const MOCK_STUDENTS: StudentEnrollment[] = [
   {
     userId: "u1",
@@ -306,9 +439,9 @@ export const MOCK_STUDENTS: StudentEnrollment[] = [
     timeSpent: 920,
     status: "active",
     courseProgress: [
-      { courseId: "1", title: "Fondamentaux du ML", progress: 100, score: 92, completedAt: "15 mars 2026" },
-      { courseId: "2", title: "Python pour la Data Science", progress: 100, score: 85, completedAt: "1 avr. 2026" },
-      { courseId: "3", title: "Réseaux de neurones profonds", progress: 68, score: null, completedAt: null },
+      { courseId: "1", title: "Fondamentaux du ML",          progress: 100, score: 92, completedAt: "15 mars 2026" },
+      { courseId: "2", title: "Python pour la Data Science",  progress: 100, score: 85, completedAt: "1 avr. 2026" },
+      { courseId: "3", title: "Réseaux de neurones profonds", progress: 68,  score: null, completedAt: null },
     ],
   },
   {
@@ -329,9 +462,9 @@ export const MOCK_STUDENTS: StudentEnrollment[] = [
     timeSpent: 560,
     status: "active",
     courseProgress: [
-      { courseId: "1", title: "Fondamentaux du ML", progress: 100, score: 74, completedAt: "20 mars 2026" },
-      { courseId: "2", title: "Python pour la Data Science", progress: 45, score: null, completedAt: null },
-      { courseId: "3", title: "Réseaux de neurones profonds", progress: 0, score: null, completedAt: null },
+      { courseId: "1", title: "Fondamentaux du ML",          progress: 100, score: 74,   completedAt: "20 mars 2026" },
+      { courseId: "2", title: "Python pour la Data Science",  progress: 45,  score: null, completedAt: null },
+      { courseId: "3", title: "Réseaux de neurones profonds", progress: 0,   score: null, completedAt: null },
     ],
   },
   {
@@ -343,7 +476,7 @@ export const MOCK_STUDENTS: StudentEnrollment[] = [
     school: "Polytechnique",
     enrolledAt: "3 févr. 2026",
     lastActive: "10 avr. 2026",
-    daysInactive: 13,
+    daysInactive: 13, // At-risk : 7–21 jours d'inactivité
     coursesCompleted: 0,
     totalCourses: 3,
     videosWatched: 1,
@@ -352,9 +485,9 @@ export const MOCK_STUDENTS: StudentEnrollment[] = [
     timeSpent: 120,
     status: "at-risk",
     courseProgress: [
-      { courseId: "1", title: "Fondamentaux du ML", progress: 22, score: null, completedAt: null },
-      { courseId: "2", title: "Python pour la Data Science", progress: 0, score: null, completedAt: null },
-      { courseId: "3", title: "Réseaux de neurones profonds", progress: 0, score: null, completedAt: null },
+      { courseId: "1", title: "Fondamentaux du ML",          progress: 22, score: null, completedAt: null },
+      { courseId: "2", title: "Python pour la Data Science",  progress: 0,  score: null, completedAt: null },
+      { courseId: "3", title: "Réseaux de neurones profonds", progress: 0,  score: null, completedAt: null },
     ],
   },
   {
@@ -366,17 +499,17 @@ export const MOCK_STUDENTS: StudentEnrollment[] = [
     school: "Polytechnique",
     enrolledAt: "3 févr. 2026",
     lastActive: "23 avr. 2026",
-    daysInactive: 0,
+    daysInactive: 0, // Actif aujourd'hui
     coursesCompleted: 3,
     totalCourses: 3,
     videosWatched: 6,
     totalVideos: 6,
     quizAvg: 91,
     timeSpent: 1100,
-    status: "completed",
+    status: "completed", // Seul étudiant avec statut "completed" dans les mocks
     courseProgress: [
-      { courseId: "1", title: "Fondamentaux du ML", progress: 100, score: 95, completedAt: "10 mars 2026" },
-      { courseId: "2", title: "Python pour la Data Science", progress: 100, score: 88, completedAt: "28 mars 2026" },
+      { courseId: "1", title: "Fondamentaux du ML",          progress: 100, score: 95, completedAt: "10 mars 2026" },
+      { courseId: "2", title: "Python pour la Data Science",  progress: 100, score: 88, completedAt: "28 mars 2026" },
       { courseId: "3", title: "Réseaux de neurones profonds", progress: 100, score: 91, completedAt: "18 avr. 2026" },
     ],
   },
@@ -389,7 +522,7 @@ export const MOCK_STUDENTS: StudentEnrollment[] = [
     school: "Polytechnique",
     enrolledAt: "3 févr. 2026",
     lastActive: "1 avr. 2026",
-    daysInactive: 22,
+    daysInactive: 22, // Inactive : > 21 jours d'inactivité
     coursesCompleted: 0,
     totalCourses: 3,
     videosWatched: 0,
@@ -398,8 +531,8 @@ export const MOCK_STUDENTS: StudentEnrollment[] = [
     timeSpent: 45,
     status: "inactive",
     courseProgress: [
-      { courseId: "1", title: "Fondamentaux du ML", progress: 8, score: null, completedAt: null },
-      { courseId: "2", title: "Python pour la Data Science", progress: 0, score: null, completedAt: null },
+      { courseId: "1", title: "Fondamentaux du ML",          progress: 8, score: null, completedAt: null },
+      { courseId: "2", title: "Python pour la Data Science",  progress: 0, score: null, completedAt: null },
       { courseId: "3", title: "Réseaux de neurones profonds", progress: 0, score: null, completedAt: null },
     ],
   },
@@ -421,22 +554,51 @@ export const MOCK_STUDENTS: StudentEnrollment[] = [
     timeSpent: 810,
     status: "active",
     courseProgress: [
-      { courseId: "1", title: "Fondamentaux du ML", progress: 100, score: 82, completedAt: "18 mars 2026" },
-      { courseId: "2", title: "Python pour la Data Science", progress: 100, score: 76, completedAt: "5 avr. 2026" },
-      { courseId: "3", title: "Réseaux de neurones profonds", progress: 32, score: null, completedAt: null },
+      { courseId: "1", title: "Fondamentaux du ML",          progress: 100, score: 82, completedAt: "18 mars 2026" },
+      { courseId: "2", title: "Python pour la Data Science",  progress: 100, score: 76, completedAt: "5 avr. 2026" },
+      { courseId: "3", title: "Réseaux de neurones profonds", progress: 32,  score: null, completedAt: null },
     ],
   },
 ];
 
+// ─── Articles Hi! Insights ───────────────────────────────────────────────────
+
+/**
+ * Union discriminée des blocs de contenu d'un article Insights.
+ *
+ * Chaque type correspond à un rendu différent dans `insights/[id]/page.tsx` :
+ *   - `"text"`       → Paragraphe de texte ordinaire.
+ *   - `"heading"`    → Titre de section (h2 ou h3).
+ *   - `"code"`       → Bloc de code avec coloration syntaxique (Prism ou Shiki).
+ *   - `"quote"`      → Citation avec auteur optionnel.
+ *   - `"key-insight"` → Encart "Point clé" mis en valeur (fond primaire).
+ *   - `"figure"`     → Image illustrative avec légende.
+ *   - `"divider"`    → Séparateur horizontal entre sections.
+ */
 export type InsightBlock =
-  | { type: "text"; content: string }
-  | { type: "heading"; content: string; level: 2 | 3 }
-  | { type: "code"; content: string; language: string }
-  | { type: "quote"; content: string; author?: string }
+  | { type: "text";        content: string }
+  | { type: "heading";     content: string; level: 2 | 3 }
+  | { type: "code";        content: string; language: string }
+  | { type: "quote";       content: string; author?: string }
   | { type: "key-insight"; content: string }
-  | { type: "figure"; url: string; caption: string }
+  | { type: "figure";      url: string; caption: string }
   | { type: "divider" };
 
+/**
+ * Métadonnées et contenu complet d'un article Hi! Insights.
+ *
+ * @property id           - UUID de l'article.
+ * @property title        - Titre complet.
+ * @property abstract     - Résumé court (affiché sur la liste et en en-tête de l'article).
+ * @property authors      - Liste des auteurs (prénom, nom, titre).
+ * @property tags         - Tags thématiques (badge ghost).
+ * @property school       - École de rattachement de l'auteur principal.
+ * @property category     - Catégorie éditoriale (ex. "IA & Cognition").
+ * @property cover        - URL de l'image de couverture.
+ * @property published_at - Date de publication ISO ("YYYY-MM-DD").
+ * @property read_time    - Temps de lecture estimé en minutes.
+ * @property blocks       - Séquence de blocs de contenu structuré.
+ */
 export interface Insight {
   id: string;
   title: string;
@@ -451,6 +613,16 @@ export interface Insight {
   blocks: InsightBlock[];
 }
 
+/**
+ * 4 articles Insights couvrant des sujets de recherche AI récents.
+ * Chaque article illustre plusieurs types de blocs pour tester le rendu.
+ *
+ * Articles :
+ *   "1" — LLMs multimodaux (Polytechnique, 8 min)
+ *   "2" — Apprentissage fédéré (Télécom Paris, 6 min)
+ *   "3" — Modèles de diffusion (ENSAE, 10 min)
+ *   "4" — Raisonnement symbolique & LLMs (Polytechnique, 7 min)
+ */
 export const MOCK_INSIGHTS: Insight[] = [
   {
     id: "1",
@@ -464,15 +636,15 @@ export const MOCK_INSIGHTS: Insight[] = [
     published_at: "2026-04-18",
     read_time: 8,
     blocks: [
-      { type: "heading", content: "Introduction", level: 2 },
-      { type: "text", content: "Les modèles de langage de grande taille (LLMs) ont connu une évolution rapide ces dernières années. L'intégration de modalités visuelles ouvre de nouvelles perspectives pour l'IA générale." },
+      { type: "heading",     content: "Introduction",                level: 2 },
+      { type: "text",        content: "Les modèles de langage de grande taille (LLMs) ont connu une évolution rapide ces dernières années. L'intégration de modalités visuelles ouvre de nouvelles perspectives pour l'IA générale." },
       { type: "key-insight", content: "Les architectures multimodales atteignent désormais des performances surhumaines sur des benchmarks de compréhension visuelle comme MMMU et MathVista." },
-      { type: "heading", content: "Architecture Vision-Language", level: 2 },
-      { type: "text", content: "Les modèles comme GPT-4o et Gemini Ultra utilisent un encodeur visuel connecté à un LLM via une couche de projection apprise. Cette approche permet une fusion sémantique profonde entre les deux modalités." },
-      { type: "code", content: "# Exemple simplifié d'architecture VLM\nclass VisionLanguageModel(nn.Module):\n    def __init__(self):\n        self.vision_encoder = CLIPEncoder()\n        self.projection = nn.Linear(768, 4096)\n        self.llm = LlamaModel()\n\n    def forward(self, image, text_tokens):\n        visual_features = self.projection(self.vision_encoder(image))\n        return self.llm(text_tokens, visual_prefix=visual_features)", language: "python" },
-      { type: "quote", content: "La compréhension multimodale n'est pas la simple concaténation de deux modalités, mais une véritable fusion sémantique.", author: "Pr. Sophie Martin" },
-      { type: "heading", content: "Implications pédagogiques", level: 2 },
-      { type: "text", content: "Ces avancées permettent d'envisager des tuteurs IA capables d'analyser des schémas, équations manuscrites et graphiques — transformant l'expérience d'apprentissage en ligne." },
+      { type: "heading",     content: "Architecture Vision-Language", level: 2 },
+      { type: "text",        content: "Les modèles comme GPT-4o et Gemini Ultra utilisent un encodeur visuel connecté à un LLM via une couche de projection apprise. Cette approche permet une fusion sémantique profonde entre les deux modalités." },
+      { type: "code",        content: "# Exemple simplifié d'architecture VLM\nclass VisionLanguageModel(nn.Module):\n    def __init__(self):\n        self.vision_encoder = CLIPEncoder()\n        self.projection = nn.Linear(768, 4096)\n        self.llm = LlamaModel()\n\n    def forward(self, image, text_tokens):\n        visual_features = self.projection(self.vision_encoder(image))\n        return self.llm(text_tokens, visual_prefix=visual_features)", language: "python" },
+      { type: "quote",       content: "La compréhension multimodale n'est pas la simple concaténation de deux modalités, mais une véritable fusion sémantique.", author: "Pr. Sophie Martin" },
+      { type: "heading",     content: "Implications pédagogiques",   level: 2 },
+      { type: "text",        content: "Ces avancées permettent d'envisager des tuteurs IA capables d'analyser des schémas, équations manuscrites et graphiques — transformant l'expérience d'apprentissage en ligne." },
     ],
   },
   {
@@ -487,13 +659,13 @@ export const MOCK_INSIGHTS: Insight[] = [
     published_at: "2026-04-10",
     read_time: 6,
     blocks: [
-      { type: "heading", content: "Le problème de la centralisation", level: 2 },
-      { type: "text", content: "Les modèles d'IA traditionnels requièrent l'agrégation de grandes quantités de données. Or, dans des domaines comme la santé ou la finance, cette centralisation est impossible ou illégale (RGPD)." },
+      { type: "heading",     content: "Le problème de la centralisation", level: 2 },
+      { type: "text",        content: "Les modèles d'IA traditionnels requièrent l'agrégation de grandes quantités de données. Or, dans des domaines comme la santé ou la finance, cette centralisation est impossible ou illégale (RGPD)." },
       { type: "key-insight", content: "L'apprentissage fédéré permet d'entraîner un modèle global sans que les données quittent jamais les appareils ou serveurs locaux." },
-      { type: "quote", content: "Nous n'apprenons pas sur les données, nous apprenons avec les données — tout en les laissant là où elles appartiennent.", author: "Dr. Amina Benali" },
-      { type: "heading", content: "FedAvg et ses variantes", level: 2 },
-      { type: "text", content: "L'algorithme FedAvg (McMahan et al., 2017) reste la référence. Chaque client entraîne localement, puis un serveur central agrège les gradients via une moyenne pondérée." },
-      { type: "code", content: "# FedAvg simplifié\ndef federated_avg(global_model, client_updates, weights):\n    aggregated = {}\n    for key in global_model.state_dict():\n        aggregated[key] = sum(\n            w * u[key] for w, u in zip(weights, client_updates)\n        )\n    global_model.load_state_dict(aggregated)\n    return global_model", language: "python" },
+      { type: "quote",       content: "Nous n'apprenons pas sur les données, nous apprenons avec les données — tout en les laissant là où elles appartiennent.", author: "Dr. Amina Benali" },
+      { type: "heading",     content: "FedAvg et ses variantes",         level: 2 },
+      { type: "text",        content: "L'algorithme FedAvg (McMahan et al., 2017) reste la référence. Chaque client entraîne localement, puis un serveur central agrège les gradients via une moyenne pondérée." },
+      { type: "code",        content: "# FedAvg simplifié\ndef federated_avg(global_model, client_updates, weights):\n    aggregated = {}\n    for key in global_model.state_dict():\n        aggregated[key] = sum(\n            w * u[key] for w, u in zip(weights, client_updates)\n        )\n    global_model.load_state_dict(aggregated)\n    return global_model", language: "python" },
     ],
   },
   {
@@ -508,12 +680,12 @@ export const MOCK_INSIGHTS: Insight[] = [
     published_at: "2026-03-28",
     read_time: 10,
     blocks: [
-      { type: "heading", content: "Au-delà des GANs", level: 2 },
-      { type: "text", content: "Les GANs ont longtemps dominé la génération de données synthétiques. Les modèles de diffusion, apparus avec DDPM (Ho et al., 2020), offrent une stabilité d'entraînement bien supérieure et une qualité de génération remarquable." },
+      { type: "heading",     content: "Au-delà des GANs",        level: 2 },
+      { type: "text",        content: "Les GANs ont longtemps dominé la génération de données synthétiques. Les modèles de diffusion, apparus avec DDPM (Ho et al., 2020), offrent une stabilité d'entraînement bien supérieure et une qualité de génération remarquable." },
       { type: "key-insight", content: "Sur le benchmark FID (Fréchet Inception Distance), Stable Diffusion 3 atteint un score de 4.2, contre 8.1 pour les meilleurs GANs." },
-      { type: "figure", url: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=600&q=60", caption: "Visualisation du processus de débruitage itératif d'un modèle de diffusion." },
-      { type: "heading", content: "Applications académiques", level: 2 },
-      { type: "text", content: "Dans nos expériences, l'augmentation de jeux de données médicaux (imagerie IRM) avec des données synthétiques générées par diffusion améliore la précision de classification de 12 points." },
+      { type: "figure",      url: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=600&q=60", caption: "Visualisation du processus de débruitage itératif d'un modèle de diffusion." },
+      { type: "heading",     content: "Applications académiques", level: 2 },
+      { type: "text",        content: "Dans nos expériences, l'augmentation de jeux de données médicaux (imagerie IRM) avec des données synthétiques générées par diffusion améliore la précision de classification de 12 points." },
     ],
   },
   {
@@ -528,10 +700,10 @@ export const MOCK_INSIGHTS: Insight[] = [
     published_at: "2026-03-15",
     read_time: 7,
     blocks: [
-      { type: "heading", content: "Le problème des hallucinations", level: 2 },
-      { type: "text", content: "Les LLMs souffrent d'hallucinations — ils produisent des réponses plausibles mais incorrectes. Les approches symboliques, basées sur des règles formelles, offrent une piste de solution." },
+      { type: "heading",     content: "Le problème des hallucinations", level: 2 },
+      { type: "text",        content: "Les LLMs souffrent d'hallucinations — ils produisent des réponses plausibles mais incorrectes. Les approches symboliques, basées sur des règles formelles, offrent une piste de solution." },
       { type: "key-insight", content: "L'approche neurosymbolique réduit les erreurs factuelles de 34% sur des benchmarks de QA à domaine fermé (MMLU Science)." },
-      { type: "quote", content: "On ne résout pas le problème de la fiabilité en ajoutant plus de paramètres. Il faut réintégrer la structure.", author: "Pr. Marc Leblanc" },
+      { type: "quote",       content: "On ne résout pas le problème de la fiabilité en ajoutant plus de paramètres. Il faut réintégrer la structure.", author: "Pr. Marc Leblanc" },
     ],
   },
 ];

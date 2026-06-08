@@ -1,3 +1,42 @@
+/**
+ * @file (platform)/studio/excel-quiz/page.tsx
+ * @description Pipeline IA "Excel → Quiz" dans Hi! Studio — "/studio/excel-quiz".
+ *
+ * Flux en 4 étapes (`Step`) :
+ *   1. `upload`     : zone de drop d'un fichier .xlsx/.xls + configuration du quiz.
+ *   2. `generating` : spinner + information sur le modèle utilisé.
+ *   3. `preview`    : éditeur du quiz généré (`QuizEditor`) + sélection du cours cible.
+ *   4. `published`  : confirmation avec options "Retour au Studio" / "Créer un autre".
+ *
+ * Appels API :
+ *   - `POST /api/v1/studio/excel-to-quiz` (FormData) : génère le quiz depuis Excel.
+ *   - `POST /api/v1/studio/save-quiz` (JSON) : publie le quiz édité.
+ *
+ * `QuizEditor` :
+ *   Éditeur question par question avec :
+ *   - `updateQuestion(idx, field, value)` : modifie un champ d'une question.
+ *   - `updateOption(qIdx, oIdx, value)` : modifie le texte d'une option.
+ *   - `removeQuestion(idx)` : supprime une question du tableau.
+ *   - Bouton lettre (A/B/C/D) — cliquer marque cette option comme correcte.
+ *   - Options : fond vert + bordure verte pour la bonne réponse.
+ *
+ * `StepBar` (identique à video-course/page.tsx) :
+ *   Indicateur de progression. Étapes : Upload / Génération IA / Prévisualisation / Publication.
+ *
+ * Configuration du quiz :
+ *   - `nQuestions` (1–20) via slider.
+ *   - `difficulty` : facile / intermédiaire / avancé.
+ *   - `language` : fr / en.
+ *   - `quizTitle` : titre optionnel (généré automatiquement par le LLM si vide).
+ *
+ * Rattachement à un cours (étape 3) :
+ *   `selectedCourse` : ID du cours cible ou "" pour quiz autonome.
+ *   En production, la liste de cours viendrait de l'API.
+ *
+ * Gestion d'erreurs :
+ *   Sur erreur API → revient à l'étape précédente avec message d'erreur.
+ */
+
 "use client";
 
 import { useState, useRef } from "react";
@@ -5,8 +44,19 @@ import Link from "next/link";
 import { ApiError } from "@/lib/api";
 import { Spinner } from "@/components/ui/Spinner";
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
 
+/**
+ * Question d'un quiz générée par le LLM.
+ *
+ * @property id          - ID unique (numérique, fourni par l'API).
+ * @property question    - Texte de la question.
+ * @property options     - Tableau des options de réponse.
+ * @property correct     - Lettre de la bonne réponse ("A", "B", "C", etc.).
+ * @property explanation - Explication de la réponse correcte.
+ * @property difficulty  - Difficulté de la question.
+ * @property source_row  - Ligne Excel source (optionnel, pour traçabilité).
+ */
 interface QuizQuestion {
   id: number;
   question: string;
@@ -17,6 +67,14 @@ interface QuizQuestion {
   source_row?: number;
 }
 
+/**
+ * Quiz généré par le LLM.
+ *
+ * @property quiz_title  - Titre du quiz.
+ * @property difficulty  - Difficulté globale.
+ * @property language    - Langue ("fr" ou "en").
+ * @property questions   - Tableau des questions.
+ */
 interface GeneratedQuiz {
   quiz_title: string;
   difficulty: string;
@@ -24,12 +82,19 @@ interface GeneratedQuiz {
   questions: QuizQuestion[];
 }
 
+/** Étapes du pipeline de génération. */
 type Step = "upload" | "generating" | "preview" | "published";
 
-// ── Step indicator ───────────────────────────────────────────────────────────
+// ── Indicateur de progression ─────────────────────────────────────────────────
 
+/** Labels des 4 étapes. */
 const STEPS = ["Upload", "Génération IA", "Prévisualisation", "Publication"];
 
+/**
+ * Barre de progression à 4 étapes avec connecteurs.
+ *
+ * @property current - Index de l'étape courante (0–3).
+ */
 function StepBar({ current }: { current: number }) {
   return (
     <div className="flex items-center gap-0 mb-10">
@@ -56,14 +121,35 @@ function StepBar({ current }: { current: number }) {
   );
 }
 
-// ── Quiz preview editor ──────────────────────────────────────────────────────
+// ── Éditeur de quiz ───────────────────────────────────────────────────────────
 
+/**
+ * Éditeur de quiz question par question.
+ * Permet de modifier les questions, options, bonne réponse et explications.
+ *
+ * @property quiz     - Quiz actuel à éditer.
+ * @property onChange - Callback appelé avec le quiz modifié.
+ */
 function QuizEditor({ quiz, onChange }: { quiz: GeneratedQuiz; onChange: (q: GeneratedQuiz) => void }) {
+  /**
+   * Met à jour un champ d'une question par son index.
+   *
+   * @param idx   - Index de la question dans le tableau.
+   * @param field - Nom du champ à modifier.
+   * @param value - Nouvelle valeur.
+   */
   function updateQuestion(idx: number, field: keyof QuizQuestion, value: string) {
     const updated = { ...quiz, questions: quiz.questions.map((q, i) => i === idx ? { ...q, [field]: value } : q) };
     onChange(updated);
   }
 
+  /**
+   * Met à jour le texte d'une option d'une question.
+   *
+   * @param qIdx - Index de la question.
+   * @param oIdx - Index de l'option.
+   * @param value - Nouveau texte.
+   */
   function updateOption(qIdx: number, oIdx: number, value: string) {
     const updated = { ...quiz, questions: quiz.questions.map((q, i) => {
       if (i !== qIdx) return q;
@@ -74,15 +160,17 @@ function QuizEditor({ quiz, onChange }: { quiz: GeneratedQuiz; onChange: (q: Gen
     onChange(updated);
   }
 
+  /** Supprime une question par son index. */
   function removeQuestion(idx: number) {
     onChange({ ...quiz, questions: quiz.questions.filter((_, i) => i !== idx) });
   }
 
+  /** Lettres correspondant aux indices d'options. */
   const LETTERS = ["A", "B", "C", "D", "E", "F"];
 
   return (
     <div className="space-y-5">
-      {/* Quiz header */}
+      {/* En-tête du quiz : titre éditable + métadonnées */}
       <div className="bg-gray-900 border border-white/10 rounded-2xl p-5">
         <label className="block text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1.5">Titre du quiz</label>
         <input
@@ -99,28 +187,36 @@ function QuizEditor({ quiz, onChange }: { quiz: GeneratedQuiz; onChange: (q: Gen
         </div>
       </div>
 
-      {/* Questions */}
+      {/* Questions individuelles */}
       {quiz.questions.map((q, qIdx) => (
         <div key={q.id} className="bg-gray-900 border border-white/10 rounded-2xl p-5">
           <div className="flex items-start gap-3 mb-4">
+            {/* Numéro de la question */}
             <span className="w-7 h-7 rounded-full bg-primary/20 text-primary text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
               {qIdx + 1}
             </span>
+            {/* Texte de la question éditable */}
             <textarea
               value={q.question}
               onChange={(e) => updateQuestion(qIdx, "question", e.target.value)}
               rows={2}
               className="flex-1 text-sm font-semibold text-white bg-gray-800 border border-white/10 rounded-xl px-3 py-2 focus:outline-none focus:border-primary/50 resize-none transition-colors"
             />
+            {/* Bouton suppression de la question */}
             <button onClick={() => removeQuestion(qIdx)} className="text-gray-600 hover:text-danger transition-colors text-sm mt-1">✕</button>
           </div>
 
+          {/* Options de réponse */}
           <div className="space-y-2 mb-4">
             {q.options.map((opt, oIdx) => {
               const letter = LETTERS[oIdx] ?? String(oIdx);
               const isCorrect = q.correct === letter;
               return (
-                <div key={oIdx} className={`flex items-center gap-3 p-2.5 rounded-xl border transition-all ${isCorrect ? "border-emerald-500/40 bg-emerald-500/5" : "border-white/5"}`}>
+                <div key={oIdx} className={`flex items-center gap-3 p-2.5 rounded-xl border transition-all ${
+                  // Branche bonne réponse : bordure + fond vert
+                  isCorrect ? "border-emerald-500/40 bg-emerald-500/5" : "border-white/5"
+                }`}>
+                  {/* Bouton lettre — marquer comme correcte au clic */}
                   <button
                     onClick={() => updateQuestion(qIdx, "correct", letter)}
                     className={`w-6 h-6 rounded-full border flex items-center justify-center text-xs font-bold shrink-0 transition-all ${
@@ -129,6 +225,7 @@ function QuizEditor({ quiz, onChange }: { quiz: GeneratedQuiz; onChange: (q: Gen
                   >
                     {letter}
                   </button>
+                  {/* Texte de l'option éditable */}
                   <input
                     value={opt}
                     onChange={(e) => updateOption(qIdx, oIdx, e.target.value)}
@@ -140,6 +237,7 @@ function QuizEditor({ quiz, onChange }: { quiz: GeneratedQuiz; onChange: (q: Gen
             })}
           </div>
 
+          {/* Explication de la bonne réponse */}
           <div>
             <label className="text-xs text-gray-600 uppercase tracking-wider font-semibold">Explication</label>
             <textarea
@@ -155,23 +253,42 @@ function QuizEditor({ quiz, onChange }: { quiz: GeneratedQuiz; onChange: (q: Gen
   );
 }
 
-// ── Main page ────────────────────────────────────────────────────────────────
+// ── Page principale ────────────────────────────────────────────────────────────
 
+/**
+ * Page du pipeline "Excel → Quiz".
+ */
 export default function ExcelQuizPage() {
+  /** Étape courante du pipeline. */
   const [step, setStep] = useState<Step>("upload");
+  /** Fichier Excel uploadé. */
   const [file, setFile] = useState<File | null>(null);
+  /** Nombre de questions à générer (1–20). */
   const [nQuestions, setNQuestions] = useState(5);
+  /** Difficulté demandée au LLM. */
   const [difficulty, setDifficulty] = useState("intermédiaire");
+  /** Langue du quiz. */
   const [language, setLanguage] = useState("fr");
+  /** Titre optionnel (le LLM en génère un si vide). */
   const [quizTitle, setQuizTitle] = useState("");
+  /** Quiz généré par l'API (null avant génération). */
   const [quiz, setQuiz] = useState<GeneratedQuiz | null>(null);
+  /** Message d'erreur API (vide si aucune erreur). */
   const [error, setError] = useState("");
+  /** ID du cours cible ("" = quiz autonome). */
   const [selectedCourse, setSelectedCourse] = useState("");
+  /** Ref pour l'input file (déclenchement programmatique). */
   const fileRef = useRef<HTMLInputElement>(null);
 
+  /** Mapping étape → index pour `StepBar`. */
   const stepIndex = { upload: 0, generating: 1, preview: 2, published: 3 }[step];
 
+  /**
+   * Lance la génération du quiz via l'API.
+   * En cas d'erreur : revient à "upload" avec message d'erreur.
+   */
   async function generate() {
+    // Guard : pas de fichier sélectionné
     if (!file) return;
     setError("");
     setStep("generating");
@@ -197,11 +314,16 @@ export default function ExcelQuizPage() {
       setQuiz(data);
       setStep("preview");
     } catch (err: unknown) {
+      // Branche erreur : retour à upload avec message
       setError(err instanceof Error ? err.message : "Une erreur est survenue");
       setStep("upload");
     }
   }
 
+  /**
+   * Publie le quiz édité via l'API.
+   * Passe à l'étape "published" si succès.
+   */
   async function publish() {
     if (!quiz) return;
     setError("");
@@ -213,6 +335,7 @@ export default function ExcelQuizPage() {
           credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            // Branche course_id vide : "standalone" (quiz autonome)
             course_id: selectedCourse || "standalone",
             quiz,
           }),
@@ -230,6 +353,7 @@ export default function ExcelQuizPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-10">
+      {/* Breadcrumb */}
       <div className="flex items-center gap-3 mb-8">
         <Link href="/studio" className="text-gray-500 hover:text-white transition-colors text-sm">← Studio</Link>
         <span className="text-gray-700">/</span>
@@ -248,22 +372,26 @@ export default function ExcelQuizPage() {
             </div>
           )}
 
-          {/* Drop zone */}
+          {/* Zone de drop / click pour sélectionner le fichier Excel */}
           <div
             onClick={() => fileRef.current?.click()}
             className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all ${
-              file ? "border-primary/50 bg-primary/5" : "border-white/10 hover:border-white/25 hover:bg-white/5"
+              // Branche fichier chargé : bordure + fond primary léger
+              file ? "border-primary/50 bg-primary/5"
+              : "border-white/10 hover:border-white/25 hover:bg-white/5"
             }`}
           >
             <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
             <div className="text-4xl mb-3">{file ? "📊" : "📂"}</div>
+            {/* Branche fichier présent : afficher nom + taille */}
             {file ? (
               <>
                 <p className="text-sm font-semibold text-white">{file.name}</p>
                 <p className="text-xs text-gray-500 mt-1">{(file.size / 1024).toFixed(1)} KB · Cliquez pour changer</p>
               </>
             ) : (
+              // Branche pas de fichier : instructions
               <>
                 <p className="text-sm font-semibold text-white mb-1">Déposez votre fichier Excel</p>
                 <p className="text-xs text-gray-500">Format .xlsx ou .xls · 10 MB max</p>
@@ -272,11 +400,11 @@ export default function ExcelQuizPage() {
             )}
           </div>
 
-          {/* Options */}
+          {/* Configuration du quiz */}
           <div className="bg-gray-900 border border-white/10 rounded-2xl p-5 space-y-4">
             <p className="text-sm font-semibold text-white mb-3">Configuration du quiz</p>
-
             <div className="grid grid-cols-2 gap-4">
+              {/* Slider nombre de questions */}
               <div>
                 <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider block mb-1.5">Nombre de questions</label>
                 <div className="flex items-center gap-2">
@@ -295,7 +423,6 @@ export default function ExcelQuizPage() {
                 </select>
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider block mb-1.5">Langue</label>
@@ -314,6 +441,7 @@ export default function ExcelQuizPage() {
             </div>
           </div>
 
+          {/* Bouton générer — désactivé si pas de fichier */}
           <button
             onClick={generate}
             disabled={!file}
@@ -324,7 +452,7 @@ export default function ExcelQuizPage() {
         </div>
       )}
 
-      {/* ── Étape 2 : Génération ── */}
+      {/* ── Étape 2 : Génération IA ── */}
       {step === "generating" && (
         <div className="flex flex-col items-center justify-center py-24 gap-6">
           <Spinner size="lg" />
@@ -338,7 +466,7 @@ export default function ExcelQuizPage() {
         </div>
       )}
 
-      {/* ── Étape 3 : Prévisualisation ── */}
+      {/* ── Étape 3 : Prévisualisation et édition ── */}
       {step === "preview" && quiz && (
         <div className="space-y-6">
           {error && (
@@ -355,7 +483,7 @@ export default function ExcelQuizPage() {
 
           <QuizEditor quiz={quiz} onChange={setQuiz} />
 
-          {/* Cours cible */}
+          {/* Rattachement optionnel à un cours existant */}
           <div className="bg-gray-900 border border-white/10 rounded-2xl p-5">
             <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider block mb-2">
               Rattacher à un cours (optionnel)
@@ -363,6 +491,7 @@ export default function ExcelQuizPage() {
             <select value={selectedCourse} onChange={(e) => setSelectedCourse(e.target.value)}
               className="w-full bg-gray-800 border border-white/10 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-primary/50">
               <option value="">— Publier comme quiz autonome —</option>
+              {/* Cours disponibles — hardcodés dans le MVP */}
               <option value="1">Fondamentaux du ML</option>
               <option value="2">Python pour la Data Science</option>
               <option value="3">Réseaux de neurones profonds</option>
@@ -378,7 +507,7 @@ export default function ExcelQuizPage() {
         </div>
       )}
 
-      {/* ── Étape 4 : Publication ── */}
+      {/* ── Étape 4 : Quiz publié ── */}
       {step === "published" && quiz && (
         <div className="flex flex-col items-center text-center py-16 gap-6">
           <div className="w-16 h-16 bg-emerald-500/20 border border-emerald-500/30 rounded-2xl flex items-center justify-center text-3xl">✓</div>
@@ -392,6 +521,7 @@ export default function ExcelQuizPage() {
             <Link href="/studio" className="border border-white/10 text-gray-300 px-5 py-2.5 rounded-xl text-sm hover:bg-white/5 transition-colors">
               Retour au Studio
             </Link>
+            {/* Réinitialise l'état pour créer un nouveau quiz */}
             <button onClick={() => { setStep("upload"); setFile(null); setQuiz(null); }}
               className="bg-primary text-white px-5 py-2.5 rounded-xl text-sm hover:bg-primary-dark transition-colors">
               Créer un autre quiz
