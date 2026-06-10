@@ -1,5 +1,3 @@
 {
-  "buildCommand": "cd apps/web && npm install --legacy-peer-deps && npm run build",
-  "outputDirectory": "apps/web/out",
-  "installCommand": "echo 'monorepo: install handled by buildCommand'"
+  "comment": "Ce fichier est ignoré car Root Directory = apps/web dans Vercel. La config active est dans apps/web/vercel.json."
 }
