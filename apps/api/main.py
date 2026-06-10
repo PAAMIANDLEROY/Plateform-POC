@@ -5,6 +5,7 @@ from alembic.config import Config
 from alembic import command
 
 from core.config import settings
+from core.domains import load_domains_from_db
 from routers import auth, users, videos, courses, moocs, apps, studio, learning, analytics
 
 
@@ -21,6 +22,7 @@ def run_migrations():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     run_migrations()
+    load_domains_from_db()  # Charge les domaines autorisés depuis Supabase
     yield
 
 

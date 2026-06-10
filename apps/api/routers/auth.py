@@ -1,4 +1,3 @@
-import os
 import logging
 from fastapi import APIRouter, HTTPException, Response, Cookie, status
 from pydantic import BaseModel, EmailStr
@@ -7,31 +6,15 @@ from typing import Optional
 from core.security import create_access_token, create_refresh_token, decode_token
 from core.store import store, CurrentUser
 from core.deps import get_current_user
+from core.domains import is_domain_allowed
 from fastapi import Depends
 from services.email import send_otp_email
-from core.config import settings
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
 REFRESH_COOKIE = "refresh_token"
 ACCESS_COOKIE = "access_token"
-
-# ── Allowed domains ───────────────────────────────────────────────────────────
-
-def _load_allowed_domains() -> set[str]:
-    path = os.path.join(os.path.dirname(__file__), "..", "allowed_domains.txt")
-    path = os.path.normpath(path)
-    try:
-        with open(path, "r") as f:
-            return {line.strip().lstrip("@").lower() for line in f if line.strip()}
-    except FileNotFoundError:
-        logger.warning("allowed_domains.txt not found — falling back to env config")
-        return set(settings.allowed_domains_list)
-
-def _is_domain_allowed(email: str) -> bool:
-    domain = email.split("@")[-1].lower()
-    return domain in _load_allowed_domains()
 
 
 # ── Schemas ───────────────────────────────────────────────────────────────────
@@ -100,7 +83,7 @@ def request_code(body: RequestCodeBody):
     """Step 1 — validate domain, generate OTP, send email."""
     email = body.email.lower()
 
-    if not _is_domain_allowed(email):
+    if not is_domain_allowed(email):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Adresse email non autorisée. Utilisez votre email institutionnel.",
