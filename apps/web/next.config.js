@@ -1,10 +1,14 @@
 /** @type {import('next').NextConfig} */
-const isProd = process.env.NODE_ENV === "production";
+
+// Permet de surcharger le basePath via NEXT_PUBLIC_BASE_PATH.
+// - GitHub Pages CI : NEXT_PUBLIC_BASE_PATH=/Plateform-POC
+// - Vercel / localhost : variable absente → basePath = ""
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
 const nextConfig = {
   output: "export",
-  basePath: isProd ? "/Plateform-POC" : "",
-  assetPrefix: isProd ? "/Plateform-POC/" : "",
+  basePath,
+  assetPrefix: basePath ? `${basePath}/` : "",
   trailingSlash: true,
   images: {
     unoptimized: true,
