@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { clsx } from "clsx";
 import { VideoCard } from "./VideoCard";
 import { CourseCard } from "./CourseCard";
 import { MOOCCard } from "./MOOCCard";
 import { AppCard } from "./AppCard";
-import { MOCK_VIDEOS, MOCK_COURSES, MOCK_MOOCS, MOCK_APPS } from "@/lib/mock";
+import { videosApi, coursesApi, moocsApi, appsApi } from "@/lib/api";
+import type { VideoResponse, CourseResponse, MOOCResponse, AppResponse } from "@/lib/api";
 
 interface SectionCatalogueProps {
   section: {
@@ -27,14 +28,55 @@ const tabs = [
 ] as const;
 
 const LEVELS = ["Débutant", "Intermédiaire", "Avancé"];
-const CATEGORIES_VIDEO = ["Tous", "IA & Data", "Mathématiques", "Finance", "Programmation"];
+const CATEGORIES_VIDEO  = ["Tous", "IA & Data", "Mathématiques", "Finance", "Programmation"];
 const CATEGORIES_COURSE = ["Tous", "IA & Data", "Programmation", "Statistiques", "DevOps", "Société & Éthique", "Mathématiques"];
+
+/** French filter label → API level value */
+const LEVEL_MAP: Record<string, string> = {
+  "Débutant": "beginner",
+  "Intermédiaire": "intermediate",
+  "Avancé": "advanced",
+};
 
 export function SectionCatalogue({ section, activeModule }: SectionCatalogueProps) {
   const base = `/${section.slug}`;
-  const [search, setSearch]     = useState("");
-  const [level, setLevel]       = useState("Tous");
+
+  // ── Filters ──────────────────────────────────────────────────────────────────
+  const [search,   setSearch]   = useState("");
+  const [level,    setLevel]    = useState("Tous");
   const [category, setCategory] = useState("Tous");
+
+  // ── API data ─────────────────────────────────────────────────────────────────
+  const [videos,  setVideos]  = useState<VideoResponse[]>([]);
+  const [courses, setCourses] = useState<CourseResponse[]>([]);
+  const [moocs,   setMoocs]   = useState<MOOCResponse[]>([]);
+  const [apps,    setApps]    = useState<AppResponse[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    (async () => {
+      try {
+        switch (activeModule) {
+          case "tube":    { const d = await videosApi.list();  if (!cancelled) setVideos(d);  break; }
+          case "courses": { const d = await coursesApi.list(); if (!cancelled) setCourses(d); break; }
+          case "moocs":   { const d = await moocsApi.list();   if (!cancelled) setMoocs(d);   break; }
+          case "apps":    { const d = await appsApi.list();    if (!cancelled) setApps(d);    break; }
+        }
+      } catch (e) {
+        if (!cancelled) setError("Impossible de charger les contenus.");
+        console.error(e);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [activeModule]);
 
   function handleModuleChange() {
     setSearch("");
@@ -42,43 +84,46 @@ export function SectionCatalogue({ section, activeModule }: SectionCatalogueProp
     setCategory("Tous");
   }
 
+  // ── Client-side filtering ─────────────────────────────────────────────────────
   const filteredVideos = useMemo(() =>
-    MOCK_VIDEOS.filter((v) => {
+    videos.filter((v) => {
       const q = search.toLowerCase();
-      const matchSearch   = !q || v.title.toLowerCase().includes(q) || v.tags.some((t) => t.toLowerCase().includes(q));
-      const matchCategory = category === "Tous" || v.category === category;
-      return matchSearch && matchCategory;
+      return (
+        (!q || v.title.toLowerCase().includes(q) || v.tags.some(t => t.toLowerCase().includes(q))) &&
+        (category === "Tous" || v.category === category)
+      );
     }),
-  [search, category]);
+  [videos, search, category]);
 
   const filteredCourses = useMemo(() =>
-    MOCK_COURSES.filter((c) => {
+    courses.filter((c) => {
       const q = search.toLowerCase();
-      const matchSearch   = !q || c.title.toLowerCase().includes(q) || c.description.toLowerCase().includes(q);
-      const matchLevel    = level === "Tous" || c.level === level;
-      const matchCategory = category === "Tous" || c.category === category;
-      return matchSearch && matchLevel && matchCategory;
+      return (
+        (!q || c.title.toLowerCase().includes(q) || (c.description ?? "").toLowerCase().includes(q)) &&
+        (level === "Tous" || c.level === LEVEL_MAP[level]) &&
+        (category === "Tous" || c.category === category)
+      );
     }),
-  [search, level, category]);
+  [courses, search, level, category]);
 
   const filteredMoocs = useMemo(() =>
-    MOCK_MOOCS.filter((m) => {
+    moocs.filter((m) => {
       const q = search.toLowerCase();
-      return !q || m.title.toLowerCase().includes(q) || m.description.toLowerCase().includes(q);
+      return !q || m.title.toLowerCase().includes(q) || (m.description ?? "").toLowerCase().includes(q);
     }),
-  [search]);
+  [moocs, search]);
 
   const filteredApps = useMemo(() =>
-    MOCK_APPS.filter((a) => {
+    apps.filter((a) => {
       const q = search.toLowerCase();
       return (
         !q ||
         a.title.toLowerCase().includes(q) ||
-        a.description.toLowerCase().includes(q) ||
-        a.tags.some((t) => t.toLowerCase().includes(q))
+        (a.description ?? "").toLowerCase().includes(q) ||
+        a.tags.some(t => t.toLowerCase().includes(q))
       );
     }),
-  [search]);
+  [apps, search]);
 
   const showCategories  = activeModule === "tube" || activeModule === "courses";
   const showLevels      = activeModule === "courses";
@@ -104,7 +149,7 @@ export function SectionCatalogue({ section, activeModule }: SectionCatalogueProp
           <h1 className="text-2xl font-bold text-center text-gray-900 mb-1">{section.label}</h1>
           <p className="text-center text-sm text-gray-500 mb-6">{section.description}</p>
 
-          {/* Barre de recherche — pill centré */}
+          {/* Search pill */}
           <div className="relative">
             <svg
               className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/40 pointer-events-none"
@@ -130,7 +175,7 @@ export function SectionCatalogue({ section, activeModule }: SectionCatalogueProp
             )}
           </div>
 
-          {/* Chips catégorie + niveau */}
+          {/* Filter chips */}
           {(showCategories || showLevels) && (
             <div className="flex flex-wrap justify-center gap-2 mt-4">
               {showCategories && categoryOptions.map((c) => (
@@ -168,7 +213,7 @@ export function SectionCatalogue({ section, activeModule }: SectionCatalogueProp
 
       {/* ── Content area ── */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Onglets modules — pills */}
+        {/* Module tabs */}
         <div className="flex items-center gap-2 mb-8 flex-wrap">
           {tabs.map((tab) => (
             <Link
@@ -187,89 +232,117 @@ export function SectionCatalogue({ section, activeModule }: SectionCatalogueProp
             </Link>
           ))}
           <span className="ml-auto text-sm text-gray-400 tabular-nums">
-            {resultCount} résultat{resultCount !== 1 ? "s" : ""}
+            {loading ? "…" : `${resultCount} résultat${resultCount !== 1 ? "s" : ""}`}
           </span>
         </div>
 
-        {/* Grille Tube */}
-        {activeModule === "tube" && (
-          filteredVideos.length === 0
-            ? <EmptyState query={search} />
-            : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredVideos.map((v) => (
-                  <VideoCard
-                    key={v.id}
-                    id={v.id}
-                    title={v.title}
-                    youtube_id={v.youtubeId}
-                    thumbnail_url={v.thumbnail}
-                    category={v.category}
-                    school={v.school}
-                    tags={v.tags}
-                    view_count={v.views}
-                  />
-                ))}
+        {/* Loading skeleton */}
+        {loading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="rounded-2xl border border-gray-100 overflow-hidden animate-pulse">
+                <div className="h-44 bg-gray-100" />
+                <div className="p-4 space-y-2">
+                  <div className="h-3 bg-gray-100 rounded w-1/3" />
+                  <div className="h-4 bg-gray-100 rounded w-3/4" />
+                  <div className="h-3 bg-gray-100 rounded w-1/2" />
+                </div>
               </div>
+            ))}
+          </div>
         )}
 
-        {/* Grille Courses */}
-        {activeModule === "courses" && (
-          filteredCourses.length === 0
-            ? <EmptyState query={search} />
-            : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredCourses.map((c) => (
-                  <CourseCard
-                    key={c.id}
-                    id={c.id}
-                    title={c.title}
-                    description={c.description}
-                    category={c.category}
-                    level={c.level === "Débutant" ? "beginner" : c.level === "Avancé" ? "advanced" : "intermediate"}
-                    school={c.school}
-                    estimated_duration_minutes={c.duration}
-                    status={c.status}
-                  />
-                ))}
-              </div>
+        {/* Error state */}
+        {!loading && error && (
+          <div className="text-center py-20 text-gray-500">
+            <p className="text-base mb-1">{error}</p>
+            <p className="text-sm">Vérifiez votre connexion ou réessayez.</p>
+          </div>
         )}
 
-        {/* Grille MOOCs */}
-        {activeModule === "moocs" && (
-          filteredMoocs.length === 0
-            ? <EmptyState query={search} />
-            : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredMoocs.map((m) => (
-                  <MOOCCard
-                    key={m.id}
-                    id={m.id}
-                    title={m.title}
-                    description={m.description}
-                    school={m.school}
-                    enrolled_count={m.enrolled}
-                    modules_count={m.courses}
-                  />
-                ))}
-              </div>
-        )}
+        {/* Results */}
+        {!loading && !error && (
+          <>
+            {/* Tube */}
+            {activeModule === "tube" && (
+              filteredVideos.length === 0
+                ? <EmptyState query={search} />
+                : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredVideos.map((v) => (
+                      <VideoCard
+                        key={v.id}
+                        id={v.id}
+                        title={v.title}
+                        youtube_id={v.youtube_id ?? undefined}
+                        thumbnail_url={v.thumbnail_url ?? undefined}
+                        category={v.category ?? undefined}
+                        school={v.school ?? undefined}
+                        tags={v.tags}
+                        view_count={v.view_count}
+                      />
+                    ))}
+                  </div>
+            )}
 
-        {/* Grille Apps */}
-        {activeModule === "apps" && (
-          filteredApps.length === 0
-            ? <EmptyState query={search} />
-            : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {filteredApps.map((a) => (
-                  <AppCard
-                    key={a.id}
-                    id={a.id}
-                    title={a.title}
-                    description={a.description}
-                    school={a.school}
-                    tags={a.tags}
-                    url={a.url}
-                    githubRepo={a.githubRepo}
-                  />
-                ))}
-              </div>
+            {/* Courses */}
+            {activeModule === "courses" && (
+              filteredCourses.length === 0
+                ? <EmptyState query={search} />
+                : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredCourses.map((c) => (
+                      <CourseCard
+                        key={c.id}
+                        id={c.id}
+                        title={c.title}
+                        description={c.description ?? ""}
+                        category={c.category ?? ""}
+                        level={c.level as "beginner" | "intermediate" | "advanced"}
+                        school={c.school ?? ""}
+                        estimated_duration_minutes={c.estimated_duration_minutes}
+                        status={c.status}
+                      />
+                    ))}
+                  </div>
+            )}
+
+            {/* MOOCs */}
+            {activeModule === "moocs" && (
+              filteredMoocs.length === 0
+                ? <EmptyState query={search} />
+                : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredMoocs.map((m) => (
+                      <MOOCCard
+                        key={m.id}
+                        id={m.id}
+                        title={m.title}
+                        description={m.description ?? ""}
+                        school={m.school ?? ""}
+                        enrolled_count={m.enrolled_count}
+                        modules_count={m.modules.length}
+                      />
+                    ))}
+                  </div>
+            )}
+
+            {/* Apps */}
+            {activeModule === "apps" && (
+              filteredApps.length === 0
+                ? <EmptyState query={search} />
+                : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {filteredApps.map((a) => (
+                      <AppCard
+                        key={a.id}
+                        id={a.id}
+                        title={a.title}
+                        description={a.description ?? ""}
+                        school={a.school ?? ""}
+                        tags={a.tags}
+                        url={a.url}
+                      />
+                    ))}
+                  </div>
+            )}
+          </>
         )}
       </div>
     </div>
