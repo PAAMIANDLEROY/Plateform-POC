@@ -51,7 +51,7 @@ def test_request_code_invalid_domain():
 
 def test_request_code_valid_domain():
     """Allowed domain + working email service → 200."""
-    with patch("core.domains.is_domain_allowed", return_value=True), \
+    with patch("routers.auth.is_domain_allowed", return_value=True), \
          patch("routers.auth.send_otp_email", return_value=True):
         response = client.post(
             "/api/v1/auth/request-code",
