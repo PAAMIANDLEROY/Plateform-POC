@@ -1,17 +1,21 @@
 """
 Analytics router — Phase 6.
-Provides platform-level KPIs and at-risk alerts for admin/teacher dashboards.
-Uses the in-memory store (same pattern as other routers).
+Platform-level KPIs and at-risk alerts for admin/teacher dashboards.
+Uses PostgreSQL via SQLAlchemy.
 """
-
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import StreamingResponse
-from datetime import datetime
 import csv
 import io
+from datetime import datetime
+
+from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
+from sqlalchemy.orm import Session
 
 from core.deps import get_current_user, require_role
-from core.store import store, CurrentUser
+from core.store import CurrentUser
+from database import get_db
+from models.user import User
+from models.course import UserCourseProgress
 
 router = APIRouter(prefix="/api/v1/analytics", tags=["analytics"])
 
@@ -24,52 +28,52 @@ TEACHER_ROLES = ("teacher", "admin", "superuser")
 @router.get("/platform")
 def get_platform_kpis(
     current_user: CurrentUser = Depends(require_role(*ADMIN_ROLES)),
+    db: Session = Depends(get_db),
 ):
     """Global platform KPIs for admin dashboard."""
-    all_users = store.get_all_users()
+    all_users = db.query(User).all()
+
     users_by_role: dict[str, int] = {}
     for user in all_users:
-        role = user.get("role", "student")
+        role = user.role.value if hasattr(user.role, "value") else str(user.role)
         users_by_role[role] = users_by_role.get(role, 0) + 1
 
     return {
         "users": {
             "total": len(all_users),
             "by_role": users_by_role,
-            "active_last_30d": len(all_users),
+            "active_last_30d": len(all_users),  # Simplified for MVP
         },
         "content": {
-            "note": "Content counts available via PostgreSQL when DB is connected.",
+            "note": "Counts available via /api/v1/courses, /api/v1/videos, etc.",
         },
         "generated_at": datetime.utcnow().isoformat(),
     }
 
 
-# ─── At-risk students ────────────────────────────────────────────────────────
+# ─── At-risk students ─────────────────────────────────────────────────────────
 
 @router.get("/at-risk")
 def get_at_risk_students(
     inactivity_days: int = 7,
     score_threshold: int = 60,
     current_user: CurrentUser = Depends(require_role(*TEACHER_ROLES)),
+    db: Session = Depends(get_db),
 ):
     """
     Returns learners who exceed the configured at-risk thresholds.
       - inactivity_days: days since last activity (default 7)
       - score_threshold: minimum quiz average below which a student is at risk (default 60)
     """
-    all_users = store.get_all_users()
+    students = db.query(User).filter(User.role == "student").all()
     at_risk = []
 
-    for user in all_users:
-        if user.get("role") != "student":
-            continue
+    for user in students:
+        progress_list = db.query(UserCourseProgress).filter(
+            UserCourseProgress.user_id == user.id
+        ).all()
 
-        user_id = user["id"]
-        progress_list = store.get_all_progress(user_id)
-
-        # Check average score
-        scores = [p.get("score") for p in progress_list if p.get("score") is not None]
+        scores = [p.score for p in progress_list if p.score is not None]
         avg_score = int(sum(scores) / len(scores)) if scores else None
 
         at_risk_reason = []
@@ -78,9 +82,9 @@ def get_at_risk_students(
 
         if at_risk_reason:
             at_risk.append({
-                "id": user_id,
-                "email": user.get("email", ""),
-                "school": user.get("school", ""),
+                "id": user.id,
+                "email": user.email,
+                "school": user.school or "",
                 "avg_score": avg_score,
                 "reasons": at_risk_reason,
             })
@@ -95,24 +99,25 @@ def get_at_risk_students(
     }
 
 
-# ─── CSV exports ─────────────────────────────────────────────────────────────
+# ─── CSV exports ──────────────────────────────────────────────────────────────
 
 @router.get("/export/users")
 def export_users_csv(
     current_user: CurrentUser = Depends(require_role(*ADMIN_ROLES)),
+    db: Session = Depends(get_db),
 ):
     """Export all users as CSV (admin only). Anonymised for RGPD compliance."""
-    all_users = store.get_all_users()
+    all_users = db.query(User).all()
 
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(["ID", "Role", "École", "Vérifié"])
     for u in all_users:
         writer.writerow([
-            u.get("id", ""),
-            u.get("role", ""),
-            u.get("school", ""),
-            "Oui" if u.get("is_verified") else "Non",
+            u.id,
+            u.role.value if hasattr(u.role, "value") else str(u.role),
+            u.school or "",
+            "Oui" if u.is_verified else "Non",
         ])
 
     output.seek(0)
@@ -132,7 +137,7 @@ def export_courses_csv(
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(["Note"])
-    writer.writerow(["Export cours disponible via la base de données PostgreSQL."])
+    writer.writerow(["Export cours disponible via /api/v1/courses/"])
 
     output.seek(0)
     today = datetime.utcnow().date()

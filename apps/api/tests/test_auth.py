@@ -1,19 +1,28 @@
 """
 Tests for the authentication endpoints.
 Phase 0.3 — CI/CD backend test coverage.
+
+Uses SQLite in-memory for isolation (tables created from ORM models).
 """
 import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
 
-# Set test environment vars before importing the app
+# Set test environment vars BEFORE importing anything from the app
 import os
-os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+os.environ.setdefault("DATABASE_URL", "sqlite:///./test_hi_platform.db")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-not-for-production")
 os.environ.setdefault("ALLOWED_DOMAINS", "polytechnique.edu,hec.fr,test.com")
 os.environ.setdefault("ANTHROPIC_API_KEY", "")
 os.environ.setdefault("OPENAI_API_KEY", "")
 os.environ.setdefault("FRONTEND_URL", "http://localhost:3000")
+
+# Import database and all models so Base.metadata knows about every table
+from database import Base, engine
+import models  # noqa: F401 — registers all ORM classes with Base
+
+# Create all tables in the test SQLite DB (bypass PostgreSQL-specific migrations)
+Base.metadata.create_all(bind=engine)
 
 from main import app
 
@@ -37,14 +46,11 @@ def test_request_code_invalid_domain():
         "/api/v1/auth/request-code",
         json={"email": "user@gmail.com"},
     )
-    # The API returns 400 (not 403) for non-allowed domains
     assert response.status_code == 400
 
 
 def test_request_code_valid_domain():
     """Allowed domain + working email service → 200."""
-    # Mock both the domain check and the email call to isolate this unit test
-    # from runtime configuration (settings singleton loaded before env vars in tests)
     with patch("core.domains.is_domain_allowed", return_value=True), \
          patch("routers.auth.send_otp_email", return_value=True):
         response = client.post(
@@ -55,7 +61,7 @@ def test_request_code_valid_domain():
 
 
 def test_verify_code_wrong_code():
-    """Wrong OTP code must return 401."""
+    """Wrong OTP code must return 400."""
     response = client.post(
         "/api/v1/auth/verify-code",
         json={"email": "user@test.com", "code": "000000"},

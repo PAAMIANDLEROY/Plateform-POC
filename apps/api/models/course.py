@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Integer, DateTime, Enum as SAEnum, ForeignKey, Text, JSON, Boolean
+from typing import Optional
+from sqlalchemy import String, Integer, DateTime, Enum as SAEnum, ForeignKey, Text, JSON, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import enum
 
@@ -44,7 +45,11 @@ class Course(Base):
     estimated_duration_minutes: Mapped[int] = mapped_column(Integer, default=0)
     created_by: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     author = relationship("User", foreign_keys=[created_by])
     blocks = relationship("CourseBlock", back_populates="course", cascade="all, delete-orphan", order_by="CourseBlock.position")
@@ -64,14 +69,30 @@ class CourseBlock(Base):
 
 
 class UserCourseProgress(Base):
+    """
+    Tracks a user's progress on a course.
+    Extended in migration 0005 to add progress_pct, score, started_at.
+    """
     __tablename__ = "user_course_progress"
+    __table_args__ = (
+        UniqueConstraint("user_id", "course_id", name="uq_user_course_progress_user_course"),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"))
     course_id: Mapped[str] = mapped_column(String(36), ForeignKey("courses.id"))
-    completed_blocks: Mapped[list | None] = mapped_column(JSON, default=list)
-    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    # Added in migration 0005
+    progress_pct: Mapped[int] = mapped_column(Integer, default=0)
+    score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Original columns
+    completed_blocks: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     user = relationship("User", foreign_keys=[user_id])
     course = relationship("Course", back_populates="enrollments")

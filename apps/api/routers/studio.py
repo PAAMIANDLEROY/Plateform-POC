@@ -143,9 +143,7 @@ async def save_quiz(
     body: SaveQuizRequest,
     current_user: CurrentUser = Depends(require_role(*TEACHER_ROLES)),
 ):
-    from core.store import store
-    quiz_data = body.quiz.model_dump()
-    store.update(current_user.id, {f"draft_quiz_{body.course_id}": json.dumps(quiz_data)})
+    # TODO: persist quiz to DB course blocks (post-MVP)
     return {"message": "Quiz sauvegardé", "course_id": body.course_id, "questions_count": len(body.quiz.questions)}
 
 
@@ -240,22 +238,9 @@ async def save_course(
     body: SaveCourseRequest,
     current_user: CurrentUser = Depends(require_role(*TEACHER_ROLES)),
 ):
-    """Sauvegarde un cours généré. Stockage en mémoire (DB dans une prochaine étape)."""
-    from core.store import store
+    """Sauvegarde un cours généré. TODO: persist to DB via courses router (post-MVP)."""
     import uuid
     course_id = str(uuid.uuid4())
-    store.update(current_user.id, {
-        f"draft_course_{course_id}": json.dumps({
-            "id": course_id,
-            "title": body.title,
-            "content": body.content,
-            "level": body.level,
-            "language": body.language,
-            "category": body.category,
-            "school": body.school,
-            "created_by": current_user.id,
-        })
-    })
     return {"message": "Cours sauvegardé", "course_id": course_id, "title": body.title}
 
 

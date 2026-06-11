@@ -1,14 +1,22 @@
 import csv
 import io
 import json
+import uuid
 from datetime import datetime, timezone
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import Optional
+from sqlalchemy.orm import Session
 
-from core.store import store, CurrentUser
+from core.store import CurrentUser
 from core.deps import get_current_user, require_role
+from core.user_utils import user_to_current
+from database import get_db
+from models.user import User, UserRole
+from models.course import UserCourseProgress
+from models.learning import UserBadge, UserCertificate
 
 router = APIRouter(prefix="/api/v1/users", tags=["users"])
 
@@ -66,57 +74,143 @@ def get_me(current_user: CurrentUser = Depends(get_current_user)):
 
 
 @router.put("/me", response_model=UserOut)
-def update_me(body: UpdateProfileRequest, current_user: CurrentUser = Depends(get_current_user)):
-    updated = store.update(current_user.id, body.model_dump(exclude_none=True))
-    if not updated:
+def update_me(
+    body: UpdateProfileRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    user = db.query(User).filter(User.id == current_user.id).first()
+    if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return _to_out(CurrentUser(updated))
+
+    for field, value in body.model_dump(exclude_none=True).items():
+        setattr(user, field, value)
+
+    db.commit()
+    db.refresh(user)
+    return _to_out(user_to_current(user))
 
 
 # ── RGPD — Art. 15 : Droit d'accès ───────────────────────────────────────────
 
 @router.get("/me/data")
-def get_my_data(current_user: CurrentUser = Depends(get_current_user)):
-    data = store.export_user_data(current_user.id)
-    if not data:
+def get_my_data(
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    user = db.query(User).filter(User.id == current_user.id).first()
+    if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return data
+
+    progress_rows = db.query(UserCourseProgress).filter(
+        UserCourseProgress.user_id == current_user.id
+    ).all()
+    badge_rows = db.query(UserBadge).filter(UserBadge.user_id == current_user.id).all()
+    cert_rows = db.query(UserCertificate).filter(UserCertificate.user_id == current_user.id).all()
+
+    return {
+        "id": user.id,
+        "email": user.email,
+        "first_name": user.first_name or "",
+        "last_name": user.last_name or "",
+        "role": str(user.role.value if hasattr(user.role, "value") else user.role),
+        "school": user.school or "",
+        "bio": user.bio or "",
+        "avatar_url": user.avatar_url,
+        "linkedin": user.linkedin or "",
+        "github": user.github or "",
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+        "consent": current_user.consent,
+        "_export_date": datetime.now(timezone.utc).isoformat(),
+        "_platform": "Hi! Platform — Hi! PARIS",
+        "learning_progress": [
+            {
+                "course_id": p.course_id,
+                "progress_pct": p.progress_pct,
+                "score": p.score,
+                "completed": p.completed_at is not None,
+                "completed_at": p.completed_at.isoformat() if p.completed_at else None,
+            }
+            for p in progress_rows
+        ],
+        "badges": [
+            {"badge_id": b.badge_id, "awarded_at": b.awarded_at.isoformat()}
+            for b in badge_rows
+        ],
+        "certificates": [
+            {
+                "id": c.id,
+                "course_id": c.course_id,
+                "course_title": c.course_title,
+                "issued_at": c.issued_at.isoformat(),
+            }
+            for c in cert_rows
+        ],
+    }
 
 
-# ── RGPD — Art. 20 : Portabilité ────────────────────────────────────────────
+# ── RGPD — Art. 20 : Portabilité ─────────────────────────────────────────────
 
 @router.get("/me/export")
-def export_my_data(current_user: CurrentUser = Depends(get_current_user)):
-    data = store.export_user_data(current_user.id)
-    if not data:
-        raise HTTPException(status_code=404, detail="User not found")
-
+def export_my_data(
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    data = get_my_data(current_user=current_user, db=db)
     json_bytes = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
     return StreamingResponse(
         io.BytesIO(json_bytes),
         media_type="application/json",
-        headers={"Content-Disposition": f"attachment; filename=hi-platform-export-{current_user.id[:8]}.json"},
+        headers={
+            "Content-Disposition": f"attachment; filename=hi-platform-export-{current_user.id[:8]}.json"
+        },
     )
 
 
-# ── RGPD — Art. 17 : Droit à l'effacement ───────────────────────────────────
+# ── RGPD — Art. 17 : Droit à l'effacement ────────────────────────────────────
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
-def delete_me(current_user: CurrentUser = Depends(get_current_user)):
-    """Anonymise les données PII dans les 30 jours (ici : immédiat en in-memory)."""
-    ok = store.anonymize(current_user.id)
-    if not ok:
+def delete_me(
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Anonymise les données PII dans les 30 jours (ici : immédiat)."""
+    user = db.query(User).filter(User.id == current_user.id).first()
+    if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
+    anon_id = f"deleted_{uuid.uuid4().hex[:8]}"
+    user.email = f"{anon_id}@deleted.invalid"
+    user.first_name = "[supprimé]"
+    user.last_name = "[supprimé]"
+    user.school = None
+    user.bio = None
+    user.avatar_url = None
+    user.linkedin = None
+    user.github = None
+    user.refresh_token = None
+    user.is_anonymized = True
+    db.commit()
 
 
 # ── RGPD — Art. 21 : Consentement ────────────────────────────────────────────
 
 @router.put("/me/consent", response_model=UserOut)
-def update_consent(body: ConsentRequest, current_user: CurrentUser = Depends(get_current_user)):
-    updated = store.update_consent(current_user.id, body.analytics, body.tracking)
-    if not updated:
+def update_consent(
+    body: ConsentRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    user = db.query(User).filter(User.id == current_user.id).first()
+    if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return _to_out(CurrentUser(updated))
+
+    user.consent_analytics = body.analytics
+    user.consent_tracking = body.tracking
+    user.consent_updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(user)
+    return _to_out(user_to_current(user))
 
 
 @router.get("/me/consent")
@@ -127,7 +221,10 @@ def get_consent(current_user: CurrentUser = Depends(get_current_user)):
 # ── Import massif Excel (admin) ───────────────────────────────────────────────
 
 @router.post("/import", dependencies=[Depends(require_role("admin", "superuser"))])
-async def import_users_excel(file: UploadFile = File(...)):
+async def import_users_excel(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
     """
     Import batch depuis Excel.
     Colonnes attendues: email, first_name, last_name, school, role (optionnel)
@@ -144,7 +241,10 @@ async def import_users_excel(file: UploadFile = File(...)):
     wb = openpyxl.load_workbook(io.BytesIO(content))
     ws = wb.active
 
-    headers = [str(c.value).strip().lower() if c.value else "" for c in next(ws.iter_rows(min_row=1, max_row=1))]
+    headers = [
+        str(c.value).strip().lower() if c.value else ""
+        for c in next(ws.iter_rows(min_row=1, max_row=1))
+    ]
     required = {"email", "first_name", "last_name"}
     if not required.issubset(set(headers)):
         raise HTTPException(
@@ -155,25 +255,39 @@ async def import_users_excel(file: UploadFile = File(...)):
     created, skipped, errors = [], [], []
 
     for row in ws.iter_rows(min_row=2, values_only=True):
-        row_data = {headers[i]: (str(v).strip() if v is not None else "") for i, v in enumerate(row)}
+        row_data = {
+            headers[i]: (str(v).strip() if v is not None else "")
+            for i, v in enumerate(row)
+        }
         email = row_data.get("email", "").lower()
 
         if not email or "@" not in email:
             errors.append({"email": email, "reason": "Email invalide"})
             continue
 
-        if store.get_by_email(email):
+        if db.query(User).filter(User.email == email).first():
             skipped.append(email)
             continue
 
-        user, _ = store.get_or_create(email)
-        store.update(user["id"], {
-            "first_name": row_data.get("first_name", ""),
-            "last_name": row_data.get("last_name", ""),
-            "school": row_data.get("school", ""),
-            "role": row_data.get("role", "student") if row_data.get("role") in ("student", "teacher", "admin") else "student",
-        })
+        role_val = row_data.get("role", "student")
+        if role_val not in ("student", "teacher", "admin"):
+            role_val = "student"
+
+        user = User(
+            id=str(uuid.uuid4()),
+            email=email,
+            first_name=row_data.get("first_name", ""),
+            last_name=row_data.get("last_name", ""),
+            school=row_data.get("school", "") or None,
+            role=role_val,
+            hashed_password="",
+            is_active=True,
+            is_verified=True,
+        )
+        db.add(user)
         created.append(email)
+
+    db.commit()
 
     return {
         "created": len(created),

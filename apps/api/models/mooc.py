@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Integer, DateTime, Enum as SAEnum, ForeignKey, Text, Boolean
+from typing import Optional
+from sqlalchemy import String, Integer, DateTime, Enum as SAEnum, ForeignKey, Text, Boolean, JSON, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import enum
 
@@ -25,7 +26,11 @@ class MOOC(Base):
     is_linear: Mapped[bool] = mapped_column(Boolean, default=True)
     created_by: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     author = relationship("User", foreign_keys=[created_by])
     modules = relationship("MOOCModule", back_populates="mooc", cascade="all, delete-orphan", order_by="MOOCModule.position")
@@ -41,8 +46,8 @@ class MOOCModule(Base):
     position: Mapped[int] = mapped_column(Integer)
 
     # Phase 5.2 — Conditional unlock (prerequisites)
-    min_score_to_unlock: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    prerequisite_module_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("mooc_modules.id"), nullable=True)
+    min_score_to_unlock: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    prerequisite_module_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("mooc_modules.id"), nullable=True)
 
     mooc = relationship("MOOC", back_populates="modules")
     courses = relationship("MOOCModuleCourse", back_populates="module", cascade="all, delete-orphan", order_by="MOOCModuleCourse.position")
@@ -62,13 +67,22 @@ class MOOCModuleCourse(Base):
 
 
 class UserMOOCEnrollment(Base):
+    """
+    Tracks a user's enrollment in a MOOC.
+    Extended in migration 0005 to add completed_modules.
+    """
     __tablename__ = "user_mooc_enrollments"
+    __table_args__ = (
+        UniqueConstraint("user_id", "mooc_id", name="uq_user_mooc_enrollment_user_mooc"),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"))
     mooc_id: Mapped[str] = mapped_column(String(36), ForeignKey("moocs.id"))
     enrolled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Added in migration 0005
+    completed_modules: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
 
     user = relationship("User", foreign_keys=[user_id])
     mooc = relationship("MOOC", back_populates="enrollments")

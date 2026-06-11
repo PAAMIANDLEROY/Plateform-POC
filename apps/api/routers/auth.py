@@ -1,13 +1,22 @@
+import uuid
+import random
 import logging
-from fastapi import APIRouter, HTTPException, Response, Cookie, status
-from pydantic import BaseModel, EmailStr
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 
+from fastapi import APIRouter, HTTPException, Response, Cookie, status, Depends
+from pydantic import BaseModel, EmailStr
+from sqlalchemy.orm import Session
+
 from core.security import create_access_token, create_refresh_token, decode_token
-from core.store import store, CurrentUser
+from core.store import CurrentUser
 from core.deps import get_current_user
 from core.domains import is_domain_allowed
-from fastapi import Depends
+from core.user_utils import user_to_current
+from core.config import settings
+from database import get_db
+from models.user import User, UserRole
+from models.learning import Otp
 from services.email import send_otp_email
 
 logger = logging.getLogger(__name__)
@@ -15,6 +24,7 @@ router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
 REFRESH_COOKIE = "refresh_token"
 ACCESS_COOKIE = "access_token"
+OTP_EXPIRE_MINUTES = 10
 
 
 # ── Schemas ───────────────────────────────────────────────────────────────────
@@ -52,8 +62,7 @@ class MessageResponse(BaseModel):
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _user_out(user_data: dict) -> UserOut:
-    cu = CurrentUser(user_data)
+def _user_out(cu: CurrentUser) -> UserOut:
     return UserOut(
         id=cu.id,
         email=cu.email,
@@ -70,17 +79,45 @@ def _user_out(user_data: dict) -> UserOut:
     )
 
 def _set_cookies(response: Response, access_token: str, refresh_token: str) -> None:
-    response.set_cookie(ACCESS_COOKIE, access_token, httponly=True, secure=False, samesite="lax",
-                        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60)
-    response.set_cookie(REFRESH_COOKIE, refresh_token, httponly=True, secure=False, samesite="lax",
-                        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400, path="/api/v1/auth/refresh")
+    response.set_cookie(
+        ACCESS_COOKIE, access_token,
+        httponly=True, secure=False, samesite="lax",
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    )
+    response.set_cookie(
+        REFRESH_COOKIE, refresh_token,
+        httponly=True, secure=False, samesite="lax",
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
+        path="/api/v1/auth/refresh",
+    )
+
+def _get_or_create_user(db: Session, email: str) -> tuple[User, bool]:
+    """Return (user, is_new). Creates a new student if email not found."""
+    user = db.query(User).filter(User.email == email).first()
+    if user:
+        return user, False
+
+    user = User(
+        id=str(uuid.uuid4()),
+        email=email,
+        first_name="",
+        last_name="",
+        hashed_password="",  # OTP auth — no password
+        role=UserRole.student,
+        is_active=True,
+        is_verified=True,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user, True
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @router.post("/request-code", response_model=MessageResponse)
-def request_code(body: RequestCodeBody):
-    """Step 1 — validate domain, generate OTP, send email."""
+def request_code(body: RequestCodeBody, db: Session = Depends(get_db)):
+    """Step 1 — validate domain, generate OTP, persist to DB, send email."""
     email = body.email.lower()
 
     if not is_domain_allowed(email):
@@ -89,35 +126,59 @@ def request_code(body: RequestCodeBody):
             detail="Adresse email non autorisée. Utilisez votre email institutionnel.",
         )
 
-    code = store.create_otp(email)
+    # Delete any existing OTPs for this email (1 active OTP per email)
+    db.query(Otp).filter(Otp.email == email).delete()
+
+    code = str(random.randint(100_000, 999_999))
+    otp = Otp(
+        id=str(uuid.uuid4()),
+        email=email,
+        code=code,
+        expires_at=datetime.now(timezone.utc) + timedelta(minutes=OTP_EXPIRE_MINUTES),
+    )
+    db.add(otp)
+    db.commit()
+
     send_otp_email(email, code)
-    logger.info("OTP sent to %s: %s", email, code)  # visible in server logs during dev
+    logger.info("OTP sent to %s (code visible in dev logs): %s", email, code)
 
     return {"message": f"Code envoyé à {email}. Vérifiez votre boîte mail."}
 
 
 @router.post("/verify-code", response_model=AuthResponse)
-def verify_code(body: VerifyCodeBody, response: Response):
+def verify_code(body: VerifyCodeBody, response: Response, db: Session = Depends(get_db)):
     """Step 2 — verify OTP, create/retrieve user, issue JWT."""
     email = body.email.lower()
+    now = datetime.now(timezone.utc)
 
-    if not store.verify_otp(email, body.code.strip()):
+    otp = db.query(Otp).filter(
+        Otp.email == email,
+        Otp.code == body.code.strip(),
+        Otp.expires_at > now,
+    ).first()
+
+    if not otp:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Code invalide ou expiré.",
         )
 
-    user_data, is_new = store.get_or_create(email)
+    db.delete(otp)
+    db.commit()
 
-    access_token = create_access_token(user_data["id"])
-    refresh_token = create_refresh_token(user_data["id"])
-    user_data["refresh_token"] = refresh_token
+    user, is_new = _get_or_create_user(db, email)
+
+    access_token = create_access_token(user.id)
+    refresh_token = create_refresh_token(user.id)
+
+    user.refresh_token = refresh_token
+    db.commit()
 
     _set_cookies(response, access_token, refresh_token)
 
     return AuthResponse(
         access_token=access_token,
-        user=_user_out(user_data),
+        user=_user_out(user_to_current(user)),
         is_new=is_new,
     )
 
@@ -125,6 +186,7 @@ def verify_code(body: VerifyCodeBody, response: Response):
 @router.post("/refresh", response_model=AuthResponse)
 def refresh(
     response: Response,
+    db: Session = Depends(get_db),
     refresh_token: Optional[str] = Cookie(default=None, alias=REFRESH_COOKIE),
 ):
     if not refresh_token:
@@ -134,28 +196,34 @@ def refresh(
     if not payload or payload.get("type") != "refresh":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
 
-    user_data = store.get_by_id(payload["sub"])
-    if not user_data or user_data.get("refresh_token") != refresh_token:
+    user = db.query(User).filter(User.id == payload["sub"]).first()
+    if not user or user.refresh_token != refresh_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session expirée")
 
-    new_access = create_access_token(user_data["id"])
-    new_refresh = create_refresh_token(user_data["id"])
-    user_data["refresh_token"] = new_refresh
+    new_access = create_access_token(user.id)
+    new_refresh = create_refresh_token(user.id)
+    user.refresh_token = new_refresh
+    db.commit()
 
     _set_cookies(response, new_access, new_refresh)
 
     return AuthResponse(
         access_token=new_access,
-        user=_user_out(user_data),
+        user=_user_out(user_to_current(user)),
         is_new=False,
     )
 
 
 @router.post("/logout", response_model=MessageResponse)
-def logout(response: Response, current_user: CurrentUser = Depends(get_current_user)):
-    user_data = store.get_by_id(current_user.id)
-    if user_data:
-        user_data.pop("refresh_token", None)
+def logout(
+    response: Response,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    user = db.query(User).filter(User.id == current_user.id).first()
+    if user:
+        user.refresh_token = None
+        db.commit()
 
     response.delete_cookie(ACCESS_COOKIE)
     response.delete_cookie(REFRESH_COOKIE, path="/api/v1/auth/refresh")
