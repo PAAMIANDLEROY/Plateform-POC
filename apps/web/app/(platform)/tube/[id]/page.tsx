@@ -1,8 +1,11 @@
 import { VideoPageClient } from "./VideoPageClient";
 
-/** Pas de pré-génération : les IDs sont des UUIDs créés via l'API. */
+/**
+ * Stub pour output: 'export' — Next.js refuse [] vide.
+ * Les vrais IDs sont résolus côté client par VideoPageClient.
+ */
 export function generateStaticParams() {
-  return [];
+  return [{ id: '_' }];
 }
 
 export default function VideoPage({ params }: { params: { id: string } }) {

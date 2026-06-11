@@ -1,8 +1,11 @@
 import { CoursePageClient } from "./CoursePageClient";
 
-/** Pas de pré-génération : les IDs sont des UUIDs créés via l'API. */
+/**
+ * Stub pour output: 'export' — Next.js refuse [] vide.
+ * Les vrais IDs sont résolus côté client par CoursePageClient.
+ */
 export function generateStaticParams() {
-  return [];
+  return [{ id: '_' }];
 }
 
 export default function CoursePage({ params }: { params: { id: string } }) {
