@@ -23,8 +23,7 @@ export function MOOCPageClient({ id }: { id: string }) {
         if (m.modules.length > 0) setOpen(m.modules[0].id);
 
         // Collect all unique course IDs across modules
-        const moduleData = m.modules as Array<{ id: string; courses: Array<{ course_id: string }> }>;
-        const courseIds = [...new Set(moduleData.flatMap(mod => mod.courses.map(c => c.course_id)))];
+        const courseIds = [...new Set(m.modules.flatMap(mod => mod.courses.map(c => c.course_id)))];
 
         // Fetch all courses in parallel
         const fetched = await Promise.allSettled(courseIds.map(cid => coursesApi.get(cid)));
@@ -49,13 +48,7 @@ export function MOOCPageClient({ id }: { id: string }) {
     </div>
   );
 
-  const moduleData = mooc.modules as Array<{
-    id: string;
-    title: string;
-    position: number;
-    courses: Array<{ course_id: string; position: number }>;
-  }>;
-  const sortedModules = [...moduleData].sort((a, b) => a.position - b.position);
+  const sortedModules = [...mooc.modules].sort((a, b) => a.position - b.position);
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">

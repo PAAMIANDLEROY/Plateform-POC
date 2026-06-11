@@ -208,7 +208,12 @@ export interface MOOCResponse {
   created_by: string;
   created_at: string;
   updated_at: string;
-  modules: unknown[];
+  modules: Array<{
+    id: string;
+    title: string;
+    position: number;
+    courses: Array<{ course_id: string; position: number }>;
+  }>;
   enrolled_count: number;
 }
 
