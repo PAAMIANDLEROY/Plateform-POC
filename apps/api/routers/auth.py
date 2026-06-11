@@ -79,14 +79,19 @@ def _user_out(cu: CurrentUser) -> UserOut:
     )
 
 def _set_cookies(response: Response, access_token: str, refresh_token: str) -> None:
+    # Cross-origin (prod): SameSite=None + Secure=True required by browsers.
+    # Same-origin (dev):   SameSite=Lax  + Secure=False (HTTP localhost).
+    _secure = settings.COOKIE_SECURE
+    _samesite = "none" if _secure else "lax"
+
     response.set_cookie(
         ACCESS_COOKIE, access_token,
-        httponly=True, secure=False, samesite="lax",
+        httponly=True, secure=_secure, samesite=_samesite,
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
     response.set_cookie(
         REFRESH_COOKIE, refresh_token,
-        httponly=True, secure=False, samesite="lax",
+        httponly=True, secure=_secure, samesite=_samesite,
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
         path="/api/v1/auth/refresh",
     )
@@ -225,7 +230,9 @@ def logout(
         user.refresh_token = None
         db.commit()
 
-    response.delete_cookie(ACCESS_COOKIE)
-    response.delete_cookie(REFRESH_COOKIE, path="/api/v1/auth/refresh")
+    _secure = settings.COOKIE_SECURE
+    _samesite = "none" if _secure else "lax"
+    response.delete_cookie(ACCESS_COOKIE, secure=_secure, samesite=_samesite)
+    response.delete_cookie(REFRESH_COOKIE, path="/api/v1/auth/refresh", secure=_secure, samesite=_samesite)
 
     return {"message": "Déconnecté avec succès."}

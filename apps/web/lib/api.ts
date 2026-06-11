@@ -8,7 +8,7 @@
  */
 
 /** URL de base de l'API — pointe vers localhost en développement, variable d'env en prod. */
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 /**
  * Erreur HTTP typée renvoyée par `request()` quand le backend répond avec un statut non-2xx.

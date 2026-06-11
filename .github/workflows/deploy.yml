@@ -72,7 +72,9 @@ jobs:
         run: npm run build
         env:
           NODE_ENV: production
-          NEXT_PUBLIC_API_URL: ""
+          # Ajouter API_URL dans : GitHub repo → Settings → Secrets → Actions
+          # Valeur : URL Render du backend, ex. https://hi-platform-api.onrender.com
+          NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
           NEXT_PUBLIC_BASE_PATH: "/Plateform-POC"
 
       - name: Add .nojekyll
