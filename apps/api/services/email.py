@@ -12,9 +12,12 @@ def _send(to_email: str, subject: str, html: str) -> None:
     if not settings.SMTP_HOST:
         logger.info("[EMAIL] To: %s | Subject: %s\n%s", to_email, subject, html)
         return
+    # From = adresse d'expéditeur vérifiée (EMAIL_FROM), distincte de SMTP_USER
+    # qui n'est que l'identifiant de login SMTP (= "resend" chez Resend).
+    sender = settings.EMAIL_FROM or settings.SMTP_USER
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
-    msg["From"] = settings.SMTP_USER
+    msg["From"] = sender
     msg["To"] = to_email
     msg.attach(MIMEText(html, "html"))
     try:
@@ -25,12 +28,12 @@ def _send(to_email: str, subject: str, html: str) -> None:
         if settings.SMTP_PORT == 465:
             with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as server:
                 server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-                server.sendmail(settings.SMTP_USER, to_email, msg.as_string())
+                server.sendmail(sender, to_email, msg.as_string())
         else:
             with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as server:
                 server.starttls()
                 server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-                server.sendmail(settings.SMTP_USER, to_email, msg.as_string())
+                server.sendmail(sender, to_email, msg.as_string())
     except Exception as exc:
         logger.error("Failed to send email to %s: %s", to_email, exc)
 

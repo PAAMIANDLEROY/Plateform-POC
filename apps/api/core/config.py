@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 587
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
+    # Adresse d'expédition affichée dans le mail. DOIT être un expéditeur vérifié
+    # côté provider (Resend). En mode test Resend, utiliser "onboarding@resend.dev".
+    # En prod, une adresse d'un domaine vérifié, ex. "noreply@hi-paris.fr".
+    # NE PAS confondre avec SMTP_USER (= "resend", identifiant de login SMTP).
+    EMAIL_FROM: str = "onboarding@resend.dev"
     # Comma-separated list of allowed frontend origins (CORS + cookies).
     # Example: "http://localhost:3000,https://paamiandleroy.github.io"
     FRONTEND_URL: str = "http://localhost:3000"
