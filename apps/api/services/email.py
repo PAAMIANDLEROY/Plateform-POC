@@ -18,10 +18,19 @@ def _send(to_email: str, subject: str, html: str) -> None:
     msg["To"] = to_email
     msg.attach(MIMEText(html, "html"))
     try:
-        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
-            server.starttls()
-            server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-            server.sendmail(settings.SMTP_USER, to_email, msg.as_string())
+        # Port 465 = SMTP-over-SSL (connexion chiffrée d'emblée).
+        # Port 587/2587 = SMTP clair puis STARTTLS.
+        # Le timeout évite que la requête pende indéfiniment si le serveur SMTP
+        # ne répond pas (ex. mauvais port, sortie SMTP bloquée par l'hébergeur).
+        if settings.SMTP_PORT == 465:
+            with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as server:
+                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+                server.sendmail(settings.SMTP_USER, to_email, msg.as_string())
+        else:
+            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as server:
+                server.starttls()
+                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+                server.sendmail(settings.SMTP_USER, to_email, msg.as_string())
     except Exception as exc:
         logger.error("Failed to send email to %s: %s", to_email, exc)
 
