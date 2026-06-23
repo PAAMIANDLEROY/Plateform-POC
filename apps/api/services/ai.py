@@ -529,3 +529,70 @@ async def generate_study_sheet_from_content(
     except Exception as e:
         logger.error("Erreur LLM (study-sheet): %s", e)
         raise ValueError(f"Erreur lors de la génération: {str(e)}")
+
+
+# ── FAQ (NotebookLM-style, Phase 11) ──────────────────────────────────────────
+
+DEMO_FAQ = {
+    "title": "FAQ de démonstration",
+    "language": "fr",
+    "items": [
+        {"question": "Qu'est-ce que le machine learning ?", "answer": "Un sous-domaine de l'IA où les systèmes apprennent des patterns à partir de données, sans être programmés explicitement pour chaque tâche."},
+        {"question": "Quelle différence entre supervisé et non-supervisé ?", "answer": "Le supervisé apprend depuis des données étiquetées ; le non-supervisé découvre des structures dans des données non étiquetées."},
+        {"question": "Comment éviter le surapprentissage ?", "answer": "Utiliser un jeu de test séparé, la validation croisée et des techniques de régularisation."},
+        {"question": "Pourquoi ne pas se fier à l'accuracy ?", "answer": "Sur des classes déséquilibrées, l'accuracy est trompeuse ; préférer le F1-score."},
+    ],
+}
+
+
+def _build_faq_prompt(content: str, n_items: int, language: str) -> str:
+    lang_label = "français" if language == "fr" else "anglais"
+    return f"""Tu es un expert en pédagogie. À partir du contenu de cours suivant, génère une FAQ de {n_items} questions-réponses en {lang_label}.
+
+CONTENU SOURCE :
+{content[:6000]}
+
+INSTRUCTIONS :
+- Anticipe les questions que se posent réellement les apprenants.
+- Réponses concises (1 à 3 phrases), fidèles au contenu source.
+- Évite les redondances.
+
+Réponds UNIQUEMENT avec un objet JSON valide, sans markdown :
+{{
+  "title": "titre de la FAQ",
+  "language": "{language}",
+  "items": [ {{ "question": "...", "answer": "..." }} ]
+}}"""
+
+
+async def generate_faq_from_content(
+    content: str,
+    n_items: int = 6,
+    language: str = "fr",
+    title: Optional[str] = None,
+) -> dict:
+    """Génère une FAQ depuis un contenu de cours.
+    Fallback sur démo si aucun provider LLM n'est configuré."""
+    provider = get_llm_provider()
+    if provider is None:
+        logger.warning("Aucun provider LLM configuré — retour FAQ de démo")
+        demo = DEMO_FAQ.copy()
+        demo["items"] = demo["items"][:n_items]
+        if title:
+            demo["title"] = title
+        return demo
+
+    try:
+        prompt = _build_faq_prompt(content, n_items, language)
+        raw = _strip_code_fences(provider.complete(prompt, max_tokens=4096))
+        result = json.loads(raw)
+        if title and not result.get("title"):
+            result["title"] = title
+        return result
+
+    except json.JSONDecodeError as e:
+        logger.error("JSON invalide retourné par le LLM (faq): %s", e)
+        raise ValueError("Le modèle IA n'a pas retourné un JSON valide. Réessayez.")
+    except Exception as e:
+        logger.error("Erreur LLM (faq): %s", e)
+        raise ValueError(f"Erreur lors de la génération: {str(e)}")

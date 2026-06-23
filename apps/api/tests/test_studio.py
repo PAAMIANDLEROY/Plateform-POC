@@ -13,6 +13,7 @@ from services.ai import (
     generate_flashcards_from_content,
     generate_mindmap_from_content,
     generate_study_sheet_from_content,
+    generate_faq_from_content,
 )
 from services.llm import get_llm_provider
 
@@ -57,6 +58,13 @@ def test_study_sheet_demo_fallback():
     assert data["key_points"]
 
 
+def test_faq_demo_fallback():
+    get_llm_provider.cache_clear()
+    data = asyncio.run(generate_faq_from_content("contenu de cours", n_items=2))
+    assert len(data["items"]) <= 2
+    assert data["items"][0]["question"] and data["items"][0]["answer"]
+
+
 # ── Endpoint : auth requise ───────────────────────────────────────────────────
 
 def test_flashcards_endpoint_requires_teacher():
@@ -74,10 +82,14 @@ def test_study_sheet_endpoint_requires_teacher():
     assert response.status_code in (401, 422)
 
 
+def test_faq_endpoint_requires_teacher():
+    response = client.post("/api/v1/studio/faq", json={"content": "x"})
+    assert response.status_code in (401, 422)
+
+
 def test_studio_health_lists_pipelines():
     response = client.get("/api/v1/studio/health")
     assert response.status_code == 200
     pipelines = response.json()["pipelines"]
-    assert "flashcards" in pipelines
-    assert "mindmap" in pipelines
-    assert "study-sheet" in pipelines
+    for p in ("flashcards", "mindmap", "study-sheet", "faq"):
+        assert p in pipelines

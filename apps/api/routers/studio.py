@@ -18,6 +18,7 @@ from services.ai import (
     generate_flashcards_from_content,
     generate_mindmap_from_content,
     generate_study_sheet_from_content,
+    generate_faq_from_content,
 )
 from services.transcription import (
     transcribe_audio, extract_pptx_text, extract_pdf_text, extract_youtube_id
@@ -120,6 +121,24 @@ class GeneratedStudySheet(BaseModel):
     summary: str
     key_concepts: list[KeyConcept]
     key_points: list[str]
+
+
+class FAQRequest(BaseModel):
+    content: str
+    n_items: int = Field(default=6, ge=1, le=30)
+    language: str = "fr"
+    title: Optional[str] = None
+
+
+class FAQItem(BaseModel):
+    question: str
+    answer: str
+
+
+class GeneratedFAQ(BaseModel):
+    title: str
+    language: str
+    items: list[FAQItem]
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -366,6 +385,28 @@ async def content_to_study_sheet(
     return GeneratedStudySheet(**data)
 
 
+# ── Pipeline 6 : Contenu → FAQ (Phase 11) ────────────────────────────────────
+
+@router.post("/faq", response_model=GeneratedFAQ)
+async def content_to_faq(
+    body: FAQRequest,
+    current_user: CurrentUser = Depends(require_role(*TEACHER_ROLES)),
+):
+    """Génère une FAQ à partir d'un contenu de cours."""
+    if not body.content.strip():
+        raise HTTPException(status_code=400, detail="Contenu requis")
+    try:
+        data = await generate_faq_from_content(
+            content=body.content,
+            n_items=body.n_items,
+            language=body.language,
+            title=body.title,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    return GeneratedFAQ(**data)
+
+
 # ── Health ────────────────────────────────────────────────────────────────────
 
 @router.get("/health")
@@ -380,5 +421,5 @@ def studio_health():
         "llm_provider": settings.LLM_PROVIDER,
         "llm_model": provider.model if provider else None,
         "transcription_configured": bool(settings.OPENAI_API_KEY),
-        "pipelines": ["excel-to-quiz", "video-to-course", "flashcards", "mindmap", "study-sheet"],
+        "pipelines": ["excel-to-quiz", "video-to-course", "flashcards", "mindmap", "study-sheet", "faq"],
     }
