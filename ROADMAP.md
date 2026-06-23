@@ -28,7 +28,7 @@ Ces fondations conditionnent plusieurs phases. À traiter avant d'attaquer la co
 
 | # | Chantier | Objectif | Effort | Statut |
 |---|---|---|---|---|
-| **P1** | **Abstraction LLM-agnostique** | Refondre `services/ai.py` derrière une interface `LLMProvider` (generate, chat, embed) ; le modèle devient un paramètre de config swappable. Préalable au broker et à tous les pipelines IA. | M | ⬜ |
+| **P1** | **Abstraction LLM-agnostique** | Refondre `services/ai.py` derrière une interface `LLMProvider` (generate, chat, embed) ; le modèle devient un paramètre de config swappable. Préalable au broker et à tous les pipelines IA. | M | ✅ |
 | **P2** | **Socle RAG / base vectorielle** | Ingestion des cours (markdown/blocs) → chunking → embeddings → store vectoriel (pgvector sur Supabase, déjà PostgreSQL). API de recherche sémantique réutilisable. Préalable à Q&R, tuteur, distribution, assemblage, suggestion. | L | ⬜ |
 | **P3** | **Auth "mobile-ready"** | Flux de tokens utilisable hors navigateur : endpoint d'échange renvoyant access+refresh en **corps JSON** (pas seulement cookie httpOnly), rotation refresh côté client mobile. Préalable à l'app mobile. | M | ⬜ |
 
@@ -55,10 +55,15 @@ Réponse à la contrainte de dépense publique (pas de pay-as-you-go ouvert).
 - ⬜ **Distribution personnalisée des ressources** *(priorité n°1 du brief)* — suggérer/contextualiser la bonne ressource selon l'usage de l'apprenant.
 - ⬜ **Assemblage personnalisé** *(priorité n°2 du brief)* — redécouper exercice/leçon selon une auto-évaluation initiale.
 
-### Phase 11 — Studio v2 & outils type NotebookLM  ⬜  (effort M · dépend de P1)
-- ⬜ **Flashcards automatiques** depuis un cours *(quick win, très demandé)*.
+### Phase 11 — Studio v2 & outils type NotebookLM  🚧  (effort M · dépend de P1)
+- ✅ **Flashcards automatiques** depuis un cours — `POST /api/v1/studio/flashcards` *(backend ; UI à faire)*.
+- ✅ **Carte mentale** (arbre JSON) — `POST /api/v1/studio/mindmap` *(backend ; UI à faire)*.
+- ✅ **Fiche de révision** (résumé + concepts + points clés) — `POST /api/v1/studio/study-sheet` *(backend ; UI à faire)*.
+- ✅ **FAQ** auto — `POST /api/v1/studio/faq` *(backend ; UI à faire)*.
+- ⬜ **UI Studio** pour ces 4 outils (frontend non fait — npm indisponible côté Claude cette nuit).
 - 🔶 **MOOC semi-automatisé** — transcription vidéo + slides → squelette de MOOC entier pré-créé (extension du pipeline vidéo→cours existant).
-- ⬜ **Outils dérivés type NotebookLM** — à partir d'un cours/document, générer automatiquement : **carte mentale**, fiche de révision, FAQ, résumé audio (« podcast »), chronologie. Deux voies : (a) **connecteur** vers un outil externe (NotebookLM n'a pas d'API publique stable → plutôt en V2), (b) **équivalents maison** via nos pipelines LLM — la carte mentale et la fiche de révision sont faciles à produire (JSON → rendu front), à privilégier en premier.
+- ⬜ **Résumé audio (« podcast ») + chronologie** — autres dérivés type NotebookLM, à venir.
+- ⬜ **Connecteur NotebookLM externe** — pas d'API publique stable → V2.
 
 ### Phase 12 — Pédagogie interactive  ⬜  (effort L)
 - ⬜ **Playground d'exercices de code pas-à-pas** (type AnswerFlow) — ~20 exercices enchaînés, exécution, entraînement manuel puis automatique, suivi complet.
@@ -114,6 +119,7 @@ Réponse à la contrainte de dépense publique (pas de pay-as-you-go ouvert).
 
 ## 4. Infra continue
 
+- ✅ **Config de logging** backend (`LOG_LEVEL`, INFO visible) + arrêt du log du code OTP en clair.
 - ⬜ **Migration cloud OVH / Scaleway** (courant 2026) — sortir des offres gratuites (Vercel/Render/Supabase) vers une infra UE maîtrisée. Architecture « suffisamment propre » : priorité zéro fuite de données + conformité légale.
 - ⬜ **Vérification domaine Resend** (DNS SPF/DKIM) → sortir du mode test email, envoyer à toute adresse.
 - ⬜ **Anti cold-start Render** (plan payant ou keep-alive) avant démo publique.
