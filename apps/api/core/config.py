@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     # par défaut du provider (ex. "claude-sonnet-4-6", "gpt-4o"). Vide = défaut provider.
     LLM_PROVIDER: str = "anthropic"
     LLM_MODEL: str = ""
+    # Niveau de log applicatif (DEBUG, INFO, WARNING, ERROR). Voir core/logging_config.py.
+    LOG_LEVEL: str = "INFO"
 
     @property
     def allowed_domains_list(self) -> List[str]:

@@ -145,7 +145,10 @@ def request_code(body: RequestCodeBody, db: Session = Depends(get_db)):
     db.commit()
 
     send_otp_email(email, code)
-    logger.info("OTP sent to %s (code visible in dev logs): %s", email, code)
+    # Ne jamais logger le code en INFO (visible en prod une fois LOG_LEVEL=INFO).
+    # Le code reste consultable en dev via la table `otps`. DEBUG pour le local.
+    logger.info("OTP généré et envoyé à %s", email)
+    logger.debug("OTP pour %s : %s", email, code)
 
     return {"message": f"Code envoyé à {email}. Vérifiez votre boîte mail."}
 
