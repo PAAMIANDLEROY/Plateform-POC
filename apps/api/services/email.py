@@ -1,39 +1,44 @@
-import smtplib
 import logging
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+
+import httpx
 
 from core.config import settings
 
 logger = logging.getLogger(__name__)
 
+RESEND_API_URL = "https://api.resend.com/emails"
+
 
 def _send(to_email: str, subject: str, html: str) -> None:
-    if not settings.SMTP_HOST:
+    """
+    Envoie un email via l'API HTTP de Resend (POST /emails, port 443).
+
+    Choix de l'API HTTP plutôt que SMTP : les hébergeurs PaaS gratuits (Render)
+    bloquent fréquemment les ports SMTP sortants (465/587), ce qui faisait échouer
+    ou pendre l'envoi en silence. Le HTTPS (443) n'est jamais bloqué, et la réponse
+    JSON de Resend donne une erreur explicite (loggée en ERROR, donc visible).
+
+    La clé API est lue depuis RESEND_API_KEY, avec fallback sur SMTP_PASSWORD
+    (où la clé `re_...` est déjà configurée). Sans clé → log dev, pas d'envoi.
+    """
+    api_key = settings.RESEND_API_KEY or settings.SMTP_PASSWORD
+    if not api_key:
         logger.info("[EMAIL] To: %s | Subject: %s\n%s", to_email, subject, html)
         return
-    # From = adresse d'expéditeur vérifiée (EMAIL_FROM), distincte de SMTP_USER
-    # qui n'est que l'identifiant de login SMTP (= "resend" chez Resend).
-    sender = settings.EMAIL_FROM or settings.SMTP_USER
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"] = sender
-    msg["To"] = to_email
-    msg.attach(MIMEText(html, "html"))
+
+    # From = expéditeur vérifié (EMAIL_FROM). En mode test Resend : onboarding@resend.dev.
+    sender = settings.EMAIL_FROM or "onboarding@resend.dev"
     try:
-        # Port 465 = SMTP-over-SSL (connexion chiffrée d'emblée).
-        # Port 587/2587 = SMTP clair puis STARTTLS.
-        # Le timeout évite que la requête pende indéfiniment si le serveur SMTP
-        # ne répond pas (ex. mauvais port, sortie SMTP bloquée par l'hébergeur).
-        if settings.SMTP_PORT == 465:
-            with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as server:
-                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-                server.sendmail(sender, to_email, msg.as_string())
-        else:
-            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as server:
-                server.starttls()
-                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-                server.sendmail(sender, to_email, msg.as_string())
+        resp = httpx.post(
+            RESEND_API_URL,
+            headers={"Authorization": f"Bearer {api_key}"},
+            json={"from": sender, "to": [to_email], "subject": subject, "html": html},
+            timeout=15,
+        )
+        if resp.status_code >= 400:
+            # resp.text contient la raison exacte (domaine non vérifié, destinataire
+            # interdit en mode test, clé invalide…) — précieux pour le débogage.
+            logger.error("Resend API %s sending to %s: %s", resp.status_code, to_email, resp.text)
     except Exception as exc:
         logger.error("Failed to send email to %s: %s", to_email, exc)
 

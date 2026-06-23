@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     # En prod, une adresse d'un domaine vérifié, ex. "noreply@hi-paris.fr".
     # NE PAS confondre avec SMTP_USER (= "resend", identifiant de login SMTP).
     EMAIL_FROM: str = "onboarding@resend.dev"
+    # Clé API Resend pour l'envoi via l'API HTTP (port 443, recommandé sur Render).
+    # Si vide, le service retombe sur SMTP_PASSWORD (même clé `re_...`).
+    RESEND_API_KEY: str = ""
     # Comma-separated list of allowed frontend origins (CORS + cookies).
     # Example: "http://localhost:3000,https://paamiandleroy.github.io"
     FRONTEND_URL: str = "http://localhost:3000"
