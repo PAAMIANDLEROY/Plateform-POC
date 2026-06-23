@@ -7,12 +7,16 @@ import io
 import json
 import logging
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 
 from core.deps import require_role
 from core.store import CurrentUser
-from services.ai import generate_quiz_from_content, generate_course_from_content
+from services.ai import (
+    generate_quiz_from_content,
+    generate_course_from_content,
+    generate_flashcards_from_content,
+)
 from services.transcription import (
     transcribe_audio, extract_pptx_text, extract_pdf_text, extract_youtube_id
 )
@@ -62,6 +66,25 @@ class SaveCourseRequest(BaseModel):
     language: str
     category: Optional[str] = None
     school: Optional[str] = None
+
+
+class FlashcardsRequest(BaseModel):
+    content: str
+    n_cards: int = Field(default=10, ge=1, le=50)
+    language: str = "fr"
+    title: Optional[str] = None
+
+
+class Flashcard(BaseModel):
+    id: int
+    front: str
+    back: str
+
+
+class GeneratedFlashcards(BaseModel):
+    title: str
+    language: str
+    cards: list[Flashcard]
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -244,6 +267,28 @@ async def save_course(
     return {"message": "Cours sauvegardé", "course_id": course_id, "title": body.title}
 
 
+# ── Pipeline 3 : Contenu → Flashcards (Phase 11) ─────────────────────────────
+
+@router.post("/flashcards", response_model=GeneratedFlashcards)
+async def content_to_flashcards(
+    body: FlashcardsRequest,
+    current_user: CurrentUser = Depends(require_role(*TEACHER_ROLES)),
+):
+    """Génère des flashcards de révision à partir d'un contenu de cours (markdown/texte)."""
+    if not body.content.strip():
+        raise HTTPException(status_code=400, detail="Contenu requis")
+    try:
+        data = await generate_flashcards_from_content(
+            content=body.content,
+            n_cards=body.n_cards,
+            language=body.language,
+            title=body.title,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    return GeneratedFlashcards(**data)
+
+
 # ── Health ────────────────────────────────────────────────────────────────────
 
 @router.get("/health")
@@ -258,5 +303,5 @@ def studio_health():
         "llm_provider": settings.LLM_PROVIDER,
         "llm_model": provider.model if provider else None,
         "transcription_configured": bool(settings.OPENAI_API_KEY),
-        "pipelines": ["excel-to-quiz", "video-to-course"],
+        "pipelines": ["excel-to-quiz", "video-to-course", "flashcards"],
     }

@@ -11,6 +11,17 @@ from services.llm import get_llm_provider
 
 logger = logging.getLogger(__name__)
 
+
+def _strip_code_fences(raw: str) -> str:
+    """Retire les backticks ```/```json qu'un LLM ajoute parfois autour du JSON."""
+    raw = raw.strip()
+    if raw.startswith("```"):
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+    return raw.strip()
+
+
 DEMO_QUIZ = {
     "quiz_title": "Quiz de démonstration",
     "difficulty": "intermédiaire",
@@ -281,14 +292,7 @@ async def generate_quiz_from_content(
     try:
         prompt = _build_prompt(content, n_questions, difficulty, language)
 
-        raw = provider.complete(prompt, max_tokens=4096)
-
-        # Nettoyer si le LLM a ajouté des backticks malgré les instructions
-        if raw.startswith("```"):
-            raw = raw.split("```")[1]
-            if raw.startswith("json"):
-                raw = raw[4:]
-        raw = raw.strip()
+        raw = _strip_code_fences(provider.complete(prompt, max_tokens=4096))
 
         result = json.loads(raw)
         if quiz_title and not result.get("quiz_title"):
@@ -300,4 +304,74 @@ async def generate_quiz_from_content(
         raise ValueError("Le modèle IA n'a pas retourné un JSON valide. Réessayez.")
     except Exception as e:
         logger.error("Erreur LLM (quiz): %s", e)
+        raise ValueError(f"Erreur lors de la génération: {str(e)}")
+
+
+# ── Flashcards (Phase 11) ─────────────────────────────────────────────────────
+
+DEMO_FLASHCARDS = {
+    "title": "Flashcards de démonstration",
+    "language": "fr",
+    "cards": [
+        {"id": 1, "front": "Apprentissage supervisé", "back": "Paradigme où le modèle apprend à partir d'exemples étiquetés (paires entrée/sortie)."},
+        {"id": 2, "front": "Surapprentissage (overfitting)", "back": "Quand un modèle colle trop aux données d'entraînement et généralise mal aux nouvelles données."},
+        {"id": 3, "front": "F1-score", "back": "Moyenne harmonique de la précision et du rappel ; adapté aux classes déséquilibrées."},
+        {"id": 4, "front": "Régularisation L2 (Ridge)", "back": "Pénalité sur la somme des carrés des poids pour réduire le surapprentissage."},
+        {"id": 5, "front": "Validation croisée", "back": "Découpe les données en plusieurs plis pour estimer la performance de façon robuste."},
+    ],
+}
+
+
+def _build_flashcards_prompt(content: str, n_cards: int, language: str) -> str:
+    lang_label = "français" if language == "fr" else "anglais"
+    return f"""Tu es un expert en pédagogie. À partir du contenu de cours suivant, génère exactement {n_cards} flashcards de révision en {lang_label}.
+
+CONTENU SOURCE :
+{content[:6000]}
+
+INSTRUCTIONS :
+- Chaque flashcard a un recto (terme, concept ou question courte) et un verso (définition ou réponse concise, 1-2 phrases).
+- Couvre les notions les plus importantes du contenu, sans redondance.
+- Reste fidèle au contenu source.
+
+Réponds UNIQUEMENT avec un objet JSON valide, sans markdown :
+{{
+  "title": "titre des flashcards",
+  "language": "{language}",
+  "cards": [
+    {{ "id": 1, "front": "...", "back": "..." }}
+  ]
+}}"""
+
+
+async def generate_flashcards_from_content(
+    content: str,
+    n_cards: int = 10,
+    language: str = "fr",
+    title: Optional[str] = None,
+) -> dict:
+    """Génère des flashcards depuis un contenu de cours via le LLM configuré.
+    Fallback sur démo si aucun provider LLM n'est configuré."""
+    provider = get_llm_provider()
+    if provider is None:
+        logger.warning("Aucun provider LLM configuré — retour flashcards de démo")
+        demo = DEMO_FLASHCARDS.copy()
+        demo["cards"] = demo["cards"][:n_cards]
+        if title:
+            demo["title"] = title
+        return demo
+
+    try:
+        prompt = _build_flashcards_prompt(content, n_cards, language)
+        raw = _strip_code_fences(provider.complete(prompt, max_tokens=4096))
+        result = json.loads(raw)
+        if title and not result.get("title"):
+            result["title"] = title
+        return result
+
+    except json.JSONDecodeError as e:
+        logger.error("JSON invalide retourné par le LLM (flashcards): %s", e)
+        raise ValueError("Le modèle IA n'a pas retourné un JSON valide. Réessayez.")
+    except Exception as e:
+        logger.error("Erreur LLM (flashcards): %s", e)
         raise ValueError(f"Erreur lors de la génération: {str(e)}")
