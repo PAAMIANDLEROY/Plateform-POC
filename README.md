@@ -43,7 +43,7 @@ Stack : **Next.js 14** (frontend) · **FastAPI** (backend) · **PostgreSQL** · 
 **Backend** (`apps/api/`) :
 - `routers/` — auth, users, videos, courses, moocs, apps, studio, learning, analytics
 - `models/` — SQLAlchemy ORM (User, Course, MOOC, Video, App, …)
-- `services/` — `ai.py` (Claude), `transcription.py` (Whisper), `certificate.py` (PDF+QR)
+- `services/` — `llm.py` (couche LLM-agnostique), `ai.py` (Studio : quiz/cours/flashcards/mindmap/fiche/FAQ), `transcription.py` (Whisper), `email.py` (Resend HTTP API), `certificate.py` (PDF+QR)
 - `core/` — config, security (JWT), deps, store (sessions)
 
 ---
@@ -111,8 +111,13 @@ docker-compose up -d          # PostgreSQL + Redis
 | `SECRET_KEY` | Clé JWT (32+ chars) | `openssl rand -hex 32` |
 | `ALLOWED_DOMAINS` | Domaines email autorisés | `polytechnique.edu,hec.fr` |
 | `ANTHROPIC_API_KEY` | Clé Claude API | `sk-ant-...` |
-| `OPENAI_API_KEY` | Clé Whisper API | `sk-...` |
-| `FRONTEND_URL` | URL CORS | `http://localhost:3000` |
+| `OPENAI_API_KEY` | Clé Whisper API / embeddings | `sk-...` |
+| `LLM_PROVIDER` | Fournisseur LLM actif | `anthropic` \| `openai` |
+| `LLM_MODEL` | Modèle (vide = défaut provider) | `claude-sonnet-4-6`, `gpt-4o` |
+| `LOG_LEVEL` | Niveau de log applicatif | `INFO` |
+| `FRONTEND_URL` | URLs CORS (séparées par virgule) | `http://localhost:3000` |
+| `CORS_VERCEL_REGEX` | Regex origines Vercel (previews) | `https://...\.vercel\.app` |
+| `EMAIL_FROM` | Expéditeur vérifié (Resend) | `onboarding@resend.dev` |
 | `OVH_S3_ENDPOINT` | Endpoint Object Storage | `s3.gra.io.cloud.ovh.net` |
 
 ### `apps/web/.env.local`
@@ -177,6 +182,16 @@ Documentation interactive disponible sur `http://localhost:8000/docs` (Swagger U
 | POST | `/save-quiz` | Sauvegarder un quiz généré |
 | POST | `/video-to-course` | **Phase 4** Vidéo+Slides → Cours |
 | POST | `/save-course` | Publier un cours généré |
+| POST | `/flashcards` | **Phase 11** Contenu → flashcards (JSON) |
+| POST | `/mindmap` | **Phase 11** Contenu → carte mentale (arbre JSON) |
+| POST | `/study-sheet` | **Phase 11** Contenu → fiche de révision |
+| POST | `/faq` | **Phase 11** Contenu → FAQ |
+| GET | `/health` | État Studio + provider LLM actif |
+
+> Les pipelines `/flashcards`, `/mindmap`, `/study-sheet`, `/faq` prennent un corps JSON
+> `{ "content": "<markdown/texte du cours>", "language": "fr", "title": "..." }` et
+> retournent du JSON structuré. Sans provider LLM configuré, ils renvoient un contenu
+> de démonstration (utile en dev/CI).
 
 ### Analytics (`/api/v1/analytics/`)
 
