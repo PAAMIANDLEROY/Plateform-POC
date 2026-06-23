@@ -456,3 +456,76 @@ async def generate_mindmap_from_content(
     except Exception as e:
         logger.error("Erreur LLM (mindmap): %s", e)
         raise ValueError(f"Erreur lors de la génération: {str(e)}")
+
+
+# ── Fiche de révision (NotebookLM-style, Phase 11) ────────────────────────────
+
+DEMO_STUDY_SHEET = {
+    "title": "Fiche de révision de démonstration",
+    "language": "fr",
+    "summary": "Le machine learning permet aux systèmes d'apprendre à partir de données. On distingue l'apprentissage supervisé, non-supervisé et par renforcement. L'évaluation rigoureuse et la lutte contre le surapprentissage sont essentielles.",
+    "key_concepts": [
+        {"term": "Apprentissage supervisé", "definition": "Le modèle apprend depuis des données étiquetées (paires entrée/sortie)."},
+        {"term": "Surapprentissage", "definition": "Le modèle mémorise les données d'entraînement et généralise mal."},
+        {"term": "F1-score", "definition": "Moyenne harmonique précision/rappel, adaptée aux classes déséquilibrées."},
+    ],
+    "key_points": [
+        "Toujours évaluer sur un jeu de test séparé.",
+        "Choisir la métrique selon le problème (ex. F1 si classes déséquilibrées).",
+        "La régularisation réduit le surapprentissage.",
+    ],
+}
+
+
+def _build_study_sheet_prompt(content: str, language: str) -> str:
+    lang_label = "français" if language == "fr" else "anglais"
+    return f"""Tu es un expert en pédagogie. À partir du contenu de cours suivant, rédige une fiche de révision synthétique en {lang_label}.
+
+CONTENU SOURCE :
+{content[:6000]}
+
+INSTRUCTIONS :
+- Un résumé de 3 à 5 phrases.
+- 3 à 8 concepts clés (terme + définition concise).
+- 3 à 6 points à retenir (phrases courtes et actionnables).
+- Reste fidèle au contenu source.
+
+Réponds UNIQUEMENT avec un objet JSON valide, sans markdown :
+{{
+  "title": "titre de la fiche",
+  "language": "{language}",
+  "summary": "...",
+  "key_concepts": [ {{ "term": "...", "definition": "..." }} ],
+  "key_points": [ "..." ]
+}}"""
+
+
+async def generate_study_sheet_from_content(
+    content: str,
+    language: str = "fr",
+    title: Optional[str] = None,
+) -> dict:
+    """Génère une fiche de révision structurée depuis un contenu de cours.
+    Fallback sur démo si aucun provider LLM n'est configuré."""
+    provider = get_llm_provider()
+    if provider is None:
+        logger.warning("Aucun provider LLM configuré — retour fiche de révision de démo")
+        demo = DEMO_STUDY_SHEET.copy()
+        if title:
+            demo["title"] = title
+        return demo
+
+    try:
+        prompt = _build_study_sheet_prompt(content, language)
+        raw = _strip_code_fences(provider.complete(prompt, max_tokens=4096))
+        result = json.loads(raw)
+        if title and not result.get("title"):
+            result["title"] = title
+        return result
+
+    except json.JSONDecodeError as e:
+        logger.error("JSON invalide retourné par le LLM (study-sheet): %s", e)
+        raise ValueError("Le modèle IA n'a pas retourné un JSON valide. Réessayez.")
+    except Exception as e:
+        logger.error("Erreur LLM (study-sheet): %s", e)
+        raise ValueError(f"Erreur lors de la génération: {str(e)}")

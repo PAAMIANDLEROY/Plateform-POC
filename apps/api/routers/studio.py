@@ -17,6 +17,7 @@ from services.ai import (
     generate_course_from_content,
     generate_flashcards_from_content,
     generate_mindmap_from_content,
+    generate_study_sheet_from_content,
 )
 from services.transcription import (
     transcribe_audio, extract_pptx_text, extract_pdf_text, extract_youtube_id
@@ -106,6 +107,19 @@ class GeneratedMindMap(BaseModel):
 
 
 MindMapNode.model_rebuild()  # résout la self-référence (Pydantic v2)
+
+
+class KeyConcept(BaseModel):
+    term: str
+    definition: str
+
+
+class GeneratedStudySheet(BaseModel):
+    title: str
+    language: str
+    summary: str
+    key_concepts: list[KeyConcept]
+    key_points: list[str]
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -331,6 +345,27 @@ async def content_to_mindmap(
     return GeneratedMindMap(**data)
 
 
+# ── Pipeline 5 : Contenu → Fiche de révision (Phase 11) ──────────────────────
+
+@router.post("/study-sheet", response_model=GeneratedStudySheet)
+async def content_to_study_sheet(
+    body: GenerateFromTextRequest,
+    current_user: CurrentUser = Depends(require_role(*TEACHER_ROLES)),
+):
+    """Génère une fiche de révision structurée à partir d'un contenu de cours."""
+    if not body.content.strip():
+        raise HTTPException(status_code=400, detail="Contenu requis")
+    try:
+        data = await generate_study_sheet_from_content(
+            content=body.content,
+            language=body.language,
+            title=body.title,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    return GeneratedStudySheet(**data)
+
+
 # ── Health ────────────────────────────────────────────────────────────────────
 
 @router.get("/health")
@@ -345,5 +380,5 @@ def studio_health():
         "llm_provider": settings.LLM_PROVIDER,
         "llm_model": provider.model if provider else None,
         "transcription_configured": bool(settings.OPENAI_API_KEY),
-        "pipelines": ["excel-to-quiz", "video-to-course", "flashcards", "mindmap"],
+        "pipelines": ["excel-to-quiz", "video-to-course", "flashcards", "mindmap", "study-sheet"],
     }
