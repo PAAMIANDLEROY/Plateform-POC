@@ -13,18 +13,18 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# ─── Job 1: Backend tests ─────────────────────────────────────────────────────
 jobs:
+
+  # ── 1. Backend tests ──────────────────────────────────────────────────────
   backend-tests:
     name: Backend (Python / FastAPI)
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: apps/api
-
     steps:
       - uses: actions/checkout@v4
 
@@ -34,8 +34,7 @@ jobs:
           cache: pip
           cache-dependency-path: apps/api/requirements.txt
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+      - run: pip install -r requirements.txt
 
       - name: Run tests
         run: pytest tests/ -v --tb=short
@@ -47,14 +46,14 @@ jobs:
           OPENAI_API_KEY: ""
           FRONTEND_URL: "http://localhost:3000"
 
-# ─── Job 2: Frontend lint & build ────────────────────────────────────────────
-  frontend-build:
-    name: Frontend (Next.js)
+  # ── 2. Build frontend — GitHub Pages (maquette cliquable stable) ──────────
+  #    Tourne sur PR et push main pour valider le build.
+  build-pages:
+    name: "Build — GitHub Pages (maquette)"
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: apps/web
-
     steps:
       - uses: actions/checkout@v4
 
@@ -62,43 +61,36 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
+      - run: npm install --legacy-peer-deps
 
-      - name: Lint
-        run: npm run lint
+      - run: npm run lint
 
-      - name: Build static export
+      - name: Build static export (base path /Plateform-POC)
         run: npm run build
         env:
           NODE_ENV: production
-          # Ajouter API_URL dans : GitHub repo → Settings → Secrets → Actions
-          # Valeur : URL Render du backend, ex. https://hi-platform-api.onrender.com
-          NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
           NEXT_PUBLIC_BASE_PATH: "/Plateform-POC"
 
-      - name: Add .nojekyll
-        run: touch out/.nojekyll
+      - run: touch out/.nojekyll
 
       - uses: actions/upload-artifact@v4
         with:
-          name: nextjs-out
+          name: pages-out
           path: apps/web/out
 
-# ─── Job 3: Deploy (main branch only) ────────────────────────────────────────
-  deploy:
-    name: Deploy to GitHub Pages
-    needs: [backend-tests, frontend-build]
+  # ── 3. Deploy — GitHub Pages ──────────────────────────────────────────────
+  deploy-pages:
+    name: "Deploy → GitHub Pages (maquette)"
+    needs: [backend-tests, build-pages]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: nextjs-out
+          name: pages-out
           path: out
 
       - uses: actions/configure-pages@v5
@@ -109,3 +101,42 @@ jobs:
 
       - uses: actions/deploy-pages@v4
         id: deployment
+
+  # ── 4. Build + Deploy — Vercel (dev avec backend) ─────────────────────────
+  #    Vercel CLI gère son propre build (lit NEXT_PUBLIC_API_URL depuis le
+  #    dashboard Vercel via `vercel pull`). Pas de base path → déploiement
+  #    à la racine.
+  deploy-vercel:
+    name: "Deploy → Vercel (dev)"
+    needs: [backend-tests]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm install --legacy-peer-deps
+
+      - name: Pull Vercel environment (env vars + project config)
+        run: npx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Build via Vercel CLI
+        run: npx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Deploy pre-built output
+        run: npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

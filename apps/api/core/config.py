@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     # Comma-separated list of allowed frontend origins (CORS + cookies).
     # Example: "http://localhost:3000,https://paamiandleroy.github.io"
     FRONTEND_URL: str = "http://localhost:3000"
+    # Regex pour accepter toutes les previews Vercel du projet sans changer l'env à chaque deploy.
+    # Exemple: https://plateform-poc-hiparis[-\w]*\.vercel\.app
+    CORS_VERCEL_REGEX: str = ""
     # Set to true in production (Render) to send Secure + SameSite=None cookies.
     COOKIE_SECURE: bool = False
     ANTHROPIC_API_KEY: str = ""

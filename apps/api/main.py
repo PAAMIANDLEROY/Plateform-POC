@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,15 +9,17 @@ from core.config import settings
 from core.domains import load_domains_from_db
 from routers import auth, users, videos, courses, moocs, apps, studio, learning, analytics
 
+logger = logging.getLogger(__name__)
+
 
 def run_migrations():
     """Lance alembic upgrade head au démarrage — idempotent."""
     try:
         alembic_cfg = Config("alembic.ini")
         command.upgrade(alembic_cfg, "head")
-        print("✅ Migrations OK")
+        logger.info("✅ Migrations OK")
     except Exception as e:
-        print(f"⚠️  Migrations skipped: {e}")
+        logger.warning("⚠️  Migrations skipped: %s", e)
 
 
 @asynccontextmanager
@@ -35,7 +38,8 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,   # comma-separated FRONTEND_URL
+    allow_origins=settings.cors_origins,
+    allow_origin_regex=settings.CORS_VERCEL_REGEX or None,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

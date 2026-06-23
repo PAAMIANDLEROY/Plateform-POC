@@ -1,3 +1,6 @@
 {
-  "outputDirectory": "out"
+  "outputDirectory": "out",
+  "github": {
+    "enabled": false
+  }
 }
