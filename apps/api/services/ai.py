@@ -375,3 +375,84 @@ async def generate_flashcards_from_content(
     except Exception as e:
         logger.error("Erreur LLM (flashcards): %s", e)
         raise ValueError(f"Erreur lors de la génération: {str(e)}")
+
+
+# ── Carte mentale (NotebookLM-style, Phase 11) ────────────────────────────────
+
+DEMO_MINDMAP = {
+    "title": "Carte mentale de démonstration",
+    "root": {
+        "label": "Machine Learning",
+        "children": [
+            {"label": "Types d'apprentissage", "children": [
+                {"label": "Supervisé", "children": []},
+                {"label": "Non-supervisé", "children": []},
+                {"label": "Par renforcement", "children": []},
+            ]},
+            {"label": "Évaluation", "children": [
+                {"label": "Accuracy", "children": []},
+                {"label": "F1-score", "children": []},
+                {"label": "Validation croisée", "children": []},
+            ]},
+            {"label": "Surapprentissage", "children": [
+                {"label": "Régularisation L1/L2", "children": []},
+                {"label": "Jeu de test séparé", "children": []},
+            ]},
+        ],
+    },
+}
+
+
+def _build_mindmap_prompt(content: str, language: str) -> str:
+    lang_label = "français" if language == "fr" else "anglais"
+    return f"""Tu es un expert en pédagogie. À partir du contenu de cours suivant, construis une carte mentale hiérarchique en {lang_label}.
+
+CONTENU SOURCE :
+{content[:6000]}
+
+INSTRUCTIONS :
+- Un concept central (racine), puis 3 à 6 branches principales, chacune avec 2 à 5 sous-nœuds.
+- Profondeur maximale : 3 niveaux. Labels courts (1 à 5 mots).
+- Reste fidèle au contenu source ; structure logiquement les notions.
+
+Réponds UNIQUEMENT avec un objet JSON valide, sans markdown. Chaque nœud a "label" et "children" (liste, éventuellement vide) :
+{{
+  "title": "titre de la carte",
+  "root": {{
+    "label": "Concept central",
+    "children": [
+      {{ "label": "Branche", "children": [ {{ "label": "Sous-point", "children": [] }} ] }}
+    ]
+  }}
+}}"""
+
+
+async def generate_mindmap_from_content(
+    content: str,
+    language: str = "fr",
+    title: Optional[str] = None,
+) -> dict:
+    """Génère une carte mentale hiérarchique depuis un contenu de cours.
+    Fallback sur démo si aucun provider LLM n'est configuré."""
+    provider = get_llm_provider()
+    if provider is None:
+        logger.warning("Aucun provider LLM configuré — retour carte mentale de démo")
+        demo = DEMO_MINDMAP.copy()
+        if title:
+            demo["title"] = title
+        return demo
+
+    try:
+        prompt = _build_mindmap_prompt(content, language)
+        raw = _strip_code_fences(provider.complete(prompt, max_tokens=4096))
+        result = json.loads(raw)
+        if title and not result.get("title"):
+            result["title"] = title
+        return result
+
+    except json.JSONDecodeError as e:
+        logger.error("JSON invalide retourné par le LLM (mindmap): %s", e)
+        raise ValueError("Le modèle IA n'a pas retourné un JSON valide. Réessayez.")
+    except Exception as e:
+        logger.error("Erreur LLM (mindmap): %s", e)
+        raise ValueError(f"Erreur lors de la génération: {str(e)}")
