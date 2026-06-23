@@ -1,11 +1,13 @@
 """
-Claude API service — Studio IA.
-Si ANTHROPIC_API_KEY n'est pas configuré, retourne un quiz de démo.
+Service IA — Studio.
+Génère quiz et cours via la couche LLM-agnostique (services/llm.py).
+Si aucun provider LLM n'est configuré, retourne un contenu de démonstration.
 """
 import json
 import logging
 from typing import Optional
-from core.config import settings
+
+from services.llm import get_llm_provider
 
 logger = logging.getLogger(__name__)
 
@@ -241,27 +243,20 @@ async def generate_course_from_content(
     n_sections: int = 4,
 ) -> str:
     """
-    Génère un cours Markdown complet depuis transcription + slides via Claude.
-    Fallback sur démo si ANTHROPIC_API_KEY absent.
+    Génère un cours Markdown complet depuis transcription + slides via le LLM configuré.
+    Fallback sur démo si aucun provider LLM n'est configuré.
     """
-    if not settings.ANTHROPIC_API_KEY:
-        logger.warning("ANTHROPIC_API_KEY non configuré — retour cours de démo")
+    provider = get_llm_provider()
+    if provider is None:
+        logger.warning("Aucun provider LLM configuré — retour cours de démo")
         return DEMO_COURSE
 
     try:
-        import anthropic
-        client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
         prompt = _build_course_prompt(transcription, slides_content, title, level, language, n_sections)
-
-        message = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=8192,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return message.content[0].text.strip()
+        return provider.complete(prompt, max_tokens=8192)
 
     except Exception as e:
-        logger.error("Erreur Claude API (course): %s", e)
+        logger.error("Erreur LLM (course): %s", e)
         raise ValueError(f"Erreur lors de la génération du cours: {e}")
 
 
@@ -274,8 +269,9 @@ async def generate_quiz_from_content(
 ) -> dict:
     """Appelle Claude pour générer un quiz. Fallback sur démo si pas d'API key."""
 
-    if not settings.ANTHROPIC_API_KEY:
-        logger.warning("ANTHROPIC_API_KEY non configuré — retour quiz de démo")
+    provider = get_llm_provider()
+    if provider is None:
+        logger.warning("Aucun provider LLM configuré — retour quiz de démo")
         demo = DEMO_QUIZ.copy()
         demo["questions"] = demo["questions"][:n_questions]
         if quiz_title:
@@ -283,18 +279,9 @@ async def generate_quiz_from_content(
         return demo
 
     try:
-        import anthropic
-        client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
-
         prompt = _build_prompt(content, n_questions, difficulty, language)
 
-        message = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=4096,
-            messages=[{"role": "user", "content": prompt}],
-        )
-
-        raw = message.content[0].text.strip()
+        raw = provider.complete(prompt, max_tokens=4096)
 
         # Nettoyer si le LLM a ajouté des backticks malgré les instructions
         if raw.startswith("```"):
@@ -309,8 +296,8 @@ async def generate_quiz_from_content(
         return result
 
     except json.JSONDecodeError as e:
-        logger.error("JSON invalide retourné par Claude: %s", e)
+        logger.error("JSON invalide retourné par le LLM: %s", e)
         raise ValueError("Le modèle IA n'a pas retourné un JSON valide. Réessayez.")
     except Exception as e:
-        logger.error("Erreur Claude API: %s", e)
+        logger.error("Erreur LLM (quiz): %s", e)
         raise ValueError(f"Erreur lors de la génération: {str(e)}")

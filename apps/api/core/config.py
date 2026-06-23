@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     COOKIE_SECURE: bool = False
     ANTHROPIC_API_KEY: str = ""
     OPENAI_API_KEY: str = ""
+    # Couche LLM-agnostique (voir services/llm.py).
+    # LLM_PROVIDER : "anthropic" | "openai". LLM_MODEL : surcharge le modèle
+    # par défaut du provider (ex. "claude-sonnet-4-6", "gpt-4o"). Vide = défaut provider.
+    LLM_PROVIDER: str = "anthropic"
+    LLM_MODEL: str = ""
 
     @property
     def allowed_domains_list(self) -> List[str]:

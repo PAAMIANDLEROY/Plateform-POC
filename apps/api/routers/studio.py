@@ -249,9 +249,14 @@ async def save_course(
 @router.get("/health")
 def studio_health():
     from core.config import settings
+    from services.llm import get_llm_provider
+
+    provider = get_llm_provider()
     return {
         "studio": "ok",
-        "ai_configured": bool(settings.ANTHROPIC_API_KEY),
+        "ai_configured": provider is not None,
+        "llm_provider": settings.LLM_PROVIDER,
+        "llm_model": provider.model if provider else None,
         "transcription_configured": bool(settings.OPENAI_API_KEY),
         "pipelines": ["excel-to-quiz", "video-to-course"],
     }
