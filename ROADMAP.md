@@ -55,9 +55,10 @@ Réponse à la contrainte de dépense publique (pas de pay-as-you-go ouvert).
 - ⬜ **Distribution personnalisée des ressources** *(priorité n°1 du brief)* — suggérer/contextualiser la bonne ressource selon l'usage de l'apprenant.
 - ⬜ **Assemblage personnalisé** *(priorité n°2 du brief)* — redécouper exercice/leçon selon une auto-évaluation initiale.
 
-### Phase 11 — Studio v2  ⬜  (effort M · dépend de P1)
+### Phase 11 — Studio v2 & outils type NotebookLM  ⬜  (effort M · dépend de P1)
 - ⬜ **Flashcards automatiques** depuis un cours *(quick win, très demandé)*.
 - 🔶 **MOOC semi-automatisé** — transcription vidéo + slides → squelette de MOOC entier pré-créé (extension du pipeline vidéo→cours existant).
+- ⬜ **Outils dérivés type NotebookLM** — à partir d'un cours/document, générer automatiquement : **carte mentale**, fiche de révision, FAQ, résumé audio (« podcast »), chronologie. Deux voies : (a) **connecteur** vers un outil externe (NotebookLM n'a pas d'API publique stable → plutôt en V2), (b) **équivalents maison** via nos pipelines LLM — la carte mentale et la fiche de révision sont faciles à produire (JSON → rendu front), à privilégier en premier.
 
 ### Phase 12 — Pédagogie interactive  ⬜  (effort L)
 - ⬜ **Playground d'exercices de code pas-à-pas** (type AnswerFlow) — ~20 exercices enchaînés, exécution, entraînement manuel puis automatique, suivi complet.
