@@ -345,7 +345,10 @@ async def content_to_flashcards(
 
 # ── Pipeline 4 : Contenu → Carte mentale (Phase 11) ──────────────────────────
 
-@router.post("/mindmap", response_model=GeneratedMindMap)
+# Note : pas de `response_model` ici — le modèle MindMapNode est récursif et
+# certaines versions de FastAPI peinent à en générer le schéma au démarrage.
+# On valide quand même la sortie en construisant GeneratedMindMap (Pydantic pur).
+@router.post("/mindmap")
 async def content_to_mindmap(
     body: GenerateFromTextRequest,
     current_user: CurrentUser = Depends(require_role(*TEACHER_ROLES)),
