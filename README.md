@@ -112,8 +112,9 @@ docker-compose up -d          # PostgreSQL + Redis
 | `ALLOWED_DOMAINS` | Domaines email autorisés | `polytechnique.edu,hec.fr` |
 | `ANTHROPIC_API_KEY` | Clé Claude API | `sk-ant-...` |
 | `OPENAI_API_KEY` | Clé Whisper API / embeddings | `sk-...` |
-| `LLM_PROVIDER` | Fournisseur LLM actif | `anthropic` \| `openai` |
-| `LLM_MODEL` | Modèle (vide = défaut provider) | `claude-sonnet-4-6`, `gpt-4o` |
+| `LLM_PROVIDER` | Fournisseur LLM actif | `anthropic` \| `openai` \| `mistral` |
+| `LLM_MODEL` | Modèle (vide = défaut provider) | `claude-sonnet-4-6`, `gpt-4o`, `mistral-large-latest` |
+| `MISTRAL_API_KEY` | Clé Mistral (si `LLM_PROVIDER=mistral`) | `...` |
 | `LOG_LEVEL` | Niveau de log applicatif | `INFO` |
 | `FRONTEND_URL` | URLs CORS (séparées par virgule) | `http://localhost:3000` |
 | `CORS_VERCEL_REGEX` | Regex origines Vercel (previews) | `https://...\.vercel\.app` |

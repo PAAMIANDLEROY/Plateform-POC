@@ -10,6 +10,7 @@ from services import llm
 from services.llm import (
     AnthropicProvider,
     OpenAIProvider,
+    MistralProvider,
     get_llm_provider,
 )
 
@@ -45,6 +46,17 @@ def test_openai_selected_with_key(monkeypatch):
     provider = get_llm_provider()
     assert isinstance(provider, OpenAIProvider)
     assert provider.model == "gpt-4o"  # surcharge LLM_MODEL respectée
+
+
+def test_mistral_selected_with_key(monkeypatch):
+    monkeypatch.setattr(settings, "LLM_PROVIDER", "mistral")
+    monkeypatch.setattr(settings, "MISTRAL_API_KEY", "mistral-test")
+    monkeypatch.setattr(settings, "LLM_MODEL", "")
+    provider = get_llm_provider()
+    assert isinstance(provider, MistralProvider)
+    assert provider.model == MistralProvider.DEFAULT_MODEL
+    # Mistral hérite des embeddings d'OpenAIProvider (prêt pour le RAG)
+    assert provider.EMBED_MODEL == "mistral-embed"
 
 
 def test_unknown_provider_returns_none(monkeypatch):

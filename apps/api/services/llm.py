@@ -126,6 +126,24 @@ class OpenAIProvider(LLMProvider):
         return [item.embedding for item in resp.data]
 
 
+class MistralProvider(OpenAIProvider):
+    """Fournisseur Mistral via son API OpenAI-compatible (réutilise le SDK openai).
+
+    Hérite de `complete()` / `embed()` d'OpenAIProvider : seuls le client (base_url
+    Mistral), le modèle par défaut et le modèle d'embeddings changent.
+    """
+
+    DEFAULT_MODEL = "mistral-large-latest"
+    EMBED_MODEL = "mistral-embed"
+    BASE_URL = "https://api.mistral.ai/v1"
+
+    def __init__(self, api_key: str, model: str = ""):
+        from openai import OpenAI  # import local
+
+        self.model = model or self.DEFAULT_MODEL
+        self._client = OpenAI(api_key=api_key, base_url=self.BASE_URL)
+
+
 @lru_cache(maxsize=1)
 def get_llm_provider() -> Optional[LLMProvider]:
     """
@@ -147,6 +165,12 @@ def get_llm_provider() -> Optional[LLMProvider]:
             logger.warning("LLM_PROVIDER=openai mais OPENAI_API_KEY absent")
             return None
         return OpenAIProvider(settings.OPENAI_API_KEY, model)
+
+    if provider == "mistral":
+        if not settings.MISTRAL_API_KEY:
+            logger.warning("LLM_PROVIDER=mistral mais MISTRAL_API_KEY absent")
+            return None
+        return MistralProvider(settings.MISTRAL_API_KEY, model)
 
     logger.error("LLM_PROVIDER inconnu : %r — aucun provider chargé", provider)
     return None

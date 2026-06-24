@@ -32,17 +32,18 @@ Ouvre **GitHub Desktop → Push origin**. Liste, du plus ancien au plus récent 
 Les nouveaux outils Studio (flashcards, carte mentale, fiche de révision, FAQ) **fonctionnent déjà**,
 mais renvoient du **contenu de démonstration** tant qu'aucune clé LLM n'est configurée sur Render.
 
-Sur **Render → Environment**, vérifie/ajoute :
+Sur **Render → Environment** — tu pars sur **Mistral** d'abord, donc :
 
 | Variable | Valeur | Pourquoi |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | `sk-ant-...` | Active la vraie génération IA (sinon démo) |
-| `LLM_PROVIDER` | `anthropic` | Provider actif (ou `openai`) |
-| `LLM_MODEL` | *(vide)* | Laisse vide = `claude-sonnet-4-6` par défaut |
+| `LLM_PROVIDER` | `mistral` | Provider actif |
+| `MISTRAL_API_KEY` | `...` (clé console.mistral.ai) | Active la vraie génération IA (sinon démo) |
+| `LLM_MODEL` | *(vide)* | Laisse vide = `mistral-large-latest` par défaut |
 | `LOG_LEVEL` | `INFO` | Rend les logs applicatifs visibles (défaut déjà INFO) |
 
-> Pour basculer sur OpenAI un jour : `LLM_PROVIDER=openai` + `LLM_MODEL=gpt-4o` + `OPENAI_API_KEY`.
-> **Aucun changement de code** — c'est tout l'intérêt de l'abstraction P1.
+> Récupère ta clé sur **console.mistral.ai → API Keys**.
+> Pour changer de fournisseur plus tard : `LLM_PROVIDER=anthropic`+`ANTHROPIC_API_KEY`, ou
+> `LLM_PROVIDER=openai`+`OPENAI_API_KEY`. **Aucun changement de code** (abstraction P1).
 
 ---
 
