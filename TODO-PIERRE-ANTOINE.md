@@ -5,25 +5,27 @@
 
 ---
 
-## 🔴 Priorité 1 — Pousser les commits de la nuit
+## 🔴 Priorité 1 — Pousser les commits + VÉRIFIER LE BUILD FRONTEND
 
-Claude a fait **9 commits locaux** (il ne peut pas pousser — tu pousses via GitHub Desktop).
-Ouvre **GitHub Desktop → Push origin**. Liste, du plus ancien au plus récent :
+Pousse via **GitHub Desktop → Push origin**. Commits récents (du plus ancien au plus récent) :
 
 | Commit | Contenu |
 |---|---|
-| `67fe8f7` | docs: ROADMAP.md (feuille de route complète) |
-| `171160f` | docs(roadmap): ajout outils type NotebookLM |
-| `b9ab363` | **P1** — abstraction LLM-agnostique (services/llm.py) |
-| `12fa9d4` | logging configurable + arrêt du log du code OTP |
-| `4782469` | **flashcards** auto (Studio) |
-| `d56ddc3` | **carte mentale** auto (Studio) |
-| `975a099` | **fiche de révision** auto (Studio) |
-| `cfe8354` | **FAQ** auto (Studio) |
-| `a1152df` | docs(readme): endpoints Studio v2 + config |
+| `b9ab363` | **P1** — abstraction LLM-agnostique |
+| `12fa9d4`…`cfe8354` | logging + flashcards / carte mentale / fiche / FAQ (backend) |
+| `a1152df`, `5b66f69`, `5d6fde9` | docs + durcissement mindmap |
+| `f12731a` | **Mistral** comme provider LLM |
+| `e4bb260` | contraste : fond sombre pages insights |
+| `73c33a2` | **page frontend Outils IA** + contraste hub Studio |
+| `c8780c3` | contraste : fond sombre excel-quiz / video-course |
+| `488d34e` | contraste : fond sombre pages détail (cours/mooc/vidéo/lms) |
 
-> Après le push, **vérifie que la CI passe au vert** (onglet Actions sur GitHub). Les nouveaux tests
-> backend (`test_llm.py`, `test_studio.py`) doivent tourner. Si un job échoue, envoie-moi le log au réveil.
+> ⚠️ **IMPORTANT — vérifie le build après push.** Claude n'a **pas** pu lancer `npm run build`/`lint`
+> en local (npm absent de son shell). Les modifs frontend (nouvelle page + corrections contraste) sont
+> écrites en calquant les patterns existants, mais **non vérifiées par un build**. Surveille le job
+> **`Build — GitHub Pages`** dans l'onglet Actions :
+> - ✅ vert → tout est bon.
+> - ❌ rouge → copie-moi l'erreur, je corrige (probablement une broutille TS/JSX dans un fichier précis).
 
 ---
 
@@ -74,12 +76,25 @@ Doc interactive : `https://hiplatform-api.onrender.com/docs`.
 
 ---
 
+## 🎨 Audit contraste — fait (à confirmer visuellement)
+
+La plateforme avait une **migration thème sombre → clair incomplète** : plusieurs pages étaient
+restées « dark » (texte blanc) mais affichées sur le nouveau fond clair → **texte invisible**.
+Corrigé en redonnant un fond sombre (`bg-navy`) à ces pages :
+- **insights** (article + éditeur), **studio** (excel-quiz, video-course, nouvelle page outils IA),
+  **détail** cours / MOOC / vidéo / cohorte LMS / élève.
+- Hub Studio (page claire) : titres blancs sur cartes blanches → repassés en gris foncé.
+- Pages OK laissées telles quelles : listes (cours, vidéos, insights), dashboard, CGU/confidentialité
+  (déjà `bg-black`).
+
+> À confirmer d'un coup d'œil une fois déployé. Si une page te semble incohérente (panneau sombre
+> centré sur fond clair), dis-le moi : on pourra soit la passer entièrement en thème clair, soit
+> ajuster. Mon choix « fond sombre » préserve le design d'origine de ces pages avec le moins de risque.
+
 ## ⏭️ Ce qu'il reste à faire ensemble (besoin de toi / décisions produit)
 
-- **Frontend des nouveaux outils Studio** : les endpoints existent, mais **pas encore d'interface**.
-  Claude n'a pas pu toucher au frontend cette nuit (npm indisponible dans son shell → risque de casser le build
-  sans pouvoir le tester). À faire ensemble : pages/boutons « Générer flashcards / carte mentale / fiche / FAQ »
-  dans Hi! Studio.
+- **Frontend des nouveaux outils Studio** : ✅ fait — page `/studio/ai-tools` (accessible depuis
+  Hi! Studio → onglet « Studio IA » → carte « Outils IA »). Reste à la tester en vrai une fois le build OK.
 - **Phase 8 — Broker LLM** : gros chantier avec décisions produit (modèle de clés, quotas, ACL par utilisateur).
   Le point d'insertion est prêt (tous les appels passent par `get_llm_provider()`). À cadrer ensemble.
 - **Comptes stores** (pour l'app mobile, plus tard) : Apple Developer (99 $/an) + Google Play (25 $ une fois).
