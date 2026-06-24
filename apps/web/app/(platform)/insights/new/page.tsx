@@ -293,7 +293,8 @@ export default function InsightsNewPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10">
+    <div className="bg-navy min-h-screen">
+      <div className="max-w-7xl mx-auto px-6 py-10">
       {/* Barre d'actions en haut de page */}
       <div className="flex items-center justify-between mb-8">
         <Link href="/insights" className="text-sm text-gray-400 hover:text-white transition-colors">
@@ -455,6 +456,7 @@ export default function InsightsNewPage() {
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

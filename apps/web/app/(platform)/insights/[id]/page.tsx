@@ -131,7 +131,8 @@ export default function InsightPage({ params }: { params: { id: string } }) {
   const related = MOCK_INSIGHTS.filter((a) => a.id !== article.id).slice(0, 2);
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10">
+    <div className="bg-navy min-h-screen">
+      <div className="max-w-7xl mx-auto px-6 py-10">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
 
         {/* ── Article principal (2/3 de la largeur sur grand écran) ── */}
@@ -224,6 +225,7 @@ export default function InsightPage({ params }: { params: { id: string } }) {
             </div>
           </div>
         </aside>
+      </div>
       </div>
     </div>
   );
