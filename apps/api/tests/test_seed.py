@@ -83,3 +83,18 @@ def test_mooc_modules_reference_seeded_courses():
         for mod_title, course_ids in modules:
             for cid in course_ids:
                 assert cid in seeded_course_ids, f"MOOC {mid} référence un cours absent : {cid}"
+
+
+def test_insights_seed_data_valid():
+    mod = _load_migration("0008_create_seed_insights.py", "seed_0008")
+    assert len(mod.INSIGHTS) == 4
+    ids = set()
+    valid_block_types = {"text", "heading", "code", "quote", "key-insight", "figure", "divider"}
+    for art in mod.INSIGHTS:
+        assert art["id"] not in ids, "id d'article dupliqué"
+        ids.add(art["id"])
+        assert art["title"] and art["abstract"]
+        assert isinstance(art["authors"], list) and art["authors"]
+        assert isinstance(art["blocks"], list) and art["blocks"]
+        for block in art["blocks"]:
+            assert block["type"] in valid_block_types, f"type de bloc inconnu : {block['type']}"
