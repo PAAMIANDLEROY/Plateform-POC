@@ -62,7 +62,7 @@ export function VideoPageClient({ id }: { id: string }) {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
+    <div className="max-w-7xl mx-auto px-6 py-8 bg-navy min-h-screen">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
         {/* ── Main content ── */}

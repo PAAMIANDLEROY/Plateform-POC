@@ -191,7 +191,7 @@ export function CohortDetail({
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10">
+    <div className="max-w-7xl mx-auto px-6 py-10 bg-navy min-h-screen">
       {/* Lien retour au tableau de bord LMS */}
       <Link
         href="/lms"

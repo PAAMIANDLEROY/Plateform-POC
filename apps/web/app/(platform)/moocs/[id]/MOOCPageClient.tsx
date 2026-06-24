@@ -51,7 +51,7 @@ export function MOOCPageClient({ id }: { id: string }) {
   const sortedModules = [...mooc.modules].sort((a, b) => a.position - b.position);
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-8">
+    <div className="max-w-5xl mx-auto px-6 py-8 bg-navy min-h-screen">
       {/* Hero */}
       <div className="bg-gradient-to-br from-primary/20 to-gray-900 border border-white/10 rounded-2xl p-8 mb-8">
         <Link href="/learning-ai/moocs" className="text-xs text-gray-500 hover:text-white mb-4 inline-block">

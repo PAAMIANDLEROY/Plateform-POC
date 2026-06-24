@@ -156,7 +156,7 @@ export default function StudentPage({ params }: { params: { id: string; userId: 
     .slice(0, 7); // Limite la frise à 7 éléments
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-10">
+    <div className="max-w-5xl mx-auto px-6 py-10 bg-navy min-h-screen">
       {/* Lien retour vers la page de la cohorte */}
       <Link
         href={`/lms/${params.id}`}

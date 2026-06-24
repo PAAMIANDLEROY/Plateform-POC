@@ -135,7 +135,7 @@ export function VideoDetail({ video, related }: { video: Video; related: Video[]
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10">
+    <div className="max-w-7xl mx-auto px-6 py-10 bg-navy min-h-screen">
       <Link
         href="/tube"
         className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-8"
