@@ -352,7 +352,8 @@ export default function ExcelQuizPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-10">
+    <div className="bg-navy min-h-screen">
+      <div className="max-w-3xl mx-auto px-6 py-10">
       {/* Breadcrumb */}
       <div className="flex items-center gap-3 mb-8">
         <Link href="/studio" className="text-gray-500 hover:text-white transition-colors text-sm">← Studio</Link>
@@ -529,6 +530,7 @@ export default function ExcelQuizPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
