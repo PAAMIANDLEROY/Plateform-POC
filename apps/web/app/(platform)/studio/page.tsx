@@ -273,7 +273,7 @@ function CourseEditor() {
               {/* Branche heading : input titre de section */}
               {block.type === "heading" && (
                 <input defaultValue={block.content} placeholder="Titre de section..."
-                  className="w-full text-lg font-bold text-white bg-transparent border-b border-white/10 focus:border-primary focus:outline-none pb-1 transition-colors"
+                  className="w-full text-lg font-bold text-gray-900 bg-transparent border-b border-gray-200 focus:border-primary focus:outline-none pb-1 transition-colors"
                 />
               )}
               {/* Branche text/video/image : textarea avec placeholder contextuel */}
@@ -292,7 +292,7 @@ function CourseEditor() {
               {/* Branche quiz : question + 4 options radio */}
               {block.type === "quiz" && (
                 <div className="flex flex-col gap-2">
-                  <input placeholder="Question..." className="w-full text-sm font-semibold text-white bg-transparent border-b border-white/10 focus:border-primary focus:outline-none pb-1" />
+                  <input placeholder="Question..." className="w-full text-sm font-semibold text-gray-900 bg-transparent border-b border-gray-200 focus:border-primary focus:outline-none pb-1" />
                   {["Option A", "Option B", "Option C", "Option D"].map((opt) => (
                     <div key={opt} className="flex items-center gap-3">
                       <input type="radio" name={`quiz-${block.id}`} className="accent-primary" />
@@ -378,7 +378,7 @@ function MOOCEditor() {
                     selected ? "bg-primary border-primary text-white" : "border-white/20 text-transparent"
                   }`}>✓</span>
                   <div>
-                    <p className={`text-xs font-semibold leading-tight ${selected ? "text-primary-light" : "text-gray-300"}`}>{c.title}</p>
+                    <p className={`text-xs font-semibold leading-tight ${selected ? "text-primary-light" : "text-gray-700"}`}>{c.title}</p>
                     <p className="text-xs text-gray-600 mt-0.5">{Math.floor(c.duration / 60)}h · {c.level}</p>
                   </div>
                 </button>
@@ -418,7 +418,7 @@ function MOOCEditor() {
 
         {/* Séquence ordonnée des cours sélectionnés */}
         <div className="bg-white border border-gray-200 rounded-xl p-5">
-          <p className="text-sm font-semibold text-white mb-4">
+          <p className="text-sm font-semibold text-gray-900 mb-4">
             Séquence du parcours
             {ordered.length > 0 && (
               <span className="text-xs text-gray-500 font-normal ml-2">
@@ -511,7 +511,7 @@ function VideoEditor() {
             )}
           </div>
           <div className="p-4">
-            <p className="text-sm font-semibold text-white line-clamp-2 mb-1">{title || "Titre de la vidéo"}</p>
+            <p className="text-sm font-semibold text-gray-900 line-clamp-2 mb-1">{title || "Titre de la vidéo"}</p>
             <p className="text-xs text-gray-500 mb-2">{school} · {category}</p>
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-1">
@@ -702,6 +702,15 @@ function AIStudio() {
       badgeColor: "bg-primary/15 text-primary border-primary/20",
       cta: "Générer un cours",
     },
+    {
+      href: "/studio/ai-tools",
+      icon: "🧠",
+      title: "Outils IA (cours → ressources)",
+      desc: "Depuis un contenu de cours, générez flashcards, carte mentale, fiche de révision ou FAQ.",
+      badge: "Phase 11",
+      badgeColor: "bg-primary/15 text-primary border-primary/20",
+      cta: "Générer des ressources",
+    },
   ];
 
   return (
@@ -715,11 +724,11 @@ function AIStudio() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         {pipelines.map((p) => (
-          <div key={p.href} className="bg-white border border-gray-200 rounded-2xl p-6 flex flex-col gap-4 hover:border-white/20 transition-all">
+          <div key={p.href} className="bg-white border border-gray-200 rounded-2xl p-6 flex flex-col gap-4 hover:border-primary/30 hover:shadow-card-hover transition-all">
             <div className="text-4xl">{p.icon}</div>
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <h3 className="font-bold text-white">{p.title}</h3>
+                <h3 className="font-bold text-gray-900">{p.title}</h3>
                 <span className={`text-xs font-medium border px-2 py-0.5 rounded-full ${p.badgeColor}`}>{p.badge}</span>
               </div>
               <p className="text-sm text-gray-400 leading-relaxed">{p.desc}</p>
