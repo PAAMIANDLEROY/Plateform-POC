@@ -161,7 +161,7 @@ export default function InsightsPage() {
           {/* Article à la une — grand format pleine largeur */}
           <Link href={`/insights/${featured.id}`} className="group block mb-10">
             <div className="relative rounded-2xl overflow-hidden h-80">
-              <img src={featured.cover} alt={featured.title}
+              <img src={featured.cover ?? ""} alt={featured.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
               {/* Dégradé sombre pour lisibilité du texte superposé */}
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
@@ -197,7 +197,7 @@ export default function InsightsPage() {
                 <Link key={article.id} href={`/insights/${article.id}`}
                   className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:border-primary/30 hover:shadow-card-hover transition-all shadow-card">
                   <div className="relative h-44 overflow-hidden">
-                    <img src={article.cover} alt={article.title}
+                    <img src={article.cover ?? ""} alt={article.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                     <span className="absolute top-3 left-3 text-xs font-semibold bg-danger text-white px-2.5 py-0.5 rounded-full">
