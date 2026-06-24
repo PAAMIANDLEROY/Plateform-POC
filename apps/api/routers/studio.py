@@ -21,7 +21,8 @@ from services.ai import (
     generate_faq_from_content,
 )
 from services.transcription import (
-    transcribe_audio, extract_pptx_text, extract_pdf_text, extract_youtube_id
+    transcribe_audio, extract_pptx_text, extract_pdf_text, extract_youtube_id,
+    fetch_youtube_transcript,
 )
 
 logger = logging.getLogger(__name__)
@@ -253,13 +254,16 @@ async def video_to_course(
 
     # ── Transcription ─────────────────────────────────────────────────────────
     if youtube_url and youtube_url.strip():
-        yt_id = extract_youtube_id(youtube_url.strip())
-        if yt_id:
-            transcription = f"[Vidéo YouTube : {youtube_url}]\n[ID: {yt_id}]\nContenu de la vidéo à analyser selon le titre et la thématique du cours."
-            sources_used.append(f"YouTube: {youtube_url}")
+        # Lien YouTube → on récupère les sous-titres (gratuit, pas de coût de
+        # transcription). Si indisponibles, on note la source et le LLM s'appuiera
+        # sur les slides / le titre.
+        yt_text = fetch_youtube_transcript(youtube_url.strip())
+        if yt_text:
+            transcription = yt_text
+            sources_used.append(f"YouTube (sous-titres) : {youtube_url}")
         else:
-            transcription = f"[URL vidéo externe : {youtube_url}]"
-            sources_used.append(f"Vidéo: {youtube_url}")
+            transcription = f"[Vidéo YouTube sans sous-titres exploitables : {youtube_url}]"
+            sources_used.append(f"YouTube : {youtube_url}")
 
     if video_file and video_file.filename:
         allowed_video = (".mp4", ".mov", ".avi", ".mp3", ".wav", ".m4a", ".webm")

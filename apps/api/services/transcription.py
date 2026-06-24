@@ -106,6 +106,26 @@ async def transcribe_audio(file_bytes: bytes, filename: str) -> str:
     return MOCK_TRANSCRIPTION
 
 
+def fetch_youtube_transcript(youtube_url: str) -> Optional[str]:
+    """
+    Récupère les sous-titres d'une vidéo YouTube (gratuit, sans transcription LLM →
+    économise des tokens). Essaie le français puis l'anglais. None si indisponible
+    (sous-titres désactivés, vidéo privée, IP serveur bloquée…) → l'appelant gère.
+    """
+    video_id = extract_youtube_id(youtube_url) or youtube_url.strip()
+    if not video_id:
+        return None
+    try:
+        from youtube_transcript_api import YouTubeTranscriptApi
+
+        segments = YouTubeTranscriptApi.get_transcript(video_id, languages=["fr", "en"])
+        text = " ".join(s["text"] for s in segments if s.get("text"))
+        return text.strip() or None
+    except Exception as e:
+        logger.warning("Sous-titres YouTube indisponibles (%s) : %s", video_id, e)
+        return None
+
+
 def extract_youtube_id(url: str) -> Optional[str]:
     """Extrait l'ID YouTube depuis une URL."""
     import re

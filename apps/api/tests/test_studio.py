@@ -16,7 +16,7 @@ from services.ai import (
     generate_faq_from_content,
 )
 from services.llm import get_llm_provider
-from services.transcription import transcribe_audio, MOCK_TRANSCRIPTION
+from services.transcription import transcribe_audio, fetch_youtube_transcript, MOCK_TRANSCRIPTION
 
 Base.metadata.create_all(bind=engine)
 
@@ -101,3 +101,8 @@ def test_transcription_falls_back_to_mock_without_keys():
     # sans appel réseau (les branches Mistral/Whisper ne sont pas atteintes).
     text = asyncio.run(transcribe_audio(b"fake-bytes", "video.mp4"))
     assert text == MOCK_TRANSCRIPTION
+
+
+def test_fetch_youtube_transcript_empty_returns_none():
+    # Entrée vide → None sans appel réseau (garde-fou avant l'API YouTube).
+    assert fetch_youtube_transcript("") is None
