@@ -29,21 +29,13 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import { MOCK_INSIGHTS } from "@/lib/mock";
-
-/**
- * Catégories disponibles pour le filtre — dédupliquées depuis les données mock.
- * Calculé une seule fois au chargement du module (hors composant → stable).
- */
-const ALL_CATEGORIES = [
-  "Tous",
-  ...Array.from(new Set(MOCK_INSIGHTS.map((i) => i.category))),
-];
+import { insightsApi, InsightResponse } from "@/lib/api";
 
 /**
  * Page de liste des articles Hi! Insights avec filtrage interactif.
+ * Les articles sont chargés depuis l'API (/api/v1/insights).
  */
 export default function InsightsPage() {
   /** Catégorie active pour le filtre — "Tous" par défaut. */
@@ -52,12 +44,32 @@ export default function InsightsPage() {
   /** Terme de recherche textuelle. */
   const [search, setSearch] = useState("");
 
+  /** Articles chargés depuis l'API. */
+  const [articles, setArticles] = useState<InsightResponse[]>([]);
+
+  /** `true` pendant le chargement initial. */
+  const [loading, setLoading] = useState(true);
+
+  // Charge les articles au montage.
+  useEffect(() => {
+    insightsApi.list()
+      .then(setArticles)
+      .catch((e) => console.error(e))
+      .finally(() => setLoading(false));
+  }, []);
+
+  /** Catégories disponibles, dérivées des articles chargés (dédupliquées). */
+  const ALL_CATEGORIES = useMemo(
+    () => ["Tous", ...Array.from(new Set(articles.map((i) => i.category).filter((c): c is string => Boolean(c))))],
+    [articles],
+  );
+
   /**
    * Articles filtrés — recompilés uniquement si `activeCategory` ou `search` change.
    * Recherche dans : titre, résumé, tags et auteurs.
    */
   const filtered = useMemo(() => {
-    return MOCK_INSIGHTS.filter((article) => {
+    return articles.filter((article) => {
       // Branche catégorie "Tous" : pas de filtre catégorie
       const matchCategory = activeCategory === "Tous" || article.category === activeCategory;
       const q = search.toLowerCase();
@@ -65,19 +77,19 @@ export default function InsightsPage() {
       const matchSearch =
         !q ||
         article.title.toLowerCase().includes(q) ||
-        article.abstract.toLowerCase().includes(q) ||
+        (article.abstract ?? "").toLowerCase().includes(q) ||
         article.tags.some((t) => t.toLowerCase().includes(q)) ||
         article.authors.some((a) => a.toLowerCase().includes(q));
       return matchCategory && matchSearch;
     });
-  }, [activeCategory, search]);
+  }, [activeCategory, search, articles]);
 
   /**
    * Article à la une (premier de la liste filtrée).
    * Si aucun résultat filtré, on ne devrait pas atteindre ce point (vérification avant).
    * `rest` = tous les articles sauf le premier (pour la grille).
    */
-  const [featured, ...rest] = filtered.length > 0 ? filtered : MOCK_INSIGHTS;
+  const [featured, ...rest] = filtered.length > 0 ? filtered : articles;
 
   /**
    * Articles de la grille (tous sauf la une).
@@ -129,16 +141,20 @@ export default function InsightsPage() {
         </div>
       </div>
 
-      {/* Branche aucun résultat */}
+      {/* Branche chargement / aucun résultat */}
       {filtered.length === 0 ? (
         <div className="text-center py-24 text-gray-600">
-          <p className="text-lg mb-2">Aucun article ne correspond à votre recherche.</p>
-          <button
-            onClick={() => { setSearch(""); setActiveCategory("Tous"); }}
-            className="text-sm text-primary hover:text-primary-light"
-          >
-            Réinitialiser les filtres
-          </button>
+          <p className="text-lg mb-2">
+            {loading ? "Chargement des articles…" : "Aucun article ne correspond à votre recherche."}
+          </p>
+          {!loading && (
+            <button
+              onClick={() => { setSearch(""); setActiveCategory("Tous"); }}
+              className="text-sm text-primary hover:text-primary-light"
+            >
+              Réinitialiser les filtres
+            </button>
+          )}
         </div>
       ) : (
         <>
@@ -153,7 +169,7 @@ export default function InsightsPage() {
                 <div className="flex items-center gap-3 mb-3">
                   {/* Badge contextuel : "À la une" si liste complète, "Premier résultat" si filtrée */}
                   <span className="text-xs font-medium bg-danger text-white px-3 py-1 rounded-full">
-                    {filtered.length === MOCK_INSIGHTS.length ? "À la une" : "Premier résultat"}
+                    {filtered.length === articles.length ? "À la une" : "Premier résultat"}
                   </span>
                   <span className="text-xs font-medium bg-white/10 text-white px-3 py-1 rounded-full border border-white/20">
                     {featured.category}

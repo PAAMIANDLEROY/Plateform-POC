@@ -35,11 +35,17 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { InsightBlock } from "@/lib/mock";
+import { insightsApi } from "@/lib/api";
 
 /** Type interne : bloc avec ID unique pour les opérations de liste React. */
 type Block = InsightBlock & { id: number };
+
+/** Cover par défaut (l'éditeur ne propose pas encore de champ image). */
+const DEFAULT_COVER =
+  "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80";
 
 /**
  * Définition des types de blocs disponibles dans la palette.
@@ -247,6 +253,15 @@ export default function InsightsNewPage() {
   /** `true` pendant 2.5s après une sauvegarde simulée. */
   const [saved, setSaved] = useState(false);
 
+  /** Navigation — redirection vers l'article après publication. */
+  const router = useRouter();
+
+  /** `true` pendant l'appel de publication à l'API. */
+  const [publishing, setPublishing] = useState(false);
+
+  /** Message d'erreur de publication (vide si aucune). */
+  const [error, setError] = useState("");
+
   /**
    * Ajoute un nouveau bloc à la fin de la liste.
    * L'ID est le timestamp courant — unique dans une session normale.
@@ -292,6 +307,38 @@ export default function InsightsNewPage() {
     setTimeout(() => setSaved(false), 2500);
   }
 
+  /** Publie l'article : persiste via l'API puis redirige vers sa page de détail. */
+  async function publish() {
+    if (!title.trim()) {
+      setError("Le titre est requis.");
+      return;
+    }
+    setError("");
+    setPublishing(true);
+    // On retire l'`id` local de chaque bloc (utile uniquement à l'édition React).
+    const cleanBlocks = blocks.map((b) => {
+      const rest: Record<string, unknown> = { ...b };
+      delete rest.id;
+      return rest;
+    });
+    try {
+      const created = await insightsApi.create({
+        title,
+        abstract,
+        authors: authors.split(",").map((a) => a.trim()).filter(Boolean),
+        tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+        category,
+        cover: DEFAULT_COVER,
+        read_time: Math.max(1, Math.round(cleanBlocks.length * 1.5)),
+        blocks: cleanBlocks,
+      });
+      router.push(`/insights/${created.id}`);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Erreur lors de la publication.");
+      setPublishing(false);
+    }
+  }
+
   return (
     <div className="bg-navy min-h-screen">
       <div className="max-w-7xl mx-auto px-6 py-10">
@@ -315,12 +362,19 @@ export default function InsightsNewPage() {
           <button onClick={save} className="text-sm bg-gray-800 border border-white/10 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors font-medium">
             {saved ? "✓ Sauvegardé" : "Sauvegarder"}
           </button>
-          {/* Bouton publier — action future (appel API) */}
-          <button className="text-sm bg-danger text-white px-5 py-2 rounded-lg hover:bg-danger-dark transition-colors font-semibold shadow-lg shadow-danger/30">
-            Publier
+          {/* Bouton publier — persiste via l'API puis redirige vers l'article */}
+          <button onClick={publish} disabled={publishing}
+            className="text-sm bg-danger text-white px-5 py-2 rounded-lg hover:bg-danger-dark transition-colors font-semibold shadow-lg shadow-danger/30 disabled:opacity-50">
+            {publishing ? "Publication…" : "Publier"}
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-danger/10 border border-danger/30 text-danger text-sm rounded-xl px-4 py-3 mb-6">
+          {error}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
 

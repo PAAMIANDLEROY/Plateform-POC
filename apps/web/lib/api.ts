@@ -897,3 +897,46 @@ export const appsApi = {
    */
   delete: (id: string) => request<void>(`/api/v1/apps/${id}`, { method: "DELETE" }),
 };
+
+// ─── Insights (articles éditoriaux) ──────────────────────────────────────────
+
+/**
+ * Représentation d'un article Hi! Insights renvoyée par l'API.
+ * Les `blocks` sont hétérogènes (heading/text/code/quote/key-insight/figure/divider) ;
+ * typés en `Record<string, unknown>[]` ici, castés au rendu côté page de détail.
+ */
+export interface InsightResponse {
+  id: string;
+  title: string;
+  abstract: string | null;
+  authors: string[];
+  tags: string[];
+  school: string | null;
+  category: string | null;
+  cover: string | null;
+  read_time: number;
+  published_at: string | null;
+  status: string;
+  blocks: Record<string, unknown>[];
+  created_by: string;
+  created_at: string;
+}
+
+/** Namespace pour les opérations sur les articles Hi! Insights. */
+export const insightsApi = {
+  /** Liste les articles (filtres optionnels : catégorie, école, recherche). */
+  list: (params?: { category?: string; school?: string; search?: string }) => {
+    const q = new URLSearchParams();
+    if (params?.category) q.set("category", params.category);
+    if (params?.school) q.set("school", params.school);
+    if (params?.search) q.set("search", params.search);
+    return request<InsightResponse[]>(`/api/v1/insights?${q}`);
+  },
+
+  /** Récupère un article par son id (blocs inclus). */
+  get: (id: string) => request<InsightResponse>(`/api/v1/insights/${id}`),
+
+  /** Crée (publie) un nouvel article. */
+  create: (data: unknown) =>
+    request<InsightResponse>("/api/v1/insights", { method: "POST", body: JSON.stringify(data) }),
+};
