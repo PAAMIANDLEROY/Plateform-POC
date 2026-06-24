@@ -29,6 +29,21 @@ Pousse via **GitHub Desktop → Push origin**. Commits récents (du plus ancien 
 
 ---
 
+## 🟢 Cours dans Supabase (« les cours ont disparu »)
+
+Les cours n'apparaissaient pas car **Supabase était vide** (les migrations créaient les tables
+mais aucun contenu) — ce n'était PAS lié aux corrections de contraste. La migration **`0006`**
+(commit `f13bd15`) seede **11 cours de démo + blocs** (mêmes ids que le catalogue : `/courses/1`…`11`)
+et un enseignant démo propriétaire.
+
+**Elle s'exécute automatiquement au prochain déploiement Render** (migrations au démarrage).
+Après push + redeploy, vérifie les **logs Render** au démarrage :
+- ✅ `Running upgrade 0005 -> 0006` → cours seedés, `/courses/1` fonctionne.
+- ⚠️ `Migrations skipped: ...` → la migration a échoué (copie-moi l'erreur).
+
+> Note : seuls les **cours** sont seedés pour l'instant. Vidéos / MOOCs / apps sont encore vides —
+> dis-moi si tu veux que je les seede pareil (même méthode).
+
 ## 🟠 Priorité 2 — Activer les nouvelles fonctions IA en production
 
 Les nouveaux outils Studio (flashcards, carte mentale, fiche de révision, FAQ) **fonctionnent déjà**,
