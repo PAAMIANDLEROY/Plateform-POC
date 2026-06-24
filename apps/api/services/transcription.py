@@ -1,15 +1,26 @@
 """
-Service de transcription vidéo via OpenAI Whisper.
-Fallback sur transcription mock si OPENAI_API_KEY absent.
+Service de transcription audio/vidéo.
+
+Priorité : Mistral (Voxtral) si MISTRAL_API_KEY, sinon OpenAI Whisper si
+OPENAI_API_KEY, sinon transcription mock. Mistral est appelé via son endpoint
+REST (httpx) — pas d'endpoint OpenAI-compatible pour la transcription, mais le
+format multipart suit la même convention que Whisper.
 """
 import io
 import logging
 import tempfile
 import os
 from typing import Optional
+
+import httpx
+
 from core.config import settings
 
 logger = logging.getLogger(__name__)
+
+# Modèle de transcription Mistral (Voxtral). Voir docs.mistral.ai (audio).
+MISTRAL_TRANSCRIBE_URL = "https://api.mistral.ai/v1/audio/transcriptions"
+MISTRAL_TRANSCRIBE_MODEL = "voxtral-mini-latest"
 
 MOCK_TRANSCRIPTION = """
 Bienvenue dans ce cours sur les fondamentaux de l'intelligence artificielle.
@@ -33,15 +44,27 @@ Dans les prochaines sections, nous approfondirons chacun de ces aspects.
 """.strip()
 
 
-async def transcribe_audio(file_bytes: bytes, filename: str) -> str:
-    """
-    Transcrit un fichier audio/vidéo via Whisper API.
-    Retourne le texte transcrit, ou une transcription mock si l'API n'est pas configurée.
-    """
-    if not settings.OPENAI_API_KEY:
-        logger.info("OPENAI_API_KEY non configuré — transcription mock utilisée")
-        return MOCK_TRANSCRIPTION
+def _transcribe_mistral(file_bytes: bytes, filename: str) -> Optional[str]:
+    """Transcrit via Mistral Voxtral (endpoint REST). None si échec → fallback appelant."""
+    try:
+        resp = httpx.post(
+            MISTRAL_TRANSCRIBE_URL,
+            headers={"Authorization": f"Bearer {settings.MISTRAL_API_KEY}"},
+            files={"file": (filename, file_bytes, "application/octet-stream")},
+            data={"model": MISTRAL_TRANSCRIBE_MODEL},
+            timeout=300,  # une vidéo peut être longue à transcrire
+        )
+        if resp.status_code >= 400:
+            logger.error("Transcription Mistral %s : %s", resp.status_code, resp.text[:300])
+            return None
+        return resp.json().get("text")
+    except Exception as e:
+        logger.error("Erreur transcription Mistral: %s", e)
+        return None
 
+
+def _transcribe_whisper(file_bytes: bytes, filename: str) -> Optional[str]:
+    """Transcrit via OpenAI Whisper. None si échec → fallback appelant."""
     try:
         from openai import OpenAI
         client = OpenAI(api_key=settings.OPENAI_API_KEY)
@@ -50,21 +73,37 @@ async def transcribe_audio(file_bytes: bytes, filename: str) -> str:
         with tempfile.NamedTemporaryFile(suffix=f".{ext}", delete=False) as tmp:
             tmp.write(file_bytes)
             tmp_path = tmp.name
-
         try:
             with open(tmp_path, "rb") as f:
                 transcript = client.audio.transcriptions.create(
-                    model="whisper-1",
-                    file=f,
-                    language="fr",
+                    model="whisper-1", file=f, language="fr",
                 )
             return transcript.text
         finally:
             os.unlink(tmp_path)
-
     except Exception as e:
-        logger.error("Erreur Whisper API: %s — fallback mock", e)
-        return MOCK_TRANSCRIPTION
+        logger.error("Erreur Whisper API: %s", e)
+        return None
+
+
+async def transcribe_audio(file_bytes: bytes, filename: str) -> str:
+    """
+    Transcrit un fichier audio/vidéo.
+    Priorité Mistral (Voxtral) → Whisper → transcription mock (si rien de configuré
+    ou en cas d'échec, pour ne jamais faire échouer la génération de cours).
+    """
+    if settings.MISTRAL_API_KEY:
+        text = _transcribe_mistral(file_bytes, filename)
+        if text:
+            return text
+
+    if settings.OPENAI_API_KEY:
+        text = _transcribe_whisper(file_bytes, filename)
+        if text:
+            return text
+
+    logger.info("Transcription indisponible (aucune clé ou échec) — transcription mock utilisée")
+    return MOCK_TRANSCRIPTION
 
 
 def extract_youtube_id(url: str) -> Optional[str]:

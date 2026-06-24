@@ -423,6 +423,7 @@ def studio_health():
         "ai_configured": provider is not None,
         "llm_provider": settings.LLM_PROVIDER,
         "llm_model": provider.model if provider else None,
-        "transcription_configured": bool(settings.OPENAI_API_KEY),
+        "transcription_configured": bool(settings.MISTRAL_API_KEY or settings.OPENAI_API_KEY),
+        "transcription_provider": "mistral" if settings.MISTRAL_API_KEY else ("openai" if settings.OPENAI_API_KEY else None),
         "pipelines": ["excel-to-quiz", "video-to-course", "flashcards", "mindmap", "study-sheet", "faq"],
     }

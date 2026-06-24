@@ -16,6 +16,7 @@ from services.ai import (
     generate_faq_from_content,
 )
 from services.llm import get_llm_provider
+from services.transcription import transcribe_audio, MOCK_TRANSCRIPTION
 
 Base.metadata.create_all(bind=engine)
 
@@ -93,3 +94,10 @@ def test_studio_health_lists_pipelines():
     pipelines = response.json()["pipelines"]
     for p in ("flashcards", "mindmap", "study-sheet", "faq"):
         assert p in pipelines
+
+
+def test_transcription_falls_back_to_mock_without_keys():
+    # En environnement de test, aucune clé MISTRAL/OPENAI → transcription mock,
+    # sans appel réseau (les branches Mistral/Whisper ne sont pas atteintes).
+    text = asyncio.run(transcribe_audio(b"fake-bytes", "video.mp4"))
+    assert text == MOCK_TRANSCRIPTION
