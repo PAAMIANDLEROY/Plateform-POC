@@ -930,38 +930,42 @@ export function Nav() {
               // ── Menu utilisateur (session active) ──
               <div ref={userMenuRef} className="relative">
                 {/* Bouton déclencheur : avatar + nom + badge de rôle */}
+                {/* Déclencheur épuré : avatar + prénom + chevron.
+                    Email et rôle sont déplacés dans le panneau déroulant. */}
                 <button
                   onClick={() => setUserMenuOpen((o) => !o)}
-                  className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-gray-50 transition-colors"
+                  aria-expanded={userMenuOpen}
+                  className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl hover:bg-gray-50 transition-colors"
                 >
-                  {/* Nom et email masqués sur mobile (< sm) */}
-                  <div className="hidden sm:block text-right">
-                    <p className="text-sm font-semibold text-gray-900 leading-none">
-                      {user.first_name} {user.last_name}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-0.5">{user.email}</p>
-                  </div>
                   <Avatar name={`${user.first_name} ${user.last_name}`} size="sm" />
-                  {/* Badge de rôle avec style conditionnel selon roleChip */}
-                  <span className={clsx(
-                    "text-xs font-semibold px-2 py-0.5 rounded-full hidden sm:inline",
-                    // Fallback sur "student" si le rôle n'est pas dans le mapping
-                    roleChip[user.role] ?? roleChip.student
-                  )}>
-                    {/* Traduction du rôle, fallback sur la valeur brute */}
-                    {t.roles[user.role as keyof typeof t.roles] ?? user.role}
+                  <span className="hidden sm:inline text-sm font-semibold text-gray-900 max-w-[120px] truncate">
+                    {user.first_name}
                   </span>
+                  <svg
+                    className={clsx("w-3 h-3 text-gray-400 transition-transform shrink-0", userMenuOpen && "rotate-180")}
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
                 </button>
 
                 {/* Panneau du menu utilisateur (position absolute car dans un relative) */}
                 {userMenuOpen && (
                   <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden z-[200]">
-                    {/* En-tête avec nom + email */}
+                    {/* En-tête : nom + badge de rôle, puis email */}
                     <div className="px-4 py-3 border-b border-gray-100">
-                      <p className="text-sm font-semibold text-gray-900">
-                        {user.first_name} {user.last_name}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-0.5 truncate">{user.email}</p>
+                      <div className="flex items-center justify-between gap-2 mb-0.5">
+                        <p className="text-sm font-semibold text-gray-900 truncate">
+                          {user.first_name} {user.last_name}
+                        </p>
+                        <span className={clsx(
+                          "text-xs font-semibold px-2 py-0.5 rounded-full shrink-0",
+                          roleChip[user.role] ?? roleChip.student
+                        )}>
+                          {t.roles[user.role as keyof typeof t.roles] ?? user.role}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-400 truncate">{user.email}</p>
                     </div>
 
                     {/* Liens communs à tous les utilisateurs connectés */}
