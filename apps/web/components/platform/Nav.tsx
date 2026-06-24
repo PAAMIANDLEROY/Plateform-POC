@@ -510,30 +510,20 @@ function SiteMapDropdown() {
       )}
 
       {/* ── Bouton déclencheur ── */}
+      {/* Bouton discret (icône seule) — outil de navigation de démo. */}
       <button
         ref={buttonRef}
         onClick={handleToggle}
-        title="Accéder à toutes les pages de la maquette"
+        title="Toutes les pages (démo)"
+        aria-label="Toutes les pages"
         className={clsx(
-          "flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all whitespace-nowrap shrink-0",
-          // Branche ouvert : fond sombre pour indiquer l'état actif
-          // Branche fermé  : bordure pointillée grise pour le distinguer
-          //                  des éléments de navigation principale
+          "flex items-center justify-center w-8 h-8 rounded-lg text-sm transition-all shrink-0",
           isOpen
-            ? "bg-gray-900 text-white border-gray-900"
-            : "border-dashed border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:bg-gray-50"
+            ? "bg-gray-900 text-white"
+            : "text-gray-400 hover:text-gray-700 hover:bg-gray-100"
         )}
       >
-        <span>🗺</span>
-        {/* Texte masqué sur très petits écrans (< sm) pour économiser l'espace */}
-        <span className="hidden sm:inline">Toutes les pages</span>
-        {/* Chevron : tourne à 180° quand ouvert */}
-        <svg
-          className={clsx("w-3 h-3 transition-transform opacity-60", isOpen && "rotate-180")}
-          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
+        🗺
       </button>
 
       {/* ═══════════════════════════════════════════════════════════════════
@@ -938,7 +928,7 @@ export function Nav() {
                   className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl hover:bg-gray-50 transition-colors"
                 >
                   <Avatar name={`${user.first_name} ${user.last_name}`} size="sm" />
-                  <span className="hidden sm:inline text-sm font-semibold text-gray-900 max-w-[120px] truncate">
+                  <span className="hidden sm:inline text-sm font-semibold text-gray-900 max-w-[90px] truncate">
                     {user.first_name}
                   </span>
                   <svg
@@ -968,9 +958,8 @@ export function Nav() {
                       <p className="text-xs text-gray-400 truncate">{user.email}</p>
                     </div>
 
-                    {/* Liens communs à tous les utilisateurs connectés */}
+                    {/* Liens du menu utilisateur (Mon parcours reste dans la barre) */}
                     <Link href="/profile"     onClick={() => setUserMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">{t.nav.profile}</Link>
-                    <Link href="/my-learning" onClick={() => setUserMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">{t.nav.myLearning}</Link>
 
                     {/* Branche admin : lien Administration dans le menu utilisateur */}
                     {isAdmin && (
