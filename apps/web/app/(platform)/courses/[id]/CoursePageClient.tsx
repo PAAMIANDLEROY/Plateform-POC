@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
-import { coursesApi } from "@/lib/api";
 import type { CourseResponse, CourseBlockResponse } from "@/lib/api";
 
 type QuizState = { selected: number | null; revealed: boolean };
@@ -38,28 +37,47 @@ function fmtDuration(minutes: number) {
   return h > 0 ? `${h}h${m > 0 ? `${m}min` : ""}` : `${m}min`;
 }
 
+// ── Démo : cours en dur (aucune base de données) ──────────────────────────────
+function demoBlocks(courseId: string, title: string, desc: string): CourseBlockResponse[] {
+  const raw: Array<{ type: string; content: Record<string, unknown> }> = [
+    { type: "heading",  content: { content: "Introduction" } },
+    { type: "text",     content: { content: `Bienvenue dans « ${title} ». ${desc} Ce module mêle théorie et pratique, avec des exercices à chaque étape.` } },
+    { type: "heading",  content: { content: "Concepts clés" } },
+    { type: "text",     content: { content: "Posons d'abord les fondations et le vocabulaire utilisés tout au long du cours." } },
+    { type: "markdown", content: { content: "# Exemple rapide\nimport numpy as np\n\nX = np.array([1, 2, 3, 4])\nprint('moyenne =', X.mean())\nprint('ecart-type =', X.std())" } },
+    { type: "quiz",     content: { question: "Quel est l'objectif principal de ce module ?", options: ["Mémoriser des formules par cœur", "Comprendre les concepts et savoir les appliquer", "Recopier du code sans le lire", "Aucun de ces objectifs"], answer: 1, explanation: "L'objectif est de comprendre les concepts et de les mettre en pratique." } },
+    { type: "divider",  content: {} },
+    { type: "text",     content: { content: "Une fois les exercices terminés, vous pourrez passer au module suivant du parcours." } },
+  ];
+  return raw.map((b, i) => ({ id: `${courseId}-b${i}`, course_id: courseId, position: i, type: b.type, content: b.content }));
+}
+
+function mkCourse(id: string, title: string, description: string, category: string,
+                  level: string, school: string, minutes: number): CourseResponse {
+  return {
+    id, title, description, cover_url: null, category, tags: [category],
+    level, school, status: "published", estimated_duration_minutes: minutes,
+    created_by: "demo", created_at: "", updated_at: "",
+    blocks: demoBlocks(id, title, description),
+  };
+}
+
+/** Cours de démonstration affichés sans backend. Fallback sur "1" pour tout id inconnu. */
+const DEMO_COURSES: Record<string, CourseResponse> = {
+  "1": mkCourse("1", "Fondamentaux du ML", "Régression, classification et évaluation de modèles.", "IA & Data", "beginner", "Polytechnique", 180),
+  "2": mkCourse("2", "Python pour la Data Science", "NumPy, Pandas, Matplotlib, Scikit-learn.", "Programmation", "beginner", "Télécom Paris", 240),
+  "3": mkCourse("3", "Réseaux de neurones profonds", "Architectures CNN, RNN et Transformer.", "IA & Data", "advanced", "Polytechnique", 360),
+};
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function CoursePageClient({ id }: { id: string }) {
-  const [course,     setCourse]     = useState<CourseResponse | null>(null);
-  const [loading,    setLoading]    = useState(true);
-  const [notFound,   setNotFound]   = useState(false);
+  // Cours affiché en dur — aucun appel API/base de données.
+  const course = DEMO_COURSES[id] ?? DEMO_COURSES["1"];
   const [completed,  setCompleted]  = useState<Set<string>>(new Set());
   const [quizStates, setQuizStates] = useState<Record<string, QuizState>>({});
 
-  useEffect(() => {
-    setLoading(true);
-    setNotFound(false);
-    coursesApi.get(id)
-      .then(setCourse)
-      .catch((e) => {
-        if (e?.status === 404) setNotFound(true);
-        else console.error(e);
-      })
-      .finally(() => setLoading(false));
-  }, [id]);
-
-  const interactiveBlocks = course?.blocks.filter(b => b.type !== "divider") ?? [];
+  const interactiveBlocks = course.blocks.filter(b => b.type !== "divider");
   const progress = interactiveBlocks.length > 0
     ? Math.round((completed.size / interactiveBlocks.length) * 100)
     : 0;
@@ -72,17 +90,6 @@ export function CoursePageClient({ id }: { id: string }) {
     setQuizStates(s => ({ ...s, [blockId]: { selected: index, revealed: true } }));
     markDone(blockId);
   }
-
-  if (loading) return (
-    <div className="max-w-7xl mx-auto px-6 py-16 text-center text-gray-400">Chargement…</div>
-  );
-
-  if (notFound || !course) return (
-    <div className="max-w-7xl mx-auto px-6 py-16 text-center">
-      <p className="text-gray-400 mb-4">Cours introuvable.</p>
-      <Link href="/learning-ai/courses" className="text-primary text-sm">← Retour au catalogue</Link>
-    </div>
-  );
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 bg-navy min-h-screen">
