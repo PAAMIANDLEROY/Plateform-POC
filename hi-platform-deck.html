@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hi! Platform — Présentation</title>
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap");
+
+  :root{
+    --navy:#0B1D3A; --navy2:#060F1E;
+    --primary:#1A3A8F; --primary-light:#3a5fc4;
+    --danger:#D72638;
+    --surface:#F4F6FA; --muted:#5b6479; --ink:#11203a;
+    --card:#ffffff; --line:#e4e8f0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:"DM Sans",system-ui,sans-serif;
+    background:#10141c;color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---- Slide frame (16:9) ---- */
+  .deck{height:100vh;display:flex;align-items:center;justify-content:center}
+  .slide{
+    position:relative;width:100vw;height:56.25vw;max-height:100vh;max-width:177.78vh;
+    background:var(--surface);overflow:hidden;display:none;
+  }
+  .slide.active{display:block}
+  .pad{position:absolute;inset:0;padding:6.2% 7%;display:flex;flex-direction:column}
+
+  /* ---- Typography ---- */
+  h1{font-size:3.4vw;line-height:1.06;font-weight:800;letter-spacing:-.02em}
+  h2{font-size:2.5vw;line-height:1.1;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
+  .kicker{font-size:1.05vw;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--primary)}
+  .lead{font-size:1.5vw;line-height:1.5;color:var(--muted);font-weight:500}
+  p{font-size:1.25vw;line-height:1.5;color:var(--muted)}
+  .small{font-size:1vw}
+
+  /* ---- Footer ---- */
+  .foot{position:absolute;left:7%;right:7%;bottom:3.2%;display:flex;justify-content:space-between;align-items:center;
+    font-size:.92vw;color:#9aa3b5;font-weight:600;letter-spacing:.02em}
+  .foot .brand b{color:var(--primary)}
+  .slide.dark .foot{color:#6f7c97}
+  .slide.dark .foot .brand b{color:#6f8ee0}
+
+  /* ---- Dark slides ---- */
+  .slide.dark{background:radial-gradient(1200px 700px at 78% -10%, #16335f 0%, var(--navy) 42%, var(--navy2) 100%);color:#fff}
+  .slide.dark h1,.slide.dark h2{color:#fff}
+  .slide.dark .lead,.slide.dark p{color:#c4cfe6}
+  .slide.dark .kicker{color:#7f9be8}
+
+  /* ---- Logo ---- */
+  .logo{font-weight:800;letter-spacing:-.02em;font-size:1.7vw}
+  .logo .hi{color:var(--danger)} .logo .pf{color:#fff}
+  .logo.ink .pf{color:var(--ink)}
+
+  /* ---- Layout helpers ---- */
+  .grow{flex:1}
+  .row{display:flex;gap:2.2vw}
+  .col{flex:1}
+  .center{display:flex;flex-direction:column;justify-content:center}
+  .mt-s{margin-top:1.1vw}.mt-m{margin-top:2vw}.mt-l{margin-top:3vw}
+
+  /* ---- Cards / grids ---- */
+  .grid{display:grid;gap:1.3vw}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:1vw;padding:1.6vw 1.5vw;
+    box-shadow:0 1px 3px rgba(16,32,60,.06)}
+  .card .ic{width:2.8vw;height:2.8vw;border-radius:.7vw;display:flex;align-items:center;justify-content:center;
+    font-size:1.5vw;background:rgba(26,58,143,.10)}
+  .card h3{font-size:1.32vw;font-weight:700;margin-top:.9vw;color:var(--ink)}
+  .card p{font-size:1.02vw;margin-top:.35vw}
+  .card.red .ic{background:rgba(215,38,56,.10)}
+
+  /* chips */
+  .chips{display:flex;flex-wrap:wrap;gap:.7vw;margin-top:1.4vw}
+  .chip{font-size:1vw;font-weight:600;color:var(--primary);background:rgba(26,58,143,.08);
+    border:1px solid rgba(26,58,143,.18);padding:.5vw 1vw;border-radius:2vw}
+  .slide.dark .chip{color:#cdd9f5;background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.16)}
+
+  /* big stat */
+  .stat{font-size:9vw;font-weight:800;line-height:.9;letter-spacing:-.03em;color:var(--danger)}
+  .stat.b{color:#ff7a86}
+
+  /* bullets */
+  ul.feat{list-style:none;margin-top:1vw}
+  ul.feat li{font-size:1.3vw;line-height:1.45;color:var(--ink);padding-left:1.8vw;position:relative;margin-bottom:.85vw;font-weight:500}
+  ul.feat li::before{content:"";position:absolute;left:0;top:.55vw;width:.7vw;height:.7vw;border-radius:50%;background:var(--primary)}
+  .slide.dark ul.feat li{color:#dbe4f7}
+  .slide.dark ul.feat li::before{background:#6f8ee0}
+
+  /* pipeline */
+  .flow{display:flex;align-items:stretch;gap:0;margin-top:2vw}
+  .step{flex:1;background:var(--card);border:1px solid var(--line);border-radius:.9vw;padding:1.3vw;text-align:center}
+  .step .n{font-size:.9vw;font-weight:700;color:var(--primary);letter-spacing:.1em}
+  .step h4{font-size:1.15vw;margin-top:.5vw;color:var(--ink)}
+  .step p{font-size:.92vw;margin-top:.3vw}
+  .arrow{display:flex;align-items:center;color:var(--primary);font-size:1.8vw;padding:0 .6vw}
+
+  /* timeline */
+  .tl{display:grid;grid-template-columns:repeat(3,1fr);gap:1.3vw;margin-top:1.6vw}
+  .tl .ph{background:var(--card);border:1px solid var(--line);border-radius:1vw;padding:1.4vw}
+  .tl .ph .tag{font-size:.85vw;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+  .tl .ph.now .tag{color:#1f9d57}.tl .ph.next .tag{color:var(--primary)}.tl .ph.later .tag{color:var(--danger)}
+  .tl .ph h4{font-size:1.15vw;margin:.5vw 0 .6vw;color:var(--ink)}
+  .tl .ph li{font-size:.95vw;color:var(--muted);list-style:none;margin-bottom:.4vw;padding-left:1vw;position:relative}
+  .tl .ph li::before{content:"–";position:absolute;left:0;color:#b9c1d2}
+
+  /* progress dots */
+  .nav{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:7px;z-index:50}
+  .dot{width:8px;height:8px;border-radius:50%;background:#39414f;cursor:pointer;transition:.2s}
+  .dot.on{background:#9fb4ff;width:22px;border-radius:5px}
+  .hint{position:fixed;bottom:10px;right:14px;color:#5a6273;font-size:11px;z-index:50;font-family:system-ui}
+
+  /* schools strip */
+  .schools{display:flex;gap:1.6vw;flex-wrap:wrap;align-items:center}
+  .schools span{font-size:1vw;font-weight:600;color:#8fa0c4}
+
+  @media print{
+    body{background:#fff}
+    .nav,.hint{display:none}
+    .deck{display:block;height:auto}
+    .slide{display:block!important;width:100%;height:100vh;max-height:none;max-width:none;page-break-after:always;box-shadow:none}
+    @page{size:landscape}
+  }
+</style>
+</head>
+<body>
+<div class="deck">
+
+  <!-- 1 — TITLE -->
+  <section class="slide dark active center">
+    <div class="pad center">
+      <div class="logo"><span class="hi">Hi!</span> <span class="pf">Platform</span></div>
+      <div class="grow"></div>
+      <div class="kicker">Plateforme pédagogique — Hi! PARIS</div>
+      <h1 class="mt-s">Le LMS nouvelle génération :<br/>moderne, souverain, augmenté par l'IA.</h1>
+      <p class="lead mt-m" style="max-width:60vw">Une plateforme d'enseignement unifiée pour les écoles de l'Institut Polytechnique de Paris et HEC — pensée pour remplacer Moodle et les LMS externes.</p>
+      <div class="grow"></div>
+      <div class="schools">
+        <span>École Polytechnique</span><span>HEC Paris</span><span>Télécom Paris</span><span>ENSAE</span><span>Télécom SudParis</span><span>ENSTA</span>
+      </div>
+    </div>
+    <div class="foot"><span class="brand"><b>Hi!</b> Platform</span><span>Présentation &amp; démo</span></div>
+  </section>
+
+  <!-- 2 — PROBLEM -->
+  <section class="slide">
+    <div class="pad">
+      <div class="kicker">Le constat</div>
+      <h2 class="mt-s">Les LMS actuels freinent l'enseignement</h2>
+      <div class="row grow mt-l" style="align-items:center">
+        <div class="col">
+          <ul class="feat">
+            <li>Interfaces datées (« années 90 »), faible engagement des étudiants</li>
+            <li>Outils dispersés : un LMS différent par école, par cours</li>
+            <li>Aucune mutualisation : le même cours recréé encore et encore</li>
+            <li>Dépendance à des solutions externes, peu de contrôle des données</li>
+            <li>Création de contenu lente et chronophage pour les enseignants</li>
+          </ul>
+        </div>
+        <div class="col">
+          <div class="card red">
+            <div class="ic">🧩</div>
+            <h3>Beaucoup d'efforts, peu de levier</h3>
+            <p>Chaque école réinvestit le même temps dans les mêmes contenus, sur des outils que personne ne maîtrise vraiment.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><span class="brand"><b>Hi!</b> Platform</span><span>02</span></div>
+  </section>
+
+  <!-- 3 — VISION -->
+  <section class="slide dark">
+    <div class="pad center">
+      <div class="kicker">La vision</div>
+      <h2 class="mt-s" style="max-width:66vw">Une seule plateforme, mutualisée, simple et maîtrisée — un « Moodle 2.0 ».</h2>
+      <div class="grid g3 mt-l">
+        <div class="card" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)">
+          <div class="ic" style="background:rgba(111,142,224,.18)">⚡</div>
+          <h3 style="color:#fff">Simplicité radicale</h3>
+          <p style="color:#c4cfe6">Créer un cours sans 40 boutons. Y accéder en 3 clics.</p>
+        </div>
+        <div class="card" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)">
+          <div class="ic" style="background:rgba(111,142,224,.18)">🤝</div>
+          <h3 style="color:#fff">Mutualisée</h3>
+          <p style="color:#c4cfe6">Les écoles partagent et réutilisent les briques de cours.</p>
+        </div>
+        <div class="card" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)">
+          <div class="ic" style="background:rgba(111,142,224,.18)">🛡️</div>
+          <h3 style="color:#fff">Souveraine</h3>
+          <p style="color:#c4cfe6">Open source, contrôlée en interne, données en Europe.</p>
+        </div>
+      </div>
+      <p class="lead mt-l">Inspirations UX : l'engagement de <b style="color:#fff">YouTube</b>, l'interactivité de <b style="color:#fff">Google Colab</b>, la certification de <b style="color:#fff">HFactory</b>.</p>
+    </div>
+    <div class="foot"><span class="brand"><b>Hi!</b> Platform</span><span>03</span></div>
+  </section>
+
+  <!-- 4 — STAT / mutualisation -->
+  <section class="slide">
+    <div class="pad">
+      <div class="kicker">Pourquoi maintenant</div>
+      <h2 class="mt-s">La mutualisation change l'échelle</h2>
+      <div class="row grow" style="align-items:center">
+        <div class="col">
+          <div class="stat">×40</div>
+          <p class="lead mt-s" style="max-width:30vw">un même cours de Machine Learning peut être donné jusqu'à <b style="color:var(--ink)">40 fois</b>, réparti dans <b style="color:var(--ink)">8 écoles</b>.</p>
+        </div>
+        <div class="col">
+          <p style="font-size:1.35vw;color:var(--ink);font-weight:600">En partageant les contenus une seule fois :</p>
+          <ul class="feat mt-s">
+            <li>économies d'échelle massives sur la production de cours</li>
+            <li>qualité homogène pour tous les apprenants</li>
+            <li>les enseignants se concentrent sur la pédagogie, pas la plomberie</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><span class="brand"><b>Hi!</b> Platform</span><span>04</span></div>
+  </section>
+
+  <!-- 5 — MODULES -->
+  <section class="slide">
+    <div class="pad">
+      <div class="kicker">Architecture fonctionnelle</div>
+      <h2 class="mt-s">Une plateforme, sept modules</h2>
+      <div class="grid g3 mt-m grow">
+        <div class="card"><div class="ic">🎬</div><h3>Hi! Tube</h3><p>Vidéothèque style YouTube, commentaires horodatés.</p></div>
+        <div class="card"><div class="ic">📖</div><h3>Hi! Course</h3><p>Cours interactifs par blocs (markdown, quiz, code, vidéo).</p></div>
+        <div class="card"><div class="ic">🎓</div><h3>Hi! MOOC</h3><p>Parcours structurés multi-cours, prérequis et progression.</p></div>
+        <div class="card"><div class="ic">⚡</div><h3>Hi! App</h3><p>Hébergement d'apps interactives (Streamlit, Gradio…).</p></div>
+        <div class="card red"><div class="ic">🛠️</div><h3>Hi! Studio</h3><p>Builder de contenu augmenté par l'IA pour enseignants.</p></div>
+        <div class="card"><div class="ic">🔬</div><h3>Hi! Insights</h3><p>Articles de recherche &amp; éditoriaux de la communauté.</p></div>
+      </div>
+      <p class="small mt-s" style="color:#9aa3b5">+ Hi! Cert — certification &amp; badges (à venir)</p>
+    </div>
+    <div class="foot"><span class="brand"><b>Hi!</b> Platform</span><span>05</span></div>
+  </section>
+
+  <!-- 6 — LEARNER -->
+  <section class="slide">
+    <div class="pad">
+      <div class="kicker">Côté apprenant</div>
+      <h2 class="mt-s">Une expérience d'apprentissage fluide</h2>
+      <div class="row grow mt-m" style="align-items:center">
+        <div class="col">
+          <ul class="feat">
+            <li>Catalogue riche : cours, vidéos, MOOCs, applications</li>
+            <li>Parcours structurés avec progression et prérequis</li>
+            <li>Quiz interactifs et suivi bloc par bloc</li>
+            <li>Vidéos avec commentaires horodatés</li>
+            <li>Badges &amp; certificats à la complétion</li>
+          </ul>
+        </div>
+        <div class="col">
+          <div class="card">
+            <div class="ic">🧭</div>
+            <h3>« Mon Parcours »</h3>
+            <p>Chaque apprenant retrouve ses cours, sa progression et ses prochaines étapes au même endroit — accessible en 3 clics.</p>
+            <div class="chips">
+              <span class="chip">Progression</span><span class="chip">Badges</span><span class="chip">Quiz</span><span class="chip">Certificats</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><span class="brand"><b>Hi!</b> Platform</span><span>06</span></div>
+  </section>
+
+  <!-- 7 — STUDIO (flagship) -->
+  <section class="slide dark">
+    <div class="pad">
+      <div class="kicker">Hi! Studio — le différenciateur</div>
+      <h2 class="mt-s">Créer un cours en minutes, pas en jours</h2>
+      <p class="lead mt-s" style="max-width:64vw">Le Studio transforme les contenus existants des enseignants en ressources pédagogiques, automatiquement, via l'IA.</p>
+      <div class="grid g3 mt-m grow">
+        <div class="card" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)"><div class="ic" style="background:rgba(111,142,224,.18)">📊</div><h3 style="color:#fff">Excel → Quiz</h3><p style="color:#c4cfe6">Un tableur devient un QCM structuré.</p></div>
+        <div class="card" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)"><div class="ic" style="background:rgba(111,142,224,.18)">🎬</div><h3 style="color:#fff">Vidéo → Cours</h3><p style="color:#c4cfe6">Une vidéo + des slides deviennent un cours complet.</p></div>
+        <div class="card" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)"><div class="ic" style="background:rgba(111,142,224,.18)">🃏</div><h3 style="color:#fff">Flashcards</h3><p style="color:#c4cfe6">Cartes de révision générées d'un clic.</p></div>
+        <div class="card" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)"><div class="ic" style="background:rgba(111,142,224,.18)">🧠</div><h3 style="color:#fff">Carte mentale</h3><p style="color:#c4cfe6">L'arborescence des concepts du cours.</p></div>
+        <div class="card" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)"><div class="ic" style="background:rgba(111,142,224,.18)">📝</div><h3 style="color:#fff">Fiche de révision</h3><p style="color:#c4cfe6">Résumé + concepts clés + points à retenir.</p></div>
+        <div class="card" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)"><div class="ic" style="background:rgba(111,142,224,.18)">❓</div><h3 style="color:#fff">FAQ auto</h3><p style="color:#c4cfe6">Les questions des apprenants, anticipées.</p></div>
+      </div>
+    </div>
+    <div class="foot"><span class="brand"><b>Hi!</b> Platform</span><span>07</span></div>
+  </section>
+
+  <!-- 8 — VIDEO->COURSE pipeline -->
+  <section class="slide">
+    <div class="pad">
+      <div class="kicker">Zoom — pipeline Vidéo → Cours</div>
+      <h2 class="mt-s">De la captation au cours publié</h2>
+      <div class="flow grow" style="align-items:center">
+        <div class="step"><div class="n">SOURCE</div><h4>Lien YouTube</h4><p>sous-titres récupérés gratuitement</p></div>
+        <div class="arrow">+</div>
+        <div class="step"><div class="n">OU</div><h4>Upload vidéo</h4><p>transcription par Voxtral (Mistral)</p></div>
+        <div class="arrow">+</div>
+        <div class="step"><div class="n">CONTEXTE</div><h4>Slides PPTX/PDF</h4><p>texte extrait automatiquement</p></div>
+        <div class="arrow">→</div>
+        <div class="step" style="background:var(--navy);border-color:var(--navy)"><div class="n" style="color:#9fb4ff">IA</div><h4 style="color:#fff">Cours Markdown</h4><p style="color:#c4cfe6">structuré + quiz intégrés</p></div>
+      </div>
+      <p class="lead mt-l">L'enseignant choisit sa source. Le coût est maîtrisé : les liens YouTube ne consomment <b style="color:var(--ink)">aucun</b> jeton de transcription.</p>
+    </div>
+    <div class="foot"><span class="brand"><b>Hi!</b> Platform</span><span>08</span></div>
+  </section>
+
+  <!-- 9 — SOVEREIGN AI -->
+  <section class="slide dark">
+    <div class="pad">
+      <div class="kicker">Une IA souveraine &amp; maîtrisée</div>
+      <h2 class="mt-s">Indépendante du fournisseur, par conception</h2>
+      <div class="row grow mt-m" style="align-items:center">
+        <div class="col">
+          <ul class="feat">
+            <li>Couche <b style="color:#fff">LLM-agnostique</b> : le modèle est un simple réglage</li>
+            <li><b style="color:#fff">Mistral</b> en production — souveraineté européenne</li>
+            <li>Swappable (Mistral / Claude / OpenAI) sans changer le code</li>
+            <li>Broker de jetons à venir : crédits plafonnés, clés par utilisateur</li>
+          </ul>
+        </div>
+        <div class="col">
+          <div class="card" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)">
+            <div class="ic" style="background:rgba(111,142,224,.18)">🇪🇺</div>
+            <h3 style="color:#fff">Pourquoi ça compte</h3>
+            <p style="color:#c4cfe6">Le meilleur modèle change tous les ~3 mois. En découplant l'IA du métier, la plateforme reste à jour, conforme et au meilleur coût — sans dette technique.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><span class="brand"><b>Hi!</b> Platform</span><span>09</span></div>
+  </section>
+
+  <!-- 10 — ANALYTICS -->
+  <section class="slide">
+    <div class="pad">
+      <div class="kicker">Pilotage &amp; suivi</div>
+      <h2 class="mt-s">Voir, comprendre, accompagner</h2>
+      <div class="grid g3 mt-m grow">
+        <div class="card"><div class="ic">📊</div><h3>Tableau de bord</h3><p>KPIs plateforme : cohortes, contenus, engagement.</p></div>
+        <div class="card red"><div class="ic">⚠️</div><h3>Apprenants à risque</h3><p>Détection par inactivité &amp; score, seuils configurables.</p></div>
+        <div class="card"><div class="ic">📁</div><h3>Exports</h3><p>Données utilisateurs &amp; cours exportables (CSV).</p></div>
+      </div>
+      <p class="lead mt-l">À venir : classification automatique des élèves à suivre, et indicateurs d'apprentissage au-delà du temps passé.</p>
+    </div>
+    <div class="foot"><span class="brand"><b>Hi!</b> Platform</span><span>10</span></div>
+  </section>
+
+  <!-- 11 — SECURITY / RGPD -->
+  <section class="slide">
+    <div class="pad">
+      <div class="kicker">Confiance &amp; conformité</div>
+      <h2 class="mt-s">Sécurité et RGPD, nativement</h2>
+      <div class="row grow mt-m" style="align-items:center">
+        <div class="col">
+          <ul class="feat">
+            <li>Authentification par email institutionnel + code à usage unique</li>
+            <li>Sessions JWT, cookies sécurisés, rotation des jetons</li>
+            <li>Droits RGPD intégrés (accès, rectification, effacement, portabilité)</li>
+            <li>Domaines autorisés configurables par établissement</li>
+          </ul>
+        </div>
+        <div class="col">
+          <div class="card"><div class="ic">🔐</div><h3>Conçu pour l'institution</h3>
+          <p>Pas de mots de passe à gérer pour l'utilisateur, accès réservé aux membres des écoles partenaires, données hébergées en Europe.</p>
+          <div class="chips"><span class="chip">OTP</span><span class="chip">JWT</span><span class="chip">RGPD</span><span class="chip">UE</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><span class="brand"><b>Hi!</b> Platform</span><span>11</span></div>
+  </section>
+
+  <!-- 12 — STACK -->
+  <section class="slide dark">
+    <div class="pad">
+      <div class="kicker">Sous le capot</div>
+      <h2 class="mt-s">Une stack moderne et déployée</h2>
+      <div class="grid g3 mt-m grow">
+        <div class="card" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)"><div class="ic" style="background:rgba(111,142,224,.18)">🖥️</div><h3 style="color:#fff">Frontend</h3><p style="color:#c4cfe6">Next.js 14 + Tailwind, déployé sur Vercel.</p></div>
+        <div class="card" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)"><div class="ic" style="background:rgba(111,142,224,.18)">⚙️</div><h3 style="color:#fff">Backend</h3><p style="color:#c4cfe6">FastAPI (Python), API REST typée, sur Render.</p></div>
+        <div class="card" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)"><div class="ic" style="background:rgba(111,142,224,.18)">🗄️</div><h3 style="color:#fff">Données</h3><p style="color:#c4cfe6">PostgreSQL (Supabase), migrations versionnées.</p></div>
+      </div>
+      <p class="lead mt-l">Architecture <b style="color:#fff">modulaire</b> (déploiement indépendant des modules) · CI/CD automatisée · cap sur une infra <b style="color:#fff">souveraine</b> (OVH / Scaleway) en 2026.</p>
+    </div>
+    <div class="foot"><span class="brand"><b>Hi!</b> Platform</span><span>12</span></div>
+  </section>
+
+  <!-- 13 — ROADMAP -->
+  <section class="slide">
+    <div class="pad">
+      <div class="kicker">Trajectoire</div>
+      <h2 class="mt-s">Feuille de route</h2>
+      <div class="tl grow">
+        <div class="ph now">
+          <div class="tag">Livré</div><h4>Le socle</h4>
+          <li>Cours, vidéos, MOOCs, parcours</li>
+          <li>Studio IA (6 générateurs)</li>
+          <li>Insights, analytics, RGPD</li>
+          <li>Déploiement bout-en-bout</li>
+        </div>
+        <div class="ph next">
+          <div class="tag">En cours / Suivant</div><h4>Approfondir</h4>
+          <li>Broker LLM (gouvernance des coûts)</li>
+          <li>Tuteur IA (intégration DeepTutor)</li>
+          <li>Analytics &amp; classification ML</li>
+        </div>
+        <div class="ph later">
+          <div class="tag">Horizon</div><h4>Élargir</h4>
+          <li>Application mobile</li>
+          <li>Multi-public : Bachelor, Exec Ed, grand public</li>
+          <li>Réutilisation collaborative entre écoles</li>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><span class="brand"><b>Hi!</b> Platform</span><span>13</span></div>
+  </section>
+
+  <!-- 14 — DEMO -->
+  <section class="slide dark center">
+    <div class="pad center" style="align-items:flex-start">
+      <div class="kicker">Place à la pratique</div>
+      <h1 class="mt-s">Démonstration live</h1>
+      <ul class="feat mt-m" style="max-width:64vw">
+        <li>Connexion par email institutionnel (code à usage unique)</li>
+        <li>Parcours d'un cours &amp; d'un MOOC côté apprenant</li>
+        <li>Hi! Studio : générer un quiz et des flashcards en direct</li>
+        <li>Publier un article Insights</li>
+      </ul>
+      <p class="lead mt-l">plateform-poc-hiparis.vercel.app</p>
+    </div>
+    <div class="foot"><span class="brand"><b>Hi!</b> Platform</span><span>14</span></div>
+  </section>
+
+  <!-- 15 — CLOSING -->
+  <section class="slide dark center">
+    <div class="pad center">
+      <div class="grow"></div>
+      <div class="logo"><span class="hi">Hi!</span> <span class="pf">Platform</span></div>
+      <h1 class="mt-s">Apprendre, créer et partager —<br/>à l'échelle de Hi! PARIS.</h1>
+      <p class="lead mt-m" style="max-width:58vw">Moderne pour les étudiants. Simple pour les enseignants. Souverain pour l'institution.</p>
+      <div class="grow"></div>
+      <div class="foot" style="position:static;padding:0;margin-top:2vw"><span class="brand"><b>Hi!</b> Platform</span><span>Merci · Questions ?</span></div>
+    </div>
+  </section>
+
+</div>
+
+<div class="nav" id="nav"></div>
+<div class="hint">← → pour naviguer · F plein écran · P pour imprimer (PDF)</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  const nav=document.getElementById('nav');
+  let i=0;
+  slides.forEach((_,k)=>{const d=document.createElement('div');d.className='dot';d.onclick=()=>go(k);nav.appendChild(d);});
+  const dots=[...nav.children];
+  function go(n){i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    dots.forEach((d,k)=>d.classList.toggle('on',k===i));}
+  function next(){go(i+1)} function prev(){go(i-1)}
+  document.addEventListener('keydown',e=>{
+    if(['ArrowRight',' ','PageDown'].includes(e.key))next();
+    else if(['ArrowLeft','PageUp'].includes(e.key))prev();
+    else if(e.key==='f'||e.key==='F'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();}
+    else if(e.key==='p'||e.key==='P'){window.print();}
+  });
+  document.addEventListener('click',e=>{if(e.target.closest('.dot'))return; if(e.clientX>window.innerWidth*0.5)next();else prev();});
+  go(0);
+</script>
+</body>
+</html>
