@@ -1,5 +1,6 @@
 import json
 from fastapi import APIRouter, Depends, HTTPException, status, Query
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from typing import Optional
 from datetime import datetime, timezone
@@ -9,6 +10,7 @@ from models.course import Course, CourseBlock, UserCourseProgress
 from models.user import User
 from schemas.course import CourseCreate, CourseUpdate, CourseResponse, CourseBlockCreate, CourseBlockResponse, ProgressUpdate
 from core.deps import get_current_user, require_role
+from core.access import allowed_access_levels, cohort_course_ids_for_user, can_view_course
 
 router = APIRouter(prefix="/api/v1/courses", tags=["courses"])
 
@@ -39,6 +41,17 @@ def list_courses(
         q = q.filter(Course.school == school)
     if search:
         q = q.filter(Course.title.ilike(f"%{search}%"))
+
+    # Filtrage par niveau d'accès (§4). Enseignants/staff voient tout le catalogue publié ;
+    # les autres selon public / hiparis / cohortes dont ils sont membres.
+    if current_user.role not in TEACHER_ROLES:
+        levels = allowed_access_levels(current_user.role)
+        cohort_ids = cohort_course_ids_for_user(db, current_user.id)
+        if cohort_ids:
+            q = q.filter(or_(Course.access_level.in_(levels), Course.id.in_(cohort_ids)))
+        else:
+            q = q.filter(Course.access_level.in_(levels))
+
     courses = q.order_by(Course.created_at.desc()).offset(offset).limit(limit).all()
     return [_serialize(c) for c in courses]
 
@@ -57,7 +70,8 @@ def get_course(course_id: str, db: Session = Depends(get_db), current_user: User
     course = db.query(Course).filter(Course.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
-    if course.status != "published" and course.created_by != current_user.id and current_user.role not in ("admin", "super_admin"):
+    cohort_ids = cohort_course_ids_for_user(db, current_user.id)
+    if not can_view_course(current_user, course, cohort_ids):
         raise HTTPException(status_code=403, detail="Course not available")
     return _serialize(course)
 

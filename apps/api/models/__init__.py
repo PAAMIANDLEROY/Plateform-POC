@@ -9,3 +9,4 @@ from models.course import Course, CourseBlock, UserCourseProgress
 from models.mooc import MOOC, MOOCModule, MOOCModuleCourse, UserMOOCEnrollment
 from models.app import App
 from models.insight import Insight, InsightStatus
+from models.cohort import Cohort, CohortMember, CohortCourse, CohortStatus, MemberStatus

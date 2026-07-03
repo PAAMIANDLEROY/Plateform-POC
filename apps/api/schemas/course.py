@@ -17,6 +17,7 @@ class CourseCreate(BaseModel):
     tags: Optional[list[str]] = None
     level: str = "beginner"
     school: Optional[str] = None
+    access_level: str = "public"
     estimated_duration_minutes: int = 0
 
 
@@ -29,6 +30,7 @@ class CourseUpdate(BaseModel):
     level: Optional[str] = None
     school: Optional[str] = None
     status: Optional[str] = None
+    access_level: Optional[str] = None
     estimated_duration_minutes: Optional[int] = None
 
 
@@ -58,6 +60,7 @@ class CourseResponse(BaseModel):
     level: str
     school: Optional[str]
     status: str
+    access_level: str = "public"
     estimated_duration_minutes: int
     created_by: str
     created_at: datetime

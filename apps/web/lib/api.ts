@@ -44,7 +44,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new ApiError(res.status, body.detail ?? "Unknown error");
   }
 
-  return res.json();
+  // 204 No Content (ex. DELETE) ou corps vide : pas de JSON à parser.
+  if (res.status === 204) return undefined as T;
+  const text = await res.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 }
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -174,6 +177,7 @@ export interface CourseResponse {
   level: string;
   school: string | null;
   status: string;
+  access_level?: string;        // public | hiparis | cohort (§4)
   estimated_duration_minutes: number;
   created_by: string;
   created_at: string;
@@ -905,6 +909,102 @@ export const adminUsersApi = {
       method: "PATCH",
       body: JSON.stringify({ is_active: isActive }),
     }),
+};
+
+// ─── Cohortes (LMS — teacher / admin) ────────────────────────────────────────
+
+/** Cohorte telle que renvoyée par l'API (voir routers/cohorts.py). Métriques réelles. */
+export interface CohortApi {
+  id: string;
+  name: string;
+  description: string | null;
+  school: string | null;
+  status: string;
+  owner_id: string;
+  start_date: string | null;
+  end_date: string | null;
+  enrolled_count: number;
+  assigned_course_ids: string[];
+  completion_rate: number;      // % moyen calculé sur les cours assignés
+  avg_score: number | null;     // score quiz moyen, null si aucun quiz noté
+  at_risk_count: number;        // membres au statut "at-risk"
+  created_at: string | null;
+}
+
+/** Membre (élève) d'une cohorte, avec ses métriques réelles. */
+export interface CohortMemberApi {
+  user_id: string;
+  name: string;
+  email: string;
+  school: string | null;
+  status: string;               // active | at-risk | completed | inactive (dérivé)
+  joined_at: string | null;
+  completion: number;
+  avg_score: number | null;
+  courses_completed: number;
+  total_courses: number;
+  days_inactive: number | null;
+  last_activity: string | null;
+}
+
+/** Détail d'une cohorte : la cohorte + ses membres. */
+export interface CohortDetailApi extends CohortApi {
+  members: CohortMemberApi[];
+}
+
+/** Payload de création / mise à jour d'une cohorte. */
+export interface CohortInput {
+  name?: string;
+  description?: string | null;
+  school?: string | null;
+  status?: string;
+  start_date?: string | null;
+  end_date?: string | null;
+}
+
+/**
+ * Gestion des cohortes (LMS). Réservé `teacher` (ses cohortes) et `admin`+ (toutes).
+ */
+export const cohortsApi = {
+  /** Liste les cohortes visibles par l'utilisateur courant. */
+  list: (statusFilter?: string) =>
+    request<CohortApi[]>(`/api/v1/cohorts${statusFilter ? `?status_filter=${statusFilter}` : ""}`),
+
+  /** Détail d'une cohorte (avec ses membres). */
+  get: (id: string) => request<CohortDetailApi>(`/api/v1/cohorts/${id}`),
+
+  /** Crée une cohorte (owner = utilisateur courant). */
+  create: (data: CohortInput) =>
+    request<CohortApi>("/api/v1/cohorts", { method: "POST", body: JSON.stringify(data) }),
+
+  /** Met à jour une cohorte. */
+  update: (id: string, data: CohortInput) =>
+    request<CohortApi>(`/api/v1/cohorts/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+
+  /** Supprime une cohorte. */
+  remove: (id: string) => request<void>(`/api/v1/cohorts/${id}`, { method: "DELETE" }),
+
+  /** Membres d'une cohorte. */
+  listMembers: (id: string) => request<CohortMemberApi[]>(`/api/v1/cohorts/${id}/members`),
+
+  /** Inscrit un élève (par user_id ou email). */
+  addMember: (id: string, member: { user_id?: string; email?: string }) =>
+    request<CohortMemberApi>(`/api/v1/cohorts/${id}/members`, { method: "POST", body: JSON.stringify(member) }),
+
+  /** Retire un élève de la cohorte. */
+  removeMember: (id: string, userId: string) =>
+    request<void>(`/api/v1/cohorts/${id}/members/${userId}`, { method: "DELETE" }),
+
+  /** Donne à la cohorte l'accès à un cours du catalogue. */
+  grantCourse: (id: string, courseId: string) =>
+    request<{ cohort_id: string; course_id: string }>(`/api/v1/cohorts/${id}/courses`, {
+      method: "POST",
+      body: JSON.stringify({ course_id: courseId }),
+    }),
+
+  /** Révoque l'accès de la cohorte à un cours. */
+  revokeCourse: (id: string, courseId: string) =>
+    request<void>(`/api/v1/cohorts/${id}/courses/${courseId}`, { method: "DELETE" }),
 };
 
 // ─── Apps ────────────────────────────────────────────────────────────────────

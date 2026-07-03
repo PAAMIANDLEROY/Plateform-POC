@@ -20,6 +20,13 @@ class CourseStatus(str, enum.Enum):
     archived = "archived"
 
 
+class CourseAccessLevel(str, enum.Enum):
+    """Niveau d'accès (voir ROLES-ET-DROITS.md §4)."""
+    public = "public"      # base « simple » — tout le monde
+    hiparis = "hiparis"    # base « Hi! PARIS » — élèves (domaine autorisé) et +
+    cohort = "cohort"      # réservé aux membres d'une cohorte y ayant accès
+
+
 class BlockType(str, enum.Enum):
     heading = "heading"
     text = "text"
@@ -42,6 +49,9 @@ class Course(Base):
     level: Mapped[CourseLevel] = mapped_column(SAEnum(CourseLevel), default=CourseLevel.beginner)
     school: Mapped[str | None] = mapped_column(String(200), nullable=True)
     status: Mapped[CourseStatus] = mapped_column(SAEnum(CourseStatus), default=CourseStatus.draft)
+    access_level: Mapped[CourseAccessLevel] = mapped_column(
+        SAEnum(CourseAccessLevel), default=CourseAccessLevel.public, server_default="public"
+    )
     estimated_duration_minutes: Mapped[int] = mapped_column(Integer, default=0)
     created_by: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

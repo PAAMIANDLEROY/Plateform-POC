@@ -261,18 +261,35 @@ Priorisées. Cases à cocher pour suivre l'avancement du weekend.
 - [ ] **À ta charge** : push → `pytest` (CI) + build front ; tester en vrai une fois déployé.
 - ⏭️ Report vers Lot 5 : journalisation (audit log) de ces changements de rôle/statut.
 
-### 🥉 Lot 3 — Cohortes (backend, gros morceau)
-- [ ] Modèles `cohorts`, `cohort_members`, `cohort_courses` + migration alembic.
-- [ ] CRUD cohortes (`teacher` = ses cohortes ; `admin`/`super_admin` = toutes).
-- [ ] Endpoints membres : inscrire / retirer un élève d'une cohorte.
-- [ ] Endpoints cours de cohorte : accorder / révoquer l'accès à un cours du catalogue.
-- [ ] Brancher les pages `/lms` et `/lms/[id]` sur l'API (aujourd'hui `MOCK_COHORTS`).
+### 🥉 Lot 3 — Cohortes — ✅ BACKEND FAIT (2026-07-03) · frontend à câbler
+- [x] Modèles `cohorts`, `cohort_members`, `cohort_courses` (`apps/api/models/cohort.py`) + migration `0010`.
+- [x] CRUD cohortes (`apps/api/routers/cohorts.py`) — `teacher` = ses cohortes ; `admin`/`super_admin` = toutes.
+- [x] Endpoints membres : `GET/POST /{id}/members`, `DELETE /{id}/members/{user_id}`.
+- [x] Endpoints cours de cohorte : `POST /{id}/courses`, `DELETE /{id}/courses/{course_id}`.
+- [x] Tests `apps/api/tests/test_cohorts.py` (périmètre owner, membres, cours, 401/403/404/409).
+- [x] Client API `cohortsApi` + types dans `apps/web/lib/api.ts` (+ `request()` gère désormais le 204).
+- [x] **Métriques réelles** (choix B) : complétion / score moyen / apprenants « à risque » calculés
+      dans `cohorts.py` depuis `UserCourseProgress`. Le **temps passé n'est pas tracké → non exposé**
+      (plutôt qu'inventé).
+- [x] **Frontend `/lms` réécrit** : dashboard réel branché sur `cohortsApi` (KPIs, liste, création,
+      gestion inline des membres + cours). Plus aucun `MOCK_COHORTS`/`MOCK_STUDENTS` dans cette page.
+      Gestion **inline** (pas de route dynamique) → compatible `output: "export"`.
+- [ ] **Nettoyage mock restant** (consigne « fausses stats », voir plus bas) : `/lms/[id]` + page élève
+      `/lms/[id]/student/[userId]` (composants serveur SSG sur ids mock) et l'onglet « Vue d'ensemble »
+      d'`/admin` (`PLATFORM_USERS` statique, MOCK_COHORTS/STUDENTS) → encore du mock, à remplacer/retirer.
+- [ ] **À ta charge** : push → `pytest` (nouveau `test_cohorts.py`) + logs Render `0009 -> 0010`.
 
-### Lot 4 — Accès aux cours (3 bases)
-- [ ] Ajouter `access_level` (`public` / `hiparis` / `cohort`) au modèle `Course` + migration.
-- [ ] Implémenter `peut_voir(user, course)` (§4) et l'appliquer sur toutes les routes cours.
-- [ ] Filtrer les catalogues selon le rôle (public → base simple ; student → + Hi! PARIS ; cohorte → cours dédiés).
-- [ ] Tests d'accès par rôle (public ne voit pas Hi! PARIS, etc.).
+### Lot 4 — Accès aux cours (3 bases) — ✅ BACKEND FAIT (2026-07-03)
+- [x] `access_level` (`public`/`hiparis`/`cohort`) sur `Course` + migration `0011` (défaut `public` →
+      cours existants inchangés) + exposé dans `CourseResponse`.
+- [x] `can_view_course(user, course, cohort_ids)` dans `core/access.py` + appliqué sur `GET /courses/{id}`.
+- [x] Filtrage du catalogue `GET /courses` : public → `public` ; student → `public`+`hiparis` ;
+      + les cours des cohortes dont il est membre ; teacher/admin/super_admin → tout le catalogue publié.
+- [x] Tests `apps/api/tests/test_courses_access.py` (public ne voit pas hiparis, cohorte réservée aux membres, etc.).
+- [ ] **UI pour définir `access_level`** : bloquée par le gap connu « Studio save » (la création/édition
+      de cours n'est pas encore branchée sur `coursesApi`). À faire quand le Studio save sera câblé ;
+      d'ici là, l'`access_level` se règle via l'API. Idée : seeder quelques cours en `hiparis` pour démo réelle.
+- [ ] **À ta charge** : push → `pytest` (`test_courses_access.py`) + logs Render `0010 -> 0011`.
 
 ### Lot 5 — Modération & audit
 - [ ] Table `audit_logs` + helper `log_action(actor, action, target, meta)`.
@@ -292,6 +309,23 @@ Priorisées. Cases à cocher pour suivre l'avancement du weekend.
 - [ ] Mettre à jour `CLAUDE.md` (section « Rôles utilisateurs ») avec le nommage final.
 - [ ] Mettre à jour les traductions `fr.ts` / `en.ts` (libellés des rôles).
 - [ ] Tests e2e : parcours par rôle (public, student, teacher, admin, super_admin).
+
+---
+
+## 8bis. Chasse aux « fausses stats » (consigne durable — 2026-07-03)
+
+> Objectif : remplacer les données de démonstration par de **vraies** données calculées, ou les
+> masquer tant qu'elles n'existent pas. À appliquer à chaque page touchée.
+
+| Emplacement | État | Action |
+|---|---|---|
+| `/lms` (dashboard cohortes) | ✅ réel | branché sur `cohortsApi` + métriques serveur |
+| Métriques cohortes (complétion/score/à risque) | ✅ réel | calculées dans `cohorts.py` |
+| `avgTimeSpent` (temps passé) | ✅ retiré | non tracké → non inventé |
+| `/admin` onglet « Vue d'ensemble » | ⚠️ mock | `PLATFORM_USERS` statique, MOCK_* → brancher sur `/analytics` |
+| `/admin` répartition rôles / écoles | ⚠️ mock | brancher sur `adminUsersApi` / analytics |
+| `/lms/[id]` + `/lms/[id]/student/[userId]` | ⚠️ mock | orphelins depuis la réécriture ; retirer ou réécrire |
+| `/dashboard`, `/my-learning` (à auditer) | ❓ | vérifier s'ils affichent du mock |
 
 ---
 
