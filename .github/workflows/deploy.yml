@@ -1,4 +1,4 @@
-name: CI/CD — Test, Build & Deploy
+name: CI/CD — Test & Deploy
 
 on:
   push:
@@ -9,8 +9,6 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -46,10 +44,11 @@ jobs:
           OPENAI_API_KEY: ""
           FRONTEND_URL: "http://localhost:3000"
 
-  # ── 2. Build frontend — GitHub Pages (maquette cliquable stable) ──────────
-  #    Tourne sur PR et push main pour valider le build.
-  build-pages:
-    name: "Build — GitHub Pages (maquette)"
+  # ── 2. Vérification du build frontend (lint + build, aucun déploiement) ───
+  #    Remplace l'ancien job GitHub Pages : garde le signal rouge/vert du build
+  #    sur push et PR, sans publier de maquette.
+  frontend-build:
+    name: "Frontend build check"
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -65,49 +64,15 @@ jobs:
 
       - run: npm run lint
 
-      - name: Build static export (base path /Plateform-POC)
-        run: npm run build
+      - run: npm run build
         env:
           NODE_ENV: production
-          NEXT_PUBLIC_BASE_PATH: "/Plateform-POC"
 
-      - run: touch out/.nojekyll
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: pages-out
-          path: apps/web/out
-
-  # ── 3. Deploy — GitHub Pages ──────────────────────────────────────────────
-  deploy-pages:
-    name: "Deploy → GitHub Pages (maquette)"
-    needs: [backend-tests, build-pages]
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: pages-out
-          path: out
-
-      - uses: actions/configure-pages@v5
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: out
-
-      - uses: actions/deploy-pages@v4
-        id: deployment
-
-  # ── 4. Build + Deploy — Vercel (dev avec backend) ─────────────────────────
+  # ── 3. Build + Deploy — Vercel (frontend avec backend) ────────────────────
   #    Vercel CLI gère son propre build (lit NEXT_PUBLIC_API_URL depuis le
-  #    dashboard Vercel via `vercel pull`). Pas de base path → déploiement
-  #    à la racine.
+  #    dashboard Vercel via `vercel pull`). Déploiement à la racine.
   deploy-vercel:
-    name: "Deploy → Vercel (dev)"
+    name: "Deploy → Vercel"
     needs: [backend-tests]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest

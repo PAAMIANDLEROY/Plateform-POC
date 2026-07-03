@@ -36,8 +36,10 @@ def upload_file(content: bytes, path: str, content_type: str | None) -> str:
     }
     resp = httpx.post(url, content=content, headers=headers, timeout=60.0)
     if resp.status_code not in (200, 201):
-        logger.warning("Upload Supabase échoué (%s): %s", resp.status_code, resp.text[:300])
-        raise RuntimeError(f"Upload Supabase échoué ({resp.status_code})")
+        detail = resp.text[:200]
+        logger.warning("Upload Supabase échoué (%s) sur bucket '%s': %s",
+                       resp.status_code, settings.SUPABASE_BUCKET, detail)
+        raise RuntimeError(f"Upload Supabase échoué ({resp.status_code}): {detail}")
     return path
 
 
