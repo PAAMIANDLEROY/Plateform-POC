@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 from core.store import CurrentUser
 from core.deps import require_role
 from core.roles import ADMIN_ROLES, TEACHER_ROLES
+from core.audit import log_action
 from database import get_db
 from models.cohort import Cohort, CohortMember, CohortCourse, CohortStatus, MemberStatus
 from models.course import Course, UserCourseProgress
@@ -279,6 +280,7 @@ def create_cohort(
         end_date=body.end_date,
     )
     db.add(cohort)
+    log_action(db, current_user.id, "cohort_create", "cohort", cohort.id, {"name": cohort.name})
     db.commit()
     db.refresh(cohort)
     return _cohort_out(db, cohort)
@@ -330,6 +332,7 @@ def delete_cohort(
 ):
     cohort = _load_cohort(db, cohort_id)
     _require_manage(current_user, cohort)
+    log_action(db, current_user.id, "cohort_delete", "cohort", cohort.id, {"name": cohort.name})
     db.delete(cohort)
     db.commit()
 

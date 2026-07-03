@@ -291,12 +291,17 @@ Priorisées. Cases à cocher pour suivre l'avancement du weekend.
       d'ici là, l'`access_level` se règle via l'API. Idée : seeder quelques cours en `hiparis` pour démo réelle.
 - [ ] **À ta charge** : push → `pytest` (`test_courses_access.py`) + logs Render `0010 -> 0011`.
 
-### Lot 5 — Modération & audit
-- [ ] Table `audit_logs` + helper `log_action(actor, action, target, meta)`.
-- [ ] Journaliser : changement de rôle, suspension, dépublication, CRUD cohorte, config.
-- [ ] Endpoint + UI de consultation de l'audit log (`admin` lecture, `super_admin` complet).
-- [ ] Table `reports` (signalements) + endpoint de signalement + file de traitement (`admin`+).
-- [ ] Endpoint « masquer / dépublier » un contenu signalé.
+### Lot 5 — Modération & audit — ✅ FAIT (2026-07-03)
+- [x] Table `audit_logs` (`models/audit.py`) + migration `0012` + helper `log_action` (`core/audit.py`).
+- [x] Journalisation câblée : changement de rôle, suspension, création/suppression de cohorte,
+      signalement, traitement de signalement, masquage de contenu.
+- [x] Endpoint `GET /api/v1/audit-logs` (admin+) + **UI onglet « Audit »** dans `/admin`.
+- [x] Table `reports` + `POST /reports` (tout utilisateur), `GET /reports` (admin+),
+      `PATCH /reports/{id}` (admin+) avec **masquage** (`hide=True` → dépublie le cours).
+- [x] Tests `apps/api/tests/test_moderation.py`.
+- [ ] UI de signalement côté contenus (bouton « Signaler ») + file de traitement dans `/admin` : à ajouter
+      (le backend `reportsApi` est prêt). Journalisation config plateforme : viendra avec le Lot 6.
+- [ ] **À ta charge** : push → `pytest` (`test_moderation.py`) + logs Render `0011 -> 0012`.
 
 ### Lot 6 — Config plateforme (super_admin)
 - [ ] UI/endpoints de gestion des **domaines email autorisés** (le modèle `allowed_domain` existe déjà).
@@ -322,8 +327,8 @@ Priorisées. Cases à cocher pour suivre l'avancement du weekend.
 | `/lms` (dashboard cohortes) | ✅ réel | branché sur `cohortsApi` + métriques serveur |
 | Métriques cohortes (complétion/score/à risque) | ✅ réel | calculées dans `cohorts.py` |
 | `avgTimeSpent` (temps passé) | ✅ retiré | non tracké → non inventé |
-| `/admin` onglet « Vue d'ensemble » | ⚠️ mock | `PLATFORM_USERS` statique, MOCK_* → brancher sur `/analytics` |
-| `/admin` répartition rôles / écoles | ⚠️ mock | brancher sur `adminUsersApi` / analytics |
+| `/admin` (tous les onglets) | ✅ réel | réécrit : `platformKPIs` + `cohortsApi` + `auditApi`, plus aucun MOCK_* |
+| `/analytics/platform` (KPIs) | ✅ réel | vrais compteurs contenus + actifs 30 j (proxy progression) |
 | `/lms/[id]` + `/lms/[id]/student/[userId]` | ⚠️ mock | orphelins depuis la réécriture ; retirer ou réécrire |
 | `/dashboard`, `/my-learning` (à auditer) | ❓ | vérifier s'ils affichent du mock |
 

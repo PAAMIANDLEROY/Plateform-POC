@@ -15,6 +15,7 @@ from core.store import CurrentUser
 from core.deps import get_current_user, require_role
 from core.user_utils import user_to_current
 from core.roles import ADMIN_ROLES, can_manage_role, can_manage_user
+from core.audit import log_action
 from database import get_db
 from models.user import User, UserRole
 from models.course import UserCourseProgress
@@ -424,6 +425,8 @@ def change_user_role(
                 detail="Impossible de rétrograder le dernier super_admin.",
             )
 
+    log_action(db, current_user.id, "role_change", "user", target.id,
+               {"from": target_role, "to": new_role})
     target.role = UserRole(new_role)
     db.commit()
     db.refresh(target)
@@ -457,6 +460,8 @@ def change_user_status(
         if active <= 1:
             raise HTTPException(status_code=400, detail="Impossible de suspendre le dernier super_admin actif.")
 
+    log_action(db, current_user.id, "user_status", "user", target.id,
+               {"is_active": body.is_active})
     target.is_active = body.is_active
     db.commit()
     db.refresh(target)

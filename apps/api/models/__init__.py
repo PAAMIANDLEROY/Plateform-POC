@@ -10,3 +10,4 @@ from models.mooc import MOOC, MOOCModule, MOOCModuleCourse, UserMOOCEnrollment
 from models.app import App
 from models.insight import Insight, InsightStatus
 from models.cohort import Cohort, CohortMember, CohortCourse, CohortStatus, MemberStatus
+from models.audit import AuditLog, Report

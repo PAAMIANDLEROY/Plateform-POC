@@ -911,6 +911,55 @@ export const adminUsersApi = {
     }),
 };
 
+// ─── Modération & audit (admin / super_admin) ────────────────────────────────
+
+/** Entrée du journal d'audit. */
+export interface AuditLogEntry {
+  id: string;
+  actor_id: string | null;
+  action: string;
+  target_type: string | null;
+  target_id: string | null;
+  meta: Record<string, unknown> | null;
+  created_at: string | null;
+}
+
+/** Signalement de contenu. */
+export interface ReportEntry {
+  id: string;
+  reporter_id: string;
+  target_type: string;
+  target_id: string;
+  reason: string;
+  status: string;
+  resolution: string | null;
+  resolved_by: string | null;
+  created_at: string | null;
+  resolved_at: string | null;
+}
+
+/** Journal d'audit (lecture admin+). */
+export const auditApi = {
+  list: (params?: { action?: string; actor_id?: string; limit?: number; offset?: number }) => {
+    const s = new URLSearchParams();
+    if (params?.action) s.set("action", params.action);
+    if (params?.actor_id) s.set("actor_id", params.actor_id);
+    if (params?.limit != null) s.set("limit", String(params.limit));
+    if (params?.offset != null) s.set("offset", String(params.offset));
+    return request<{ total: number; items: AuditLogEntry[] }>(`/api/v1/audit-logs?${s}`);
+  },
+};
+
+/** Signalements de contenu. */
+export const reportsApi = {
+  create: (data: { target_type: string; target_id: string; reason: string }) =>
+    request<ReportEntry>("/api/v1/reports", { method: "POST", body: JSON.stringify(data) }),
+  list: (status?: string) =>
+    request<ReportEntry[]>(`/api/v1/reports${status ? `?status=${status}` : ""}`),
+  resolve: (id: string, data: { status: string; resolution?: string; hide?: boolean }) =>
+    request<ReportEntry>(`/api/v1/reports/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+};
+
 // ─── Cohortes (LMS — teacher / admin) ────────────────────────────────────────
 
 /** Cohorte telle que renvoyée par l'API (voir routers/cohorts.py). Métriques réelles. */

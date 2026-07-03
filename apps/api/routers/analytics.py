@@ -5,17 +5,21 @@ Uses PostgreSQL via SQLAlchemy.
 """
 import csv
 import io
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from core.deps import get_current_user, require_role
 from core.store import CurrentUser
 from database import get_db
 from models.user import User
-from models.course import UserCourseProgress
+from models.course import Course, UserCourseProgress
+from models.video import Video
+from models.mooc import MOOC
+from models.app import App
 
 router = APIRouter(prefix="/api/v1/analytics", tags=["analytics"])
 
@@ -38,16 +42,29 @@ def get_platform_kpis(
         role = user.role.value if hasattr(user.role, "value") else str(user.role)
         users_by_role[role] = users_by_role.get(role, 0) + 1
 
+    # Actifs sur 30 j : utilisateurs distincts avec une activité d'apprentissage récente
+    # (vraie donnée, pas le total). Pas de tracking de connexion en DB → proxy par la progression.
+    cutoff = datetime.now(timezone.utc) - timedelta(days=30)
+    active_last_30d = (
+        db.query(func.count(func.distinct(UserCourseProgress.user_id)))
+        .filter(UserCourseProgress.updated_at >= cutoff)
+        .scalar()
+    ) or 0
+
     return {
         "users": {
             "total": len(all_users),
             "by_role": users_by_role,
-            "active_last_30d": len(all_users),  # Simplified for MVP
+            "active_last_30d": active_last_30d,
         },
         "content": {
-            "note": "Counts available via /api/v1/courses, /api/v1/videos, etc.",
+            "courses_total": db.query(Course).count(),
+            "courses_published": db.query(Course).filter(Course.status == "published").count(),
+            "videos": db.query(Video).count(),
+            "moocs": db.query(MOOC).count(),
+            "apps": db.query(App).count(),
         },
-        "generated_at": datetime.utcnow().isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
