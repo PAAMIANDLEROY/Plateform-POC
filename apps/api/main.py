@@ -8,7 +8,7 @@ from alembic import command
 from core.config import settings
 from core.logging_config import configure_logging
 from core.domains import load_domains_from_db
-from routers import auth, users, videos, courses, moocs, apps, studio, learning, analytics, insights, cohorts, moderation
+from routers import auth, users, videos, courses, moocs, apps, studio, learning, analytics, insights, cohorts, moderation, submissions
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -89,6 +89,7 @@ app.include_router(analytics.router)
 app.include_router(insights.router)
 app.include_router(cohorts.router)
 app.include_router(moderation.router)
+app.include_router(submissions.router)
 
 
 @app.get("/health")

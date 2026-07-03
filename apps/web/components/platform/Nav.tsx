@@ -838,6 +838,19 @@ export function Nav() {
               {t.nav.insights}
             </Link>
 
+            {/* Lien direct About us */}
+            <Link
+              href="/about"
+              className={clsx(
+                "px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
+                pathname.startsWith("/about")
+                  ? "bg-primary/10 text-primary font-semibold"
+                  : "text-gray-600 hover:text-primary hover:bg-primary/5"
+              )}
+            >
+              {t.nav.about}
+            </Link>
+
             {/* 3 dropdowns Learning — itération sur LEARNING_SECTIONS */}
             {LEARNING_SECTIONS.map((section) => (
               <NavDropdown

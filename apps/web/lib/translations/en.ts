@@ -60,6 +60,7 @@ export const en: Translations = {
   // ── Navigation ────────────────────────────────────────────────────────────────
   nav: {
     insights:       "Insights",
+    about:          "About us",
     myLearning:     "My learning",
     studio:         "Studio",
     lms:            "LMS",

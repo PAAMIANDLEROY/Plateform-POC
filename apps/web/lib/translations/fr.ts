@@ -79,6 +79,7 @@ export const fr = {
   // ── Navigation ────────────────────────────────────────────────────────────────
   nav: {
     insights:       "Insights",
+    about:          "About us",
     myLearning:     "Mon parcours",
     studio:         "Studio",
     lms:            "LMS",

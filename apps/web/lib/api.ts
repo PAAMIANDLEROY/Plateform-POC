@@ -960,6 +960,40 @@ export const reportsApi = {
     request<ReportEntry>(`/api/v1/reports/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
 };
 
+// ─── Soumissions de fichiers (« About us ») ──────────────────────────────────
+
+/** Métadonnées d'une soumission de fichier. */
+export interface SubmissionEntry {
+  id: string;
+  filename: string;
+  content_type: string | null;
+  size: number;
+  uploaded_by: string;
+  created_at: string | null;
+  url: string | null;   // URL signée temporaire (présente côté liste admin)
+}
+
+export const submissionsApi = {
+  /** Upload multipart (< 10 Mo). N'utilise pas `request()` (qui force le JSON). */
+  create: async (file: File): Promise<SubmissionEntry> => {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch(`${API_URL}/api/v1/submissions`, {
+      method: "POST",
+      credentials: "include",
+      body: form,
+    });
+    if (!res.ok) {
+      const b = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new ApiError(res.status, b.detail ?? "Upload échoué");
+    }
+    return res.json();
+  },
+
+  /** Liste des soumissions (admin+), avec URL signée. */
+  list: () => request<SubmissionEntry[]>("/api/v1/submissions"),
+};
+
 // ─── Cohortes (LMS — teacher / admin) ────────────────────────────────────────
 
 /** Cohorte telle que renvoyée par l'API (voir routers/cohorts.py). Métriques réelles. */

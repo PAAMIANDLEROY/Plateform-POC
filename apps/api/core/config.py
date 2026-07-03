@@ -43,6 +43,13 @@ class Settings(BaseSettings):
     LLM_MODEL: str = ""
     # Niveau de log applicatif (DEBUG, INFO, WARNING, ERROR). Voir core/logging_config.py.
     LOG_LEVEL: str = "INFO"
+    # Supabase Storage (upload de fichiers — onglet « About us »).
+    # SUPABASE_URL : URL du projet (ex. https://xxxx.supabase.co).
+    # SUPABASE_SERVICE_KEY : clé `service_role` (secrète, jamais exposée au front).
+    # SUPABASE_BUCKET : nom du bucket Storage à créer côté Supabase.
+    SUPABASE_URL: str = ""
+    SUPABASE_SERVICE_KEY: str = ""
+    SUPABASE_BUCKET: str = "submissions"
 
     @property
     def allowed_domains_list(self) -> List[str]:
