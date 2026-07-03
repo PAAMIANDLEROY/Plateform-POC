@@ -12,7 +12,7 @@
  *   - Suppression du compte → `confirm()` → `authApi.deleteMe()` → `logout()` → "/login".
  *
  * Badge de rôle :
- *   - admin / superuser → `danger` (rouge)
+ *   - admin / super_admin → `danger` (rouge)
  *   - teacher           → `primary` (bleu)
  *   - student / autre   → `neutral` (gris)
  *
@@ -165,9 +165,9 @@ export default function ProfilePage() {
           <h1 className="text-2xl font-extrabold text-gray-900">{fullName || t.profile.incomplete}</h1>
           <p className="text-gray-500 text-sm mt-0.5">{user.email}</p>
           <div className="flex items-center gap-2 mt-3">
-            {/* Badge rôle : rouge pour admin/superuser, bleu pour teacher, gris sinon */}
+            {/* Badge rôle : rouge pour admin/super_admin, bleu pour teacher, gris sinon */}
             <Badge variant={
-              user.role === "admin" || user.role === "superuser" ? "danger"
+              user.role === "admin" || user.role === "super_admin" ? "danger"
               : user.role === "teacher" ? "primary"
               : "neutral"
             }>

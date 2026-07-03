@@ -72,7 +72,7 @@ export const fr = {
     student:   "Étudiant",
     teacher:   "Enseignant",
     admin:     "Administrateur",
-    superuser: "Super Admin",
+    super_admin: "Super Admin",
     public:    "Visiteur",
   },
 

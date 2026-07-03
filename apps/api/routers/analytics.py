@@ -19,8 +19,8 @@ from models.course import UserCourseProgress
 
 router = APIRouter(prefix="/api/v1/analytics", tags=["analytics"])
 
-ADMIN_ROLES = ("admin", "superuser")
-TEACHER_ROLES = ("teacher", "admin", "superuser")
+ADMIN_ROLES = ("admin", "super_admin")
+TEACHER_ROLES = ("teacher", "admin", "super_admin")
 
 
 # ─── Platform KPIs ────────────────────────────────────────────────────────────

@@ -2,8 +2,8 @@
  * @file (platform)/admin/page.tsx
  * @description Dashboard d'administration de la plateforme "/admin".
  *
- * Accessible uniquement aux utilisateurs avec les rôles `admin` ou `superuser`
- * (vérification côté API — le frontend ne bloque pas l'accès dans le MVP).
+ * Accessible uniquement aux utilisateurs avec les rôles `admin` ou `super_admin`.
+ * Garde côté client (redirection si rôle insuffisant) — le gating fait autorité côté API.
  *
  * 4 onglets :
  *   1. Vue d'ensemble — KPIs globaux, santé des cohortes, apprenants à risque.
@@ -31,10 +31,16 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { MOCK_COHORTS, MOCK_STUDENTS, MOCK_VIDEOS, MOCK_COURSES, MOCK_MOOCS, MOCK_APPS, MOCK_INSIGHTS } from "@/lib/mock";
 import { downloadCSV, todayStamp } from "@/lib/export";
+import { useAuth } from "@/lib/auth";
+import { PageSpinner } from "@/components/ui/Spinner";
+
+/** Rôles autorisés à consulter le dashboard d'administration. */
+const ADMIN_ROLES = ["admin", "super_admin"];
 
 // ─── Statistiques de plateforme (statiques dans le MVP) ──────────────────────
 
@@ -47,7 +53,7 @@ const PLATFORM_USERS = {
   student:     241,
   teacher:     35,
   admin:       8,
-  superuser:   3,
+  super_admin: 3,
   activeToday: 48,
   newThisWeek: 12,
 };
@@ -137,8 +143,25 @@ type AdminTab = "overview" | "cohorts" | "users" | "content";
  * Dashboard d'administration de la plateforme.
  */
 export default function AdminDashboardPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
   /** Onglet actif — "overview" par défaut. */
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
+
+  /**
+   * Garde d'accès — défense en profondeur côté client (le gating fait autorité côté API).
+   * Redirige les rôles insuffisants : vers /login si non connecté, sinon vers /dashboard.
+   */
+  const authorized = !!user && ADMIN_ROLES.includes(user.role);
+  useEffect(() => {
+    if (loading) return;
+    if (!user) { router.replace("/login"); return; }
+    if (!authorized) router.replace("/dashboard");
+  }, [loading, user, authorized, router]);
+
+  // Pendant le refresh ou avant redirection : spinner (évite le flash de contenu admin).
+  if (loading || !authorized) return <PageSpinner />;
 
   /**
    * Exporte un rapport CSV de toutes les cohortes.
@@ -378,7 +401,7 @@ export default function AdminDashboardPage() {
                 { role: "Étudiants",  count: PLATFORM_USERS.student,   color: "bg-primary",    pct: Math.round((PLATFORM_USERS.student   / PLATFORM_USERS.total) * 100) },
                 { role: "Enseignants",count: PLATFORM_USERS.teacher,   color: "bg-blue-500",   pct: Math.round((PLATFORM_USERS.teacher   / PLATFORM_USERS.total) * 100) },
                 { role: "Admins",     count: PLATFORM_USERS.admin,     color: "bg-danger",     pct: Math.round((PLATFORM_USERS.admin     / PLATFORM_USERS.total) * 100) },
-                { role: "Superusers", count: PLATFORM_USERS.superuser, color: "bg-purple-500", pct: Math.round((PLATFORM_USERS.superuser / PLATFORM_USERS.total) * 100) },
+                { role: "Super Admins", count: PLATFORM_USERS.super_admin, color: "bg-purple-500", pct: Math.round((PLATFORM_USERS.super_admin / PLATFORM_USERS.total) * 100) },
               ]).map((r) => (
                 <div key={r.role}>
                   <div className="flex items-center justify-between mb-1.5">

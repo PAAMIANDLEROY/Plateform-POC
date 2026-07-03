@@ -28,7 +28,7 @@ from services.transcription import (
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/studio", tags=["studio"])
 
-TEACHER_ROLES = ("teacher", "admin", "superuser")
+TEACHER_ROLES = ("teacher", "admin", "super_admin")
 
 
 # ── Schemas ───────────────────────────────────────────────────────────────────

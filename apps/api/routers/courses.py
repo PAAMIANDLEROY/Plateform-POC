@@ -12,7 +12,7 @@ from core.deps import get_current_user, require_role
 
 router = APIRouter(prefix="/api/v1/courses", tags=["courses"])
 
-TEACHER_ROLES = ("teacher", "admin", "superuser")
+TEACHER_ROLES = ("teacher", "admin", "super_admin")
 
 
 def _serialize(course: Course) -> CourseResponse:
@@ -57,7 +57,7 @@ def get_course(course_id: str, db: Session = Depends(get_db), current_user: User
     course = db.query(Course).filter(Course.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
-    if course.status != "published" and course.created_by != current_user.id and current_user.role not in ("admin", "superuser"):
+    if course.status != "published" and course.created_by != current_user.id and current_user.role not in ("admin", "super_admin"):
         raise HTTPException(status_code=403, detail="Course not available")
     return _serialize(course)
 
@@ -89,7 +89,7 @@ def update_course(
     course = db.query(Course).filter(Course.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
-    if course.created_by != current_user.id and current_user.role not in ("admin", "superuser"):
+    if course.created_by != current_user.id and current_user.role not in ("admin", "super_admin"):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
 
     data = body.model_dump(exclude_unset=True)
@@ -112,7 +112,7 @@ def update_blocks(
     course = db.query(Course).filter(Course.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
-    if course.created_by != current_user.id and current_user.role not in ("admin", "superuser"):
+    if course.created_by != current_user.id and current_user.role not in ("admin", "super_admin"):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
 
     db.query(CourseBlock).filter(CourseBlock.course_id == course_id).delete()

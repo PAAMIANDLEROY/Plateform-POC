@@ -51,20 +51,23 @@ Hi! Platform
 
 ## Rôles utilisateurs
 
+Hiérarchie (privilège croissant) : `public` < `student` < `teacher` < `admin` < `super_admin`.
+Détail complet du modèle : voir [ROLES-ET-DROITS.md](ROLES-ET-DROITS.md).
+
 | Rôle | Accès |
 |---|---|
-| `student` | Consulter contenus, suivre cours, passer quiz |
-| `teacher` | Créer/éditer cours via Hi! Studio, gérer ses cohortes |
-| `admin` | Gestion complète, gestion des utilisateurs, stats |
-| `superuser` | Config plateforme, gestion des écoles |
-| `public` | Accès limité aux contenus non restreints |
+| `public` | User classique : base de cours « simple » (contenu ouvert) |
+| `student` | User+ / élève (domaine autorisé) : base « Hi! PARIS » + cours de ses cohortes |
+| `teacher` | Prof : crée/gère ses cohortes et ses élèves, crée des cours (Hi! Studio) |
+| `admin` | Consultation totale + modération + gestion des rôles **jusqu'à `teacher`** |
+| `super_admin` | Contrôle total : config plateforme, gestion des écoles, **crée/retire les `admin`** |
 
 ---
 
 ## Authentification (domain-based)
 
 - Inscription via email institutionnel uniquement
-- Domaines autorisés configurables par `superuser` (ex : `@polytechnique.edu`, `@telecom-paris.fr`, `@hec.fr`)
+- Domaines autorisés configurables par `super_admin` (ex : `@polytechnique.edu`, `@telecom-paris.fr`, `@hec.fr`)
 - Email de vérification obligatoire
 - JWT access token (15min) + refresh token (30j) en cookie httpOnly
 - Pas de SSO/SAML dans le MVP — prévu post-MVP

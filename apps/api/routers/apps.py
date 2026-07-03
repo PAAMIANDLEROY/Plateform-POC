@@ -11,7 +11,7 @@ from core.deps import get_current_user, require_role
 
 router = APIRouter(prefix="/api/v1/apps", tags=["apps"])
 
-TEACHER_ROLES = ("teacher", "admin", "superuser")
+TEACHER_ROLES = ("teacher", "admin", "super_admin")
 
 
 def _serialize(app: App) -> AppResponse:
@@ -71,7 +71,7 @@ def update_app(
     app = db.query(App).filter(App.id == app_id).first()
     if not app:
         raise HTTPException(status_code=404, detail="App not found")
-    if app.created_by != current_user.id and current_user.role not in ("admin", "superuser"):
+    if app.created_by != current_user.id and current_user.role not in ("admin", "super_admin"):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
 
     data = body.model_dump(exclude_unset=True)
@@ -93,7 +93,7 @@ def delete_app(
     app = db.query(App).filter(App.id == app_id).first()
     if not app:
         raise HTTPException(status_code=404, detail="App not found")
-    if app.created_by != current_user.id and current_user.role not in ("admin", "superuser"):
+    if app.created_by != current_user.id and current_user.role not in ("admin", "super_admin"):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     db.delete(app)
     db.commit()

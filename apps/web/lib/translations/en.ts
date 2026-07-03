@@ -53,7 +53,7 @@ export const en: Translations = {
     student:   "Student",
     teacher:   "Teacher",
     admin:     "Administrator",
-    superuser: "Super Admin",
+    super_admin: "Super Admin",
     public:    "Visitor",
   },
 

@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
     ALLOWED_DOMAINS: str = "polytechnique.edu,telecom-paris.fr"
+    # Email du super_admin fondateur (toi). Au démarrage, l'utilisateur portant cet
+    # email est promu `super_admin` (idempotent). Jamais via l'UI publique. Voir main.py.
+    SUPER_ADMIN_EMAIL: str = ""
     SMTP_HOST: str = ""
     SMTP_PORT: int = 587
     SMTP_USER: str = ""

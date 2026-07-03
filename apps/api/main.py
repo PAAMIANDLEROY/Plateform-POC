@@ -24,9 +24,39 @@ def run_migrations():
         logger.warning("⚠️  Migrations skipped: %s", e)
 
 
+def bootstrap_super_admin():
+    """
+    Promeut l'utilisateur portant SUPER_ADMIN_EMAIL au rôle `super_admin`.
+    Idempotent, rejoué à chaque démarrage (permet de définir l'env après coup).
+    Ne crée pas le compte : l'email doit d'abord s'être connecté via OTP.
+    """
+    email = (settings.SUPER_ADMIN_EMAIL or "").strip().lower()
+    if not email:
+        return
+    try:
+        from database import SessionLocal
+        from models.user import User, UserRole
+
+        db = SessionLocal()
+        try:
+            user = db.query(User).filter(User.email == email).first()
+            if not user:
+                logger.info("Super admin bootstrap: %s pas encore inscrit — ignoré", email)
+                return
+            if user.role != UserRole.super_admin:
+                user.role = UserRole.super_admin
+                db.commit()
+                logger.info("✅ Super admin bootstrap: %s promu super_admin", email)
+        finally:
+            db.close()
+    except Exception as e:
+        logger.warning("⚠️  Super admin bootstrap skipped: %s", e)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     run_migrations()
+    bootstrap_super_admin()  # Promeut le fondateur (SUPER_ADMIN_EMAIL) si présent
     load_domains_from_db()  # Charge les domaines autorisés depuis Supabase
     yield
 

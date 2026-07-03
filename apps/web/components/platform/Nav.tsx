@@ -41,7 +41,7 @@ import { useState, useRef, useEffect } from "react";
  */
 const roleChip: Record<string, string> = {
   admin:     "bg-danger/10 text-danger border border-danger/20",
-  superuser: "bg-purple-100 text-purple-700 border border-purple-200",
+  super_admin: "bg-purple-100 text-purple-700 border border-purple-200",
   teacher:   "bg-primary/10 text-primary border border-primary/20",
   student:   "bg-gray-100 text-gray-600 border border-gray-200",
   public:    "bg-gray-100 text-gray-600 border border-gray-200",
@@ -674,8 +674,8 @@ function SiteMapDropdown() {
  *   Mon parcours | [Studio LMS]? | [Admin]? | FR/EN | [Connexion / UserMenu] | 🗺
  *
  * Visibilité conditionnelle des entrées :
- *   - Studio + LMS : visibles si `user.role` ∈ {teacher, admin, superuser}
- *   - Admin        : visible si `user.role` ∈ {admin, superuser}
+ *   - Studio + LMS : visibles si `user.role` ∈ {teacher, admin, super_admin}
+ *   - Admin        : visible si `user.role` ∈ {admin, super_admin}
  *   - Bouton "Connexion" : affiché si pas de session (`user === null`)
  *   - Menu utilisateur   : affiché si session active (`user !== null`)
  *   - "Toutes les pages" : TOUJOURS visible (maquette démonstration)
@@ -788,13 +788,13 @@ export function Nav() {
    * `true` si l'utilisateur a un rôle d'enseignant ou supérieur.
    * Conditionne l'affichage des liens Studio et LMS dans la nav.
    */
-  const isTeacher = user && ["teacher", "admin", "superuser"].includes(user.role);
+  const isTeacher = user && ["teacher", "admin", "super_admin"].includes(user.role);
 
   /**
-   * `true` si l'utilisateur a un rôle administrateur ou superuser.
+   * `true` si l'utilisateur a un rôle administrateur ou super_admin.
    * Conditionne l'affichage du lien Admin dans la nav et dans le menu utilisateur.
    */
-  const isAdmin = user && ["admin", "superuser"].includes(user.role);
+  const isAdmin = user && ["admin", "super_admin"].includes(user.role);
 
   return (
     <>
@@ -863,7 +863,7 @@ export function Nav() {
 
             {/*
              * Branche enseignant : Studio + LMS
-             * Visibles uniquement pour les rôles teacher, admin, superuser.
+             * Visibles uniquement pour les rôles teacher, admin, super_admin.
              * Un séparateur visuel précède ces liens pour les distinguer
              * des liens "étudiants".
              */}
@@ -891,7 +891,7 @@ export function Nav() {
 
             {/*
              * Branche admin : lien Administration
-             * Visible uniquement pour les rôles admin et superuser.
+             * Visible uniquement pour les rôles admin et super_admin.
              */}
             {isAdmin && (
               <Link href="/admin" className={clsx(

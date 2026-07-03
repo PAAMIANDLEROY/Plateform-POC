@@ -11,7 +11,7 @@ from core.deps import get_current_user, require_role
 
 router = APIRouter(prefix="/api/v1/moocs", tags=["moocs"])
 
-TEACHER_ROLES = ("teacher", "admin", "superuser")
+TEACHER_ROLES = ("teacher", "admin", "super_admin")
 
 
 def _serialize(mooc: MOOC) -> MOOCResponse:
@@ -83,7 +83,7 @@ def update_mooc(
     mooc = db.query(MOOC).filter(MOOC.id == mooc_id).first()
     if not mooc:
         raise HTTPException(status_code=404, detail="MOOC not found")
-    if mooc.created_by != current_user.id and current_user.role not in ("admin", "superuser"):
+    if mooc.created_by != current_user.id and current_user.role not in ("admin", "super_admin"):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
 
     for key, val in body.model_dump(exclude_unset=True).items():

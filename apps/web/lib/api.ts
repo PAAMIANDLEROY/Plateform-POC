@@ -57,7 +57,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
  * @property first_name - Prénom.
  * @property last_name - Nom de famille.
  * @property email - Adresse email institutionnelle (domaine vérifié).
- * @property role - Rôle sur la plateforme : `student`, `teacher`, `admin`, `superuser`.
+ * @property role - Rôle sur la plateforme : `student`, `teacher`, `admin`, `super_admin`.
  * @property is_verified - Indique si l'email a été confirmé via OTP.
  * @property school - École/institution d'appartenance (ex. "Polytechnique").
  * @property bio - Courte biographie affichée sur le profil public.

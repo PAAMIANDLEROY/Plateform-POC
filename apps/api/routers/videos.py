@@ -11,7 +11,7 @@ from core.deps import get_current_user, require_role
 
 router = APIRouter(prefix="/api/v1/videos", tags=["videos"])
 
-TEACHER_ROLES = ("teacher", "admin", "superuser")
+TEACHER_ROLES = ("teacher", "admin", "super_admin")
 
 
 def _serialize(video: Video) -> VideoResponse:
@@ -76,7 +76,7 @@ def update_video(
     video = db.query(Video).filter(Video.id == video_id).first()
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
-    if video.created_by != current_user.id and current_user.role not in ("admin", "superuser"):
+    if video.created_by != current_user.id and current_user.role not in ("admin", "super_admin"):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
 
     data = body.model_dump(exclude_unset=True)
@@ -98,7 +98,7 @@ def delete_video(
     video = db.query(Video).filter(Video.id == video_id).first()
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
-    if video.created_by != current_user.id and current_user.role not in ("admin", "superuser"):
+    if video.created_by != current_user.id and current_user.role not in ("admin", "super_admin"):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     db.delete(video)
     db.commit()

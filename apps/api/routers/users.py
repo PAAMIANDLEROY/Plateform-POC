@@ -220,7 +220,7 @@ def get_consent(current_user: CurrentUser = Depends(get_current_user)):
 
 # ── Import massif Excel (admin) ───────────────────────────────────────────────
 
-@router.post("/import", dependencies=[Depends(require_role("admin", "superuser"))])
+@router.post("/import", dependencies=[Depends(require_role("admin", "super_admin"))])
 async def import_users_excel(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
