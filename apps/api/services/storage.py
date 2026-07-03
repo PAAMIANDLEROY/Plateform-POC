@@ -29,6 +29,8 @@ def upload_file(content: bytes, path: str, content_type: str | None) -> str:
     url = f"{base}/storage/v1/object/{settings.SUPABASE_BUCKET}/{path}"
     headers = {
         "Authorization": f"Bearer {settings.SUPABASE_SERVICE_KEY}",
+        # `apikey` requis par le nouveau format de clés Supabase (sb_secret_…).
+        "apikey": settings.SUPABASE_SERVICE_KEY,
         "Content-Type": content_type or "application/octet-stream",
         "x-upsert": "true",
     }
@@ -47,6 +49,7 @@ def create_signed_url(path: str, expires_in: int = 3600) -> str | None:
     url = f"{base}/storage/v1/object/sign/{settings.SUPABASE_BUCKET}/{path}"
     headers = {
         "Authorization": f"Bearer {settings.SUPABASE_SERVICE_KEY}",
+        "apikey": settings.SUPABASE_SERVICE_KEY,
         "Content-Type": "application/json",
     }
     try:
