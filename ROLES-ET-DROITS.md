@@ -167,14 +167,19 @@ L'`admin` et le `super_admin` voient toutes les cohortes.
 | `admin` | `public`, `student`, `teacher` | `admin`, `super_admin` |
 | `super_admin` | tout, y compris **créer / retirer des `admin`** et d'autres `super_admin` | — |
 
-Règle formelle (à implémenter dans `PATCH /users/{id}/role`) :
+Règle formelle (implémentée dans `core/roles.py`, utilisée par `PATCH /users/{id}/role`) :
 ```
+a_autorite_sur(acteur, role_cible) =
+    acteur == super_admin            # le sommet a autorité sur tout le monde
+    OR niveau(acteur) > niveau(role_cible)
+
 peut_changer_role(acteur, cible, nouveau_role) =
-    niveau(acteur) > niveau(cible.role_actuel)      # la cible est en dessous de l'acteur
-    AND niveau(acteur) > niveau(nouveau_role)       # on ne promeut pas à son niveau ou au-dessus
+    a_autorite_sur(acteur, cible.role_actuel)   # l'acteur domine la cible
+    AND a_autorite_sur(acteur, nouveau_role)    # ... et le rôle visé
 ```
-> Concrètement : un `admin` ne peut ni promouvoir quelqu'un `admin`, ni modifier un `admin` existant.
-> Seul un `super_admin` fabrique des `admin`.
+> Concrètement : un `admin` ne peut ni promouvoir quelqu'un `admin`, ni modifier un `admin` existant ;
+> seul un `super_admin` fabrique/retire des `admin` (et peut gérer d'autres `super_admin`, borné par
+> le garde-fou « dernier super_admin »).
 
 - **Garde-fous obligatoires** :
   - ❌ On ne peut pas **se rétrograder soi-même** si on est le **dernier `super_admin`**
@@ -241,15 +246,20 @@ Priorisées. Cases à cocher pour suivre l'avancement du weekend.
 - [ ] **À ta charge** : push → vérifier le build GitHub Pages/Vercel + les logs Render
       (`Running upgrade 0008 -> 0009`) ; définir `SUPER_ADMIN_EMAIL=<ton email>` sur Render.
 
-### 🥈 Lot 2 — Gestion des droits (déléguée)
-- [ ] Endpoint `GET /api/v1/users` (liste paginée + filtres rôle/école) — `admin`+.
-- [ ] Endpoint `PATCH /api/v1/users/{id}/role` — `admin`+ **avec plafond hiérarchique** (§6) :
-      un admin gère jusqu'à `teacher`, seul le super_admin fabrique des `admin`.
-- [ ] Endpoint `PATCH /api/v1/users/{id}/status` (suspendre/réactiver) — `admin`+.
-- [ ] Tests : dernier super_admin non rétrogradable ; admin ne peut PAS créer/modifier un admin ;
-      admin ne peut pas s'auto-promouvoir ; on ne promeut pas à son propre niveau.
-- [ ] UI admin : onglet « Utilisateurs » → passer du mock à l'API réelle + actions (rôle, suspension),
-      en masquant les actions interdites selon le rôle courant.
+### 🥈 Lot 2 — Gestion des droits (déléguée) — ✅ FAIT (2026-07-03, à builder/déployer)
+- [x] Endpoint `GET /api/v1/users` (liste paginée + filtres rôle/école/recherche) — `admin`+.
+- [x] Endpoint `PATCH /api/v1/users/{id}/role` — `admin`+ avec plafond hiérarchique (`can_manage_role`) +
+      garde-fou « dernier super_admin non rétrogradable ».
+- [x] Endpoint `PATCH /api/v1/users/{id}/status` (suspendre/réactiver) — `admin`+ ;
+      `is_active` désormais **enforced** dans `get_current_user` + au login (compte suspendu = accès refusé).
+- [x] Import Excel resserré : un admin ne peut plus créer d'`admin` par import (délégation respectée).
+- [x] Tests `apps/api/tests/test_users_admin.py` : unitaires délégation + endpoints (dernier super_admin,
+      admin ne touche pas un admin, pas d'auto-suspension, filtres, 401/403…).
+- [x] UI admin : onglet « Utilisateurs » → table réelle branchée sur l'API
+      (`components/platform/UserManagement.tsx`), actions rôle + suspension, options masquées/désactivées
+      selon le rôle de l'acteur (revalidées côté API).
+- [ ] **À ta charge** : push → `pytest` (CI) + build front ; tester en vrai une fois déployé.
+- ⏭️ Report vers Lot 5 : journalisation (audit log) de ces changements de rôle/statut.
 
 ### 🥉 Lot 3 — Cohortes (backend, gros morceau)
 - [ ] Modèles `cohorts`, `cohort_members`, `cohort_courses` + migration alembic.

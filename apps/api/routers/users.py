@@ -8,11 +8,13 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from core.store import CurrentUser
 from core.deps import get_current_user, require_role
 from core.user_utils import user_to_current
+from core.roles import ADMIN_ROLES, can_manage_role, can_manage_user
 from database import get_db
 from models.user import User, UserRole
 from models.course import UserCourseProgress
@@ -220,9 +222,10 @@ def get_consent(current_user: CurrentUser = Depends(get_current_user)):
 
 # ── Import massif Excel (admin) ───────────────────────────────────────────────
 
-@router.post("/import", dependencies=[Depends(require_role("admin", "super_admin"))])
+@router.post("/import")
 async def import_users_excel(
     file: UploadFile = File(...),
+    current_user: CurrentUser = Depends(require_role(*ADMIN_ROLES)),
     db: Session = Depends(get_db),
 ):
     """
@@ -272,6 +275,10 @@ async def import_users_excel(
         role_val = row_data.get("role", "student")
         if role_val not in ("student", "teacher", "admin"):
             role_val = "student"
+        # Délégation : l'importateur ne peut créer que des rôles sur lesquels il a autorité
+        # (un admin ne fabrique pas d'admin ; seul un super_admin le peut).
+        if not can_manage_user(current_user.role, role_val):
+            role_val = "student"
 
         user = User(
             id=str(uuid.uuid4()),
@@ -295,3 +302,162 @@ async def import_users_excel(
         "errors": len(errors),
         "detail": {"created": created, "skipped": skipped, "errors": errors},
     }
+
+
+# ── Gestion des droits (admin / super_admin) ──────────────────────────────────
+# Modèle de délégation : voir ROLES-ET-DROITS.md §6 et core/roles.py.
+
+class AdminUserOut(BaseModel):
+    id: str
+    email: str
+    first_name: str
+    last_name: str
+    role: str
+    school: Optional[str]
+    is_active: bool
+    is_verified: bool
+    created_at: Optional[str]
+
+
+class UserListOut(BaseModel):
+    total: int
+    items: list[AdminUserOut]
+
+
+class ChangeRoleRequest(BaseModel):
+    role: str
+
+
+class ChangeStatusRequest(BaseModel):
+    is_active: bool
+
+
+def _admin_out(u: User) -> AdminUserOut:
+    return AdminUserOut(
+        id=u.id,
+        email=u.email,
+        first_name=u.first_name or "",
+        last_name=u.last_name or "",
+        role=u.role.value if hasattr(u.role, "value") else str(u.role),
+        school=u.school,
+        is_active=u.is_active,
+        is_verified=u.is_verified,
+        created_at=u.created_at.isoformat() if u.created_at else None,
+    )
+
+
+def _role_value(u: User) -> str:
+    return u.role.value if hasattr(u.role, "value") else str(u.role)
+
+
+@router.get("", response_model=UserListOut)
+def list_users(
+    role: Optional[str] = None,
+    school: Optional[str] = None,
+    q: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
+    current_user: CurrentUser = Depends(require_role(*ADMIN_ROLES)),
+    db: Session = Depends(get_db),
+):
+    """Liste paginée des utilisateurs (admin+). Filtres : rôle, école, recherche texte."""
+    query = db.query(User)
+    if role:
+        query = query.filter(User.role == role)
+    if school:
+        query = query.filter(User.school == school)
+    if q:
+        like = f"%{q.strip()}%"
+        query = query.filter(
+            or_(
+                User.email.ilike(like),
+                User.first_name.ilike(like),
+                User.last_name.ilike(like),
+            )
+        )
+
+    total = query.count()
+    limit = max(1, min(limit, 200))
+    rows = (
+        query.order_by(User.created_at.desc())
+        .offset(max(0, offset))
+        .limit(limit)
+        .all()
+    )
+    return UserListOut(total=total, items=[_admin_out(u) for u in rows])
+
+
+@router.patch("/{user_id}/role", response_model=AdminUserOut)
+def change_user_role(
+    user_id: str,
+    body: ChangeRoleRequest,
+    current_user: CurrentUser = Depends(require_role(*ADMIN_ROLES)),
+    db: Session = Depends(get_db),
+):
+    """
+    Change le rôle d'un utilisateur (délégation §6).
+    Un admin gère jusqu'à `teacher` ; seul un super_admin fabrique/retire des admin.
+    Le dernier super_admin ne peut pas être rétrogradé.
+    """
+    valid_roles = {r.value for r in UserRole}
+    new_role = body.role
+    if new_role not in valid_roles:
+        raise HTTPException(status_code=400, detail=f"Rôle invalide : {new_role}")
+
+    target = db.query(User).filter(User.id == user_id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="Utilisateur introuvable")
+
+    target_role = _role_value(target)
+    if not can_manage_role(current_user.role, target_role, new_role):
+        raise HTTPException(
+            status_code=403,
+            detail="Vous n'avez pas l'autorité pour attribuer ce rôle à cet utilisateur.",
+        )
+
+    # Garde-fou : ne pas rétrograder le dernier super_admin (plateforme orpheline).
+    if target_role == UserRole.super_admin.value and new_role != UserRole.super_admin.value:
+        count = db.query(User).filter(User.role == UserRole.super_admin).count()
+        if count <= 1:
+            raise HTTPException(
+                status_code=400,
+                detail="Impossible de rétrograder le dernier super_admin.",
+            )
+
+    target.role = UserRole(new_role)
+    db.commit()
+    db.refresh(target)
+    return _admin_out(target)
+
+
+@router.patch("/{user_id}/status", response_model=AdminUserOut)
+def change_user_status(
+    user_id: str,
+    body: ChangeStatusRequest,
+    current_user: CurrentUser = Depends(require_role(*ADMIN_ROLES)),
+    db: Session = Depends(get_db),
+):
+    """Suspend (is_active=False) ou réactive un compte (admin+)."""
+    target = db.query(User).filter(User.id == user_id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="Utilisateur introuvable")
+
+    if target.id == current_user.id:
+        raise HTTPException(status_code=400, detail="Vous ne pouvez pas suspendre votre propre compte.")
+
+    target_role = _role_value(target)
+    if not can_manage_user(current_user.role, target_role):
+        raise HTTPException(status_code=403, detail="Vous n'avez pas l'autorité sur ce compte.")
+
+    # Garde-fou : ne pas suspendre le dernier super_admin actif.
+    if not body.is_active and target_role == UserRole.super_admin.value:
+        active = db.query(User).filter(
+            User.role == UserRole.super_admin, User.is_active == True  # noqa: E712
+        ).count()
+        if active <= 1:
+            raise HTTPException(status_code=400, detail="Impossible de suspendre le dernier super_admin actif.")
+
+    target.is_active = body.is_active
+    db.commit()
+    db.refresh(target)
+    return _admin_out(target)

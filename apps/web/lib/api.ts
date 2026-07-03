@@ -843,6 +843,70 @@ export const analyticsApi = {
     fetch(`${API_URL}/api/v1/analytics/export/courses`, { credentials: "include" }).then((r) => r.blob()),
 };
 
+// ─── Gestion des utilisateurs (admin / super_admin) ──────────────────────────
+
+/**
+ * Utilisateur tel que renvoyé par les endpoints d'administration.
+ * Vue plus complète que `UserResponse` (inclut `is_active` et `created_at`).
+ */
+export interface AdminUser {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  school: string | null;
+  is_active: boolean;
+  is_verified: boolean;
+  created_at: string | null;
+}
+
+/** Réponse paginée de la liste des utilisateurs. */
+export interface UserListResponse {
+  total: number;
+  items: AdminUser[];
+}
+
+/**
+ * Namespace pour la gestion des droits (délégation §6, voir ROLES-ET-DROITS.md).
+ * Toutes les routes exigent le rôle `admin` ou `super_admin` côté API.
+ */
+export const adminUsersApi = {
+  /**
+   * Liste paginée des utilisateurs avec filtres optionnels.
+   *
+   * @param params - Filtres : rôle, école, recherche (email/nom), pagination.
+   */
+  list: (params?: { role?: string; school?: string; q?: string; limit?: number; offset?: number }) => {
+    const s = new URLSearchParams();
+    if (params?.role) s.set("role", params.role);
+    if (params?.school) s.set("school", params.school);
+    if (params?.q) s.set("q", params.q);
+    if (params?.limit != null) s.set("limit", String(params.limit));
+    if (params?.offset != null) s.set("offset", String(params.offset));
+    return request<UserListResponse>(`/api/v1/users?${s}`);
+  },
+
+  /**
+   * Change le rôle d'un utilisateur. Soumis à la règle de délégation côté API
+   * (403 si l'acteur n'a pas l'autorité ; 400 si dernier super_admin).
+   */
+  changeRole: (userId: string, role: string) =>
+    request<AdminUser>(`/api/v1/users/${userId}/role`, {
+      method: "PATCH",
+      body: JSON.stringify({ role }),
+    }),
+
+  /**
+   * Suspend ou réactive un compte (`is_active`).
+   */
+  changeStatus: (userId: string, isActive: boolean) =>
+    request<AdminUser>(`/api/v1/users/${userId}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ is_active: isActive }),
+    }),
+};
+
 // ─── Apps ────────────────────────────────────────────────────────────────────
 
 /**

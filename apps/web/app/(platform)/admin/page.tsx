@@ -38,6 +38,7 @@ import { MOCK_COHORTS, MOCK_STUDENTS, MOCK_VIDEOS, MOCK_COURSES, MOCK_MOOCS, MOC
 import { downloadCSV, todayStamp } from "@/lib/export";
 import { useAuth } from "@/lib/auth";
 import { PageSpinner } from "@/components/ui/Spinner";
+import UserManagement from "@/components/platform/UserManagement";
 
 /** Rôles autorisés à consulter le dashboard d'administration. */
 const ADMIN_ROLES = ["admin", "super_admin"];
@@ -392,7 +393,16 @@ export default function AdminDashboardPage() {
 
       {/* ── Onglet Utilisateurs ── */}
       {activeTab === "users" && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="flex flex-col gap-8">
+          {/* Gestion des droits — table réelle branchée sur l'API (rôles + suspension) */}
+          <div>
+            <h2 className="text-sm font-semibold text-gray-900 mb-1">Gestion des utilisateurs</h2>
+            <p className="text-xs text-gray-500 mb-4">Rechercher, changer les rôles, suspendre des comptes. Actions limitées selon vos droits.</p>
+            <UserManagement />
+          </div>
+
+          {/* Aperçu statistique (statique dans le MVP) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Répartition par rôle */}
           <div className="bg-white border border-gray-200 rounded-xl p-6">
             <h2 className="text-sm font-semibold text-gray-900 mb-5">Répartition par rôle</h2>
@@ -437,6 +447,7 @@ export default function AdminDashboardPage() {
                 </div>
               ))}
             </div>
+          </div>
           </div>
         </div>
       )}

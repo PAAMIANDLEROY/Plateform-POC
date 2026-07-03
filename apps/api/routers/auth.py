@@ -176,6 +176,13 @@ def verify_code(body: VerifyCodeBody, response: Response, db: Session = Depends(
 
     user, is_new = _get_or_create_user(db, email)
 
+    # Compte suspendu : bloquer la connexion même si l'OTP est valide.
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Compte suspendu. Contactez un administrateur.",
+        )
+
     access_token = create_access_token(user.id)
     refresh_token = create_refresh_token(user.id)
 

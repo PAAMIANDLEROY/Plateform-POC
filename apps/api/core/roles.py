@@ -33,16 +33,30 @@ def role_at_least(role: str, minimum: str) -> bool:
     return level(role) >= level(minimum)
 
 
+def can_manage_user(actor_role: str, target_role: str) -> bool:
+    """
+    True si `actor_role` a autorité sur un compte de rôle `target_role`
+    (pour suspendre/réactiver, éditer, etc.).
+
+      - le `super_admin` (sommet) a autorité sur tout le monde, y compris d'autres super_admin ;
+      - les autres n'ont autorité que sur les rôles STRICTEMENT inférieurs.
+
+    Le garde-fou « dernier super_admin » (côté endpoint) reste appliqué en plus.
+    """
+    if actor_role == UserRole.super_admin.value:
+        return True
+    return level(actor_role) > level(target_role)
+
+
 def can_manage_role(actor_role: str, target_current_role: str, new_role: str) -> bool:
     """
     Règle de délégation (§6) : un acteur peut changer le rôle d'une cible si et
-    seulement si la cible ET le nouveau rôle sont STRICTEMENT en dessous de lui.
+    seulement s'il a autorité sur la cible ET sur le nouveau rôle visé.
 
     Conséquences :
       - un `admin` gère public/student/teacher, mais ni un `admin` ni un `super_admin` ;
-      - seul un `super_admin` fabrique/retire des `admin`.
+      - seul un `super_admin` fabrique/retire des `admin` (et gère d'autres super_admin).
     """
     if new_role not in ROLE_LEVEL:
         return False
-    actor = level(actor_role)
-    return actor > level(target_current_role) and actor > level(new_role)
+    return can_manage_user(actor_role, target_current_role) and can_manage_user(actor_role, new_role)

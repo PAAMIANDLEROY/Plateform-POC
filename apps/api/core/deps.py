@@ -32,6 +32,13 @@ def get_current_user(
     if not user:
         raise credentials_exception
 
+    # Compte suspendu (is_active=False) : accès refusé sur toutes les routes authentifiées.
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Compte suspendu. Contactez un administrateur.",
+        )
+
     return user_to_current(user)
 
 
