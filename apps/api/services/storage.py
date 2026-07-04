@@ -43,6 +43,11 @@ def upload_file(content: bytes, path: str, content_type: str | None) -> str:
     return path
 
 
+def public_url(path: str) -> str:
+    """URL publique d'un objet (nécessite un bucket PUBLIC côté Supabase)."""
+    return f"{settings.SUPABASE_URL.rstrip('/')}/storage/v1/object/public/{settings.SUPABASE_BUCKET}/{path}"
+
+
 def create_signed_url(path: str, expires_in: int = 3600) -> str | None:
     """URL signée temporaire pour télécharger un fichier privé. None si indisponible."""
     if not is_configured():

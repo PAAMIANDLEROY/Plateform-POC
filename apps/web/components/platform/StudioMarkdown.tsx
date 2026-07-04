@@ -86,6 +86,13 @@ export function MarkdownPreview({ content }: { content: string }) {
       );
     } else if (line.startsWith("- ")) {
       rendered.push(<li key={i} className="text-sm text-gray-300 ml-4 list-disc my-0.5">{line.slice(2)}</li>);
+    } else if (/^!\[[^\]]*\]\([^)]+\)/.test(line.trim())) {
+      // Image markdown ![légende](url) — ex. figures OCR des slides
+      const m = line.trim().match(/^!\[([^\]]*)\]\(([^)]+)\)/);
+      if (m) {
+        // eslint-disable-next-line @next/next/no-img-element
+        rendered.push(<img key={i} src={m[2]} alt={m[1]} className="rounded-lg max-w-full my-3 border border-white/10" />);
+      }
     } else if (line.trim() === "") {
       rendered.push(<div key={i} className="my-1" />);
     } else {
