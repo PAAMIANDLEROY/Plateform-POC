@@ -37,7 +37,10 @@ export default function EditableLink({
   const isAdmin = !!user && ADMIN_ROLES.includes(user.role);
   const label = useContentBlock(labelKey, fallbackLabel);
   const url = useContentBlock(urlKey, fallbackUrl);
-  const hasDraft = useContentHasDraft(labelKey) || useContentHasDraft(urlKey);
+  // Les deux hooks doivent être appelés inconditionnellement (règles des hooks).
+  const labelHasDraft = useContentHasDraft(labelKey);
+  const urlHasDraft = useContentHasDraft(urlKey);
+  const hasDraft = labelHasDraft || urlHasDraft;
 
   const [editing, setEditing] = useState(false);
   const [publishing, setPublishing] = useState(false);
