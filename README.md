@@ -1,4 +1,4 @@
-# Hi! Platform — Documentation Technique v1.0
+# Hi! Platform — Documentation Technique v1.5
 
 Plateforme LMS mutualisée pour **Hi! PARIS** (HEC Paris + École Polytechnique de Paris).  
 Stack : **Next.js 14** (frontend) · **FastAPI** (backend) · **PostgreSQL** · **Claude API** (IA)
@@ -36,15 +36,22 @@ Stack : **Next.js 14** (frontend) · **FastAPI** (backend) · **PostgreSQL** · 
 
 **Frontend** (`apps/web/`) :
 - `app/(auth)/` — Pages publiques (login, register, privacy, CGU)
-- `app/(platform)/` — Pages authentifiées (dashboard, cours, studio, LMS, admin)
-- `components/platform/` — Nav, SectionCatalogue, AppCard, VideoCard, etc.
-- `lib/` — `api.ts` (client HTTP), `auth.tsx` (contexte auth), `mock.ts`, `export.ts`
+- `app/(platform)/` — Pages authentifiées. Top nav réduit (Insights, Learning×3, NeuriPP) ;
+  le reste (profil, parcours, Studio, LMS, Admin) est rangé dans l'**espace « Mon profil »**
+  (menu latéral, sections réservées selon le rôle — voir `WorkspaceShell` / `WorkspaceSidebar`)
+- `components/platform/` — Nav, WorkspaceSidebar, EditableBlock/EditableLink (contenu éditable),
+  UserManagement, AdminContentPanel, cartes de contenu, etc.
+- `lib/` — `api.ts` (client HTTP), `auth.tsx` (contexte auth), `content.tsx` (blocs éditables),
+  `contentRegistry.ts`, `export.ts`, `mock.ts` (démo résiduelle)
 
 **Backend** (`apps/api/`) :
-- `routers/` — auth, users, videos, courses, moocs, apps, studio, learning, analytics
-- `models/` — SQLAlchemy ORM (User, Course, MOOC, Video, App, …)
-- `services/` — `llm.py` (couche LLM-agnostique), `ai.py` (Studio : quiz/cours/flashcards/mindmap/fiche/FAQ), `transcription.py` (Whisper), `email.py` (Resend HTTP API), `certificate.py` (PDF+QR)
-- `core/` — config, security (JWT), deps, store (sessions)
+- `routers/` — auth, users, videos, courses, moocs, apps, studio, learning, analytics, insights,
+  **cohorts**, **moderation** (audit + signalements), **submissions** (NeuriPP), **content** (blocs éditables)
+- `models/` — SQLAlchemy ORM (User, Course, MOOC, Video, App, Insight, **Cohort/CohortMember/CohortCourse**,
+  **AuditLog/Report**, **Submission**, **ContentBlock**, …)
+- `services/` — `llm.py` (couche LLM-agnostique), `ai.py` (Studio : quiz/cours/flashcards/mindmap/fiche/FAQ),
+  `transcription.py` (Whisper), `email.py` (Resend HTTP API), `certificate.py` (PDF+QR), `storage.py` (Supabase Storage)
+- `core/` — config, security (JWT), deps, `roles.py` (hiérarchie & délégation), `access.py` (accès cours), `audit.py`
 
 ---
 
@@ -55,12 +62,13 @@ Stack : **Next.js 14** (frontend) · **FastAPI** (backend) · **PostgreSQL** · 
 | Frontend | Next.js 14 (App Router) + TypeScript + Tailwind CSS |
 | Backend | FastAPI (Python 3.12) |
 | Base de données | PostgreSQL 16 + SQLAlchemy 2.0 + Alembic |
-| Auth | JWT (access 15min / refresh 30j) + email OTP |
-| Stockage | OVH Object Storage (S3-compatible) |
+| Auth | JWT (access 15min / refresh 30j) + email OTP ; contrôle d'accès par rôle (RBAC + délégation) |
+| Stockage fichiers | Supabase Storage (uploads NeuriPP) — OVH S3 prévu |
 | LLM Studio | Anthropic Claude API (`claude-sonnet-4-6`) |
 | Transcription | OpenAI Whisper API |
 | Certificats PDF | fpdf2 + qrcode |
-| CI/CD | GitHub Actions — tests backend + build frontend + deploy |
+| Hébergement (prod) | Vercel (frontend) · Render (API) · Supabase (Postgres + Storage) |
+| CI/CD | GitHub Actions — tests backend + build check frontend + deploy Vercel |
 | Tests backend | pytest + FastAPI TestClient |
 | Tests E2E | Playwright |
 
@@ -119,7 +127,12 @@ docker-compose up -d          # PostgreSQL + Redis
 | `FRONTEND_URL` | URLs CORS (séparées par virgule) | `http://localhost:3000` |
 | `CORS_VERCEL_REGEX` | Regex origines Vercel (previews) | `https://...\.vercel\.app` |
 | `EMAIL_FROM` | Expéditeur vérifié (Resend) | `onboarding@resend.dev` |
-| `OVH_S3_ENDPOINT` | Endpoint Object Storage | `s3.gra.io.cloud.ovh.net` |
+| `COOKIE_SECURE` | Cookies `Secure` + `SameSite=None` (prod cross-origin) | `true` |
+| `SUPER_ADMIN_EMAIL` | Email promu `super_admin` au démarrage (fondateur) | `toi@…` |
+| `SUPABASE_URL` | URL du projet Supabase (Storage) | `https://xxxx.supabase.co` |
+| `SUPABASE_SERVICE_KEY` | Clé **secrète** `service_role` (jamais côté front) | `sb_secret_…` / `eyJ…` |
+| `SUPABASE_BUCKET` | Bucket Storage des soumissions | `submissions` |
+| `OVH_S3_ENDPOINT` | Endpoint Object Storage (prévu) | `s3.gra.io.cloud.ovh.net` |
 
 ### `apps/web/.env.local`
 
@@ -203,6 +216,52 @@ Documentation interactive disponible sur `http://localhost:8000/docs` (Swagger U
 | GET | `/export/users` | Admin | Export CSV utilisateurs |
 | GET | `/export/courses` | Teacher | Export CSV cours |
 
+### Gestion des droits (`/api/v1/users/`)
+
+| Méthode | Endpoint | Rôle | Description |
+|---------|----------|------|-------------|
+| GET | `/` | Admin | Liste paginée + filtres (rôle, école, recherche) |
+| PATCH | `/{id}/role` | Admin | Changer le rôle (délégation : chacun gère strictement en dessous de soi) |
+| PATCH | `/{id}/status` | Admin | Suspendre / réactiver un compte |
+
+### Cohortes (`/api/v1/cohorts/`)
+
+| Méthode | Endpoint | Rôle | Description |
+|---------|----------|------|-------------|
+| GET / POST | `/` | Teacher | Lister (les siennes ; admin = toutes) / créer |
+| GET / PATCH / DELETE | `/{id}` | Owner/Admin | Détail (métriques réelles) / éditer / supprimer |
+| GET / POST | `/{id}/members` | Owner/Admin | Membres / inscrire (par id ou email) |
+| DELETE | `/{id}/members/{user_id}` | Owner/Admin | Retirer un membre |
+| POST | `/{id}/courses` · DELETE `/{id}/courses/{course_id}` | Owner/Admin | Accorder / révoquer un cours du catalogue |
+
+### Modération & audit (`/api/v1/`)
+
+| Méthode | Endpoint | Rôle | Description |
+|---------|----------|------|-------------|
+| GET | `/audit-logs` | Admin | Journal des actions sensibles |
+| POST | `/reports` | Auth | Signaler un contenu |
+| GET | `/reports` · PATCH `/reports/{id}` | Admin | File des signalements / traiter (avec masquage) |
+
+### Soumissions NeuriPP (`/api/v1/submissions/`)
+
+| Méthode | Endpoint | Rôle | Description |
+|---------|----------|------|-------------|
+| POST | `/` | Auth | Soumettre un projet EdTech (form + pièce jointe < 1 Mo → Supabase) |
+| GET | `/` | Admin | Liste des soumissions (URL signée de la pièce jointe) |
+
+### Contenu éditable (`/api/v1/content/`)
+
+| Méthode | Endpoint | Rôle | Description |
+|---------|----------|------|-------------|
+| GET | `/` | Public | Blocs de texte des pages (admin → inclut les brouillons) |
+| PUT | `/{key}` | Admin | Écrire le **brouillon** d'un bloc |
+| POST | `/{key}/publish` | Admin | Publier le brouillon |
+
+### Accès aux cours (§ niveaux)
+
+`GET /api/v1/courses` et `/{id}` filtrent selon `access_level` : `public` (tous) · `hiparis`
+(élèves+) · `cohort` (membres d'une cohorte à qui le cours est accordé). Teachers/admins voient tout le catalogue publié.
+
 ---
 
 ## 6. Modèle de données
@@ -217,12 +276,22 @@ User (id, email, first_name, last_name, role, school, is_verified, …)
  │    └── MOOCModule (id, position, min_score_to_unlock, prerequisite_module_id)
  │         └── MOOCModuleCourse (course_id, position)
  ├── UserMOOCEnrollment (user_id, mooc_id, completed_at)
- └── App (id, title, url, tags, visibility, …)
+ ├── App (id, title, url, tags, visibility, …)
+ ├── Insight (id, title, abstract, authors, tags, cover, status, …)
+ ├── Cohort (id, name, school, owner_id, status, start/end_date)
+ │    ├── CohortMember (cohort_id, user_id, status)
+ │    └── CohortCourse (cohort_id, course_id, granted_by)   — accès catalogue → cohorte
+ └── Course.access_level : public | hiparis | cohort
 
-AllowedDomain (id, domain)  — domaines autorisés, configurables par superuser
+AuditLog (id, actor_id, action, target_type, target_id, meta, created_at)
+Report (id, reporter_id, target_type, target_id, reason, status, …)   — modération
+Submission (id, project_name, repo_url, …, storage_path, uploaded_by)  — NeuriPP
+ContentBlock (key, value, draft_value, updated_by)                     — texte éditable
+AllowedDomain (id, domain)  — domaines autorisés, configurables par super_admin
 ```
 
-**Rôles :** `student` · `teacher` · `admin` · `superuser` · `public`
+**Rôles (privilège croissant) :** `public` < `student` < `teacher` < `admin` < `super_admin`.
+Délégation : chacun ne gère que les rôles strictement inférieurs au sien (voir `ROLES-ET-DROITS.md`).
 
 ---
 
@@ -233,7 +302,7 @@ AllowedDomain (id, domain)  — domaines autorisés, configurables par superuser
 1. `POST /request-code` — OTP 6 chiffres envoyé par email
 2. `POST /verify-code` — Vérification + émission tokens JWT
 3. Access token (15min) stocké en mémoire côté client
-4. Refresh token (30j) en cookie `httpOnly; Secure; SameSite=Lax`
+4. Refresh token (30j) en cookie `httpOnly` — `Secure; SameSite=None` en prod (cross-origin, `COOKIE_SECURE=true`), `Lax` en dev
 5. Rotation automatique du refresh token
 
 ### RGPD — Droits des utilisateurs (CNIL)
@@ -286,10 +355,11 @@ YouTube URL / Fichier MP4 + PPTX/PDF
 ### GitHub Actions
 
 ```yaml
-# 3 jobs en parallèle sur push main / PR :
-backend-tests  →  pytest tests/ -v
-frontend-build →  next build
-deploy         →  GitHub Pages (main seulement, après tests ✅)
+# push main / PR :
+backend-tests   →  pytest tests/ -v
+frontend-build  →  next lint + next build (vérification, sans déploiement)
+deploy-vercel   →  déploiement Vercel (main seulement, après tests ✅)
+# (le déploiement maquette GitHub Pages a été retiré)
 ```
 
 ### Migrations DB
@@ -301,9 +371,13 @@ alembic revision --autogenerate -m "description"        # Créer
 ```
 
 Migrations disponibles :
-- `0001_init_auth` — User, AllowedDomain
-- `0002_add_content_models` — Course, Video, MOOC, App, …
-- `0003_mooc_prerequisites` — **Phase 5.2** `min_score_to_unlock`, `prerequisite_module_id`
+- `0001`–`0008` — auth, contenus, prérequis MOOC, profil/learning, seeds (cours, contenus, insights)
+- `0009_rename_superuser_to_super_admin` — enum rôle `superuser` → `super_admin`
+- `0010_cohorts` — `cohorts`, `cohort_members`, `cohort_courses`
+- `0011_course_access_level` — `courses.access_level` (public/hiparis/cohort)
+- `0012_audit_and_reports` — `audit_logs`, `reports`
+- `0013_submissions` + `0014_submission_project_fields` — soumissions NeuriPP
+- `0015_content_blocks` + `0016_content_draft` — blocs de texte éditables (brouillon/publication)
 
 ---
 
@@ -344,17 +418,29 @@ Couverture : auth flow, navigation dropdowns, pages protégées.
 | 6 — Dashboard LMS + Admin KPIs + Export CSV + Alertes | ✅ |
 | 7 — Catalogue apps+GitHub API, Insights, E2E, Documentation | ✅ |
 
+### V1.5 — Livré (récent)
+
+| Lot | Statut |
+|-----|--------|
+| RBAC `super_admin` + gestion des droits **déléguée** (chacun gère strictement en dessous de soi) | ✅ |
+| Cohortes (backend complet) + LMS branché sur données réelles + métriques calculées | ✅ |
+| Niveaux d'accès aux cours (`public` / `hiparis` / `cohort`) | ✅ |
+| Modération & **audit log** (changements de rôle/statut, cohortes, signalements, masquage) | ✅ |
+| Nettoyage des « fausses stats » (admin, dashboard, my-learning → données réelles) | ✅ |
+| **NeuriPP** — appel à soumissions + formulaire projet + upload Supabase | ✅ |
+| **Contenu éditable** des pages (inline + panneau admin) avec brouillon / publication | ✅ |
+| Refonte nav : top réduit + espace « Mon profil » à menu latéral | ✅ |
+| i18n FR/EN | ✅ |
+
 ### V2 — Prévu
 
-- SSO/SAML 2.0 (Renater)
-- Import/export SCORM
-- Lecteur vidéo self-hosted (Mux/PeerTube)
-- Métriques vidéo avancées (position, pause, replay)
-- PWA + mode hors-ligne
-- Déploiement backend OVH Cloud (Docker)
-- Dashboard analytics temps-réel (WebSocket)
-- Internationalisation (i18n — FR/EN)
-- Staging environment
+- **Appli mobile** (piste privilégiée : Capacitor sur l'export statique ; auth à basculer en token)
+- Config plateforme par `super_admin` (domaines autorisés + écoles) — *Lot 6*
+- Bouton « Signaler » côté contenus (backend prêt)
+- SSO/SAML 2.0 (Renater) · Import/export SCORM
+- Lecteur vidéo self-hosted (Mux/PeerTube) + métriques avancées
+- Fiabilité données : keep-alive Supabase + backups (voir `TODO.md`)
+- Dashboard analytics temps-réel (WebSocket) · Staging environment
 
 ---
 
