@@ -25,6 +25,6 @@ export const CONTENT_REGISTRY: RegistryEntry[] = [
     fallback: "Soumettez votre projet : dépôt GitHub, page de présentation, démo et licence. Ouvert en priorité aux étudiants Hi! PARIS." },
 
   // Footer
-  { key: "footer.hiparis.label", group: "Footer", label: "Lien hi-paris.fr — libellé", fallback: "hi-paris.fr ↗" },
-  { key: "footer.hiparis.url", group: "Footer", label: "Lien hi-paris.fr — URL", type: "url", fallback: "https://hi-paris.fr" },
+  { key: "footer.hiparis.label", group: "Pied de page", label: "Lien hi-paris.fr — libellé", fallback: "hi-paris.fr ↗" },
+  { key: "footer.hiparis.url", group: "Pied de page", label: "Lien hi-paris.fr — URL", type: "url", fallback: "https://hi-paris.fr" },
 ];

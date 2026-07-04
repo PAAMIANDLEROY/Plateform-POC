@@ -93,8 +93,7 @@ export const en: Translations = {
 
   // ── Pied de page ─────────────────────────────────────────────────────────────
   footer: {
-    description:
-      "Hi! PARIS shared educational platform — Institut Polytechnique de Paris, HEC Paris, Télécom Paris, ENSAE.",
+    description: "Hi! PARIS shared pedagogical platform",
     contact: "Contact",
     sections: {
       platform: "Platform",

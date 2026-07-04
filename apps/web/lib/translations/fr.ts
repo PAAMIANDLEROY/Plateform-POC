@@ -114,8 +114,7 @@ export const fr = {
 
   // ── Pied de page ─────────────────────────────────────────────────────────────
   footer: {
-    description:
-      "Plateforme pédagogique mutualisée Hi! PARIS — Institut Polytechnique de Paris, HEC Paris, Télécom Paris, ENSAE.",
+    description: "Plateforme pédagogique mutualisée Hi! PARIS",
     contact: "Contact",
     sections: {
       platform: "Plateforme",
