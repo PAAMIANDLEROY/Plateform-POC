@@ -960,24 +960,54 @@ export const reportsApi = {
     request<ReportEntry>(`/api/v1/reports/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
 };
 
-// ─── Soumissions de fichiers (« About us ») ──────────────────────────────────
+// ─── Soumissions NeuriPP (projets EdTech) ────────────────────────────────────
 
-/** Métadonnées d'une soumission de fichier. */
+/** Métadonnées d'une soumission de projet. */
 export interface SubmissionEntry {
   id: string;
-  filename: string;
-  content_type: string | null;
+  project_name: string | null;
+  repo_url: string | null;
+  pages_url: string | null;
+  demo_url: string | null;
+  license: string | null;
+  usage_category: string | null;
+  domain_scope: string | null;
+  domain_detail: string | null;
+  model_type: string | null;
+  authors: string | null;
+  description: string | null;
+  rules_consent: boolean;
+  filename: string | null;
   size: number;
   uploaded_by: string;
   created_at: string | null;
-  url: string | null;   // URL signée temporaire (présente côté liste admin)
+  file_url: string | null;   // URL signée de la pièce jointe (côté liste admin)
+}
+
+/** Payload de soumission (métadonnées projet). */
+export interface SubmissionInput {
+  project_name: string;
+  repo_url: string;
+  usage_category: string;
+  rules_consent: boolean;
+  pages_url?: string;
+  demo_url?: string;
+  license?: string;
+  domain_scope?: string;
+  domain_detail?: string;
+  model_type?: string;
+  authors?: string;
+  description?: string;
 }
 
 export const submissionsApi = {
-  /** Upload multipart (< 10 Mo). N'utilise pas `request()` (qui force le JSON). */
-  create: async (file: File): Promise<SubmissionEntry> => {
+  /** Soumet un projet (multipart : champs + pièce jointe optionnelle < 10 Mo). */
+  create: async (data: SubmissionInput, file?: File | null): Promise<SubmissionEntry> => {
     const form = new FormData();
-    form.append("file", file);
+    Object.entries(data).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) form.append(k, String(v));
+    });
+    if (file) form.append("file", file);
     const res = await fetch(`${API_URL}/api/v1/submissions`, {
       method: "POST",
       credentials: "include",
@@ -985,12 +1015,12 @@ export const submissionsApi = {
     });
     if (!res.ok) {
       const b = await res.json().catch(() => ({ detail: res.statusText }));
-      throw new ApiError(res.status, b.detail ?? "Upload échoué");
+      throw new ApiError(res.status, b.detail ?? "Soumission échouée");
     }
     return res.json();
   },
 
-  /** Liste des soumissions (admin+), avec URL signée. */
+  /** Liste des soumissions (admin+), avec URL signée de la pièce jointe. */
   list: () => request<SubmissionEntry[]>("/api/v1/submissions"),
 };
 

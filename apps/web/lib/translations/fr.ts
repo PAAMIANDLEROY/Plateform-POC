@@ -79,7 +79,7 @@ export const fr = {
   // ── Navigation ────────────────────────────────────────────────────────────────
   nav: {
     insights:       "Insights",
-    about:          "About us",
+    about:          "NeuriPP",
     myLearning:     "Mon parcours",
     studio:         "Studio",
     lms:            "LMS",

@@ -60,7 +60,7 @@ export const en: Translations = {
   // ── Navigation ────────────────────────────────────────────────────────────────
   nav: {
     insights:       "Insights",
-    about:          "About us",
+    about:          "NeuriPP",
     myLearning:     "My learning",
     studio:         "Studio",
     lms:            "LMS",

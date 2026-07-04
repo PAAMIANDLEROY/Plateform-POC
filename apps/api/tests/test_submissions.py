@@ -1,5 +1,6 @@
 """
-Tests de l'upload « About us » (Supabase Storage mocké — aucun réseau).
+Tests des soumissions NeuriPP (projet EdTech + pièce jointe optionnelle).
+Supabase Storage mocké — aucun réseau.
 """
 import os
 os.environ.setdefault("DATABASE_URL", "sqlite:///./test_hi_platform.db")
@@ -51,49 +52,68 @@ def _reset():
     app.dependency_overrides.pop(get_current_user, None)
 
 
-def test_upload_requires_auth():
-    r = client.post("/api/v1/submissions", files={"file": ("t.txt", b"hi", "text/plain")})
-    assert r.status_code == 401
+def _valid() -> dict:
+    return {
+        "project_name": "Mon Tuteur IA",
+        "repo_url": "https://github.com/moi/mon-tuteur",
+        "usage_category": "revision",
+        "domain_scope": "all",
+        "model_type": "open",
+        "rules_consent": "true",
+    }
 
 
-def test_public_role_cannot_upload():
+def test_submit_requires_auth():
+    assert client.post("/api/v1/submissions", data=_valid()).status_code == 401
+
+
+def test_public_role_cannot_submit():
     _act("public", _mk_user(UserRole.public))
-    r = client.post("/api/v1/submissions", files={"file": ("t.txt", b"hi", "text/plain")})
-    assert r.status_code == 403
+    assert client.post("/api/v1/submissions", data=_valid()).status_code == 403
 
 
-def test_student_can_upload():
+def test_student_submits_without_file():
     _act("student", _mk_user(UserRole.student))
-    with patch("services.storage.upload_file", return_value="path/x") as up:
-        r = client.post("/api/v1/submissions", files={"file": ("devoir.pdf", b"%PDF-1.4 data", "application/pdf")})
+    r = client.post("/api/v1/submissions", data=_valid())
     assert r.status_code == 201, r.text
     body = r.json()
-    assert body["filename"] == "devoir.pdf"
-    assert body["size"] == len(b"%PDF-1.4 data")
-    up.assert_called_once()
+    assert body["project_name"] == "Mon Tuteur IA"
+    assert body["usage_category"] == "revision"
+    assert body["rules_consent"] is True
+    assert body["filename"] is None
 
 
-def test_empty_file_rejected():
+def test_consent_required():
     _act("student", _mk_user(UserRole.student))
-    with patch("services.storage.upload_file", return_value="p"):
-        r = client.post("/api/v1/submissions", files={"file": ("empty.txt", b"", "text/plain")})
+    data = _valid(); data["rules_consent"] = "false"
+    r = client.post("/api/v1/submissions", data=data)
     assert r.status_code == 400
 
 
-def test_oversized_file_rejected():
+def test_invalid_usage_category():
     _act("student", _mk_user(UserRole.student))
-    big = b"x" * (10 * 1024 * 1024 + 1)
+    data = _valid(); data["usage_category"] = "bricolage"
+    r = client.post("/api/v1/submissions", data=data)
+    assert r.status_code == 400
+
+
+def test_submit_with_attachment():
+    _act("student", _mk_user(UserRole.student))
+    with patch("services.storage.upload_file", return_value="path/x") as up:
+        r = client.post("/api/v1/submissions", data=_valid(),
+                        files={"file": ("poster.pdf", b"%PDF data", "application/pdf")})
+    assert r.status_code == 201, r.text
+    assert r.json()["filename"] == "poster.pdf"
+    up.assert_called_once()
+
+
+def test_oversized_attachment_rejected():
+    _act("student", _mk_user(UserRole.student))
+    big = b"x" * (1 * 1024 * 1024 + 1)
     with patch("services.storage.upload_file", return_value="p"):
-        r = client.post("/api/v1/submissions", files={"file": ("big.bin", big, "application/octet-stream")})
+        r = client.post("/api/v1/submissions", data=_valid(),
+                        files={"file": ("big.bin", big, "application/octet-stream")})
     assert r.status_code == 413
-
-
-def test_filename_is_sanitized():
-    _act("student", _mk_user(UserRole.student))
-    with patch("services.storage.upload_file", return_value="p"):
-        r = client.post("/api/v1/submissions", files={"file": ("mon dossier/rapport final!.pdf", b"data", "application/pdf")})
-    assert r.status_code == 201
-    assert "/" not in r.json()["filename"] and " " not in r.json()["filename"]
 
 
 def test_list_requires_admin():
@@ -103,8 +123,7 @@ def test_list_requires_admin():
 
 def test_admin_lists_submissions():
     _act("student", _mk_user(UserRole.student))
-    with patch("services.storage.upload_file", return_value="path/y"):
-        created = client.post("/api/v1/submissions", files={"file": ("a.txt", b"hello", "text/plain")}).json()
+    created = client.post("/api/v1/submissions", data=_valid()).json()
 
     _act("admin", _mk_user(UserRole.admin))
     r = client.get("/api/v1/submissions")
