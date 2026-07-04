@@ -322,6 +322,7 @@ const SITE_MAP: SiteMapItem[] = [
       { label: "Accueil Studio",  href: "/studio" },
       { label: "Excel → Quiz",    href: "/studio/excel-quiz" },
       { label: "Vidéo → Cours",   href: "/studio/video-course" },
+      { label: "PDF → Cours",     href: "/studio/pdf-course" },
     ],
   },
   {

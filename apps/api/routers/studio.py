@@ -10,8 +10,13 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel, Field
 from typing import Optional
 
+from sqlalchemy.orm import Session
+
 from core.deps import require_role
 from core.store import CurrentUser
+from core.audit import log_action
+from database import get_db
+from models.course import Course, CourseBlock
 from services.ai import (
     generate_quiz_from_content,
     generate_course_from_content,
@@ -70,6 +75,7 @@ class SaveCourseRequest(BaseModel):
     language: str
     category: Optional[str] = None
     school: Optional[str] = None
+    access_level: str = "public"  # public | hiparis | cohort
 
 
 class FlashcardsRequest(BaseModel):
@@ -314,15 +320,119 @@ async def video_to_course(
     )
 
 
-@router.post("/save-course")
-async def save_course(
-    body: SaveCourseRequest,
+@router.post("/pdf-to-course", response_model=GeneratedCourse)
+async def pdf_to_course(
+    file: UploadFile = File(...),
+    title: str = Form(...),
+    level: str = Form(default="intermediate"),
+    language: str = Form(default="fr"),
+    n_sections: int = Form(default=5, ge=2, le=12),
     current_user: CurrentUser = Depends(require_role(*TEACHER_ROLES)),
 ):
-    """Sauvegarde un cours généré. TODO: persist to DB via courses router (post-MVP)."""
+    """
+    Pipeline PDF → Cours Markdown (boosté par le provider LLM configuré, ex. Mistral).
+    Extrait le texte du PDF (pdfplumber) puis le structure en cours markdown.
+    """
+    if not file.filename or not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Fichier PDF (.pdf) requis")
+
+    pdf_bytes = await file.read()
+    if len(pdf_bytes) > 25 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="PDF trop volumineux (max 25 Mo)")
+
+    try:
+        extracted = extract_pdf_text(pdf_bytes)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Impossible de lire le PDF : {e}")
+
+    if not extracted or not extracted.strip():
+        raise HTTPException(
+            status_code=422,
+            detail="Aucun texte extrait du PDF (document scanné/image ? OCR non géré ici).",
+        )
+
+    # Bornage pour éviter des prompts démesurés (coût/latence) sur de gros PDF.
+    MAX_CHARS = 60_000
+    if len(extracted) > MAX_CHARS:
+        logger.info("PDF %s tronqué : %d -> %d chars", file.filename, len(extracted), MAX_CHARS)
+        extracted = extracted[:MAX_CHARS]
+
+    try:
+        content = await generate_course_from_content(
+            transcription="",
+            slides_content=extracted,
+            title=title,
+            level=level,
+            language=language,
+            n_sections=n_sections,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+    return GeneratedCourse(
+        title=title,
+        content=content,
+        level=level,
+        language=language,
+        sources_used=[f"PDF : {file.filename}"],
+    )
+
+
+@router.post("/save-course")
+def save_course(
+    body: SaveCourseRequest,
+    current_user: CurrentUser = Depends(require_role(*TEACHER_ROLES)),
+    db: Session = Depends(get_db),
+):
+    """
+    Persiste un cours généré en base (Supabase Postgres) : une ligne `Course` publiée
+    + un bloc markdown contenant le contenu. Renvoie l'id réel du cours créé.
+    """
     import uuid
-    course_id = str(uuid.uuid4())
-    return {"message": "Cours sauvegardé", "course_id": course_id, "title": body.title}
+
+    if not body.title.strip() or not body.content.strip():
+        raise HTTPException(status_code=400, detail="Titre et contenu requis")
+
+    access = body.access_level if body.access_level in ("public", "hiparis", "cohort") else "public"
+    level = body.level if body.level in ("beginner", "intermediate", "advanced") else "intermediate"
+
+    # Description courte : 1re ligne non-titre du markdown.
+    desc = next(
+        (l.strip() for l in body.content.split("\n") if l.strip() and not l.strip().startswith("#")),
+        None,
+    )
+    if desc and len(desc) > 240:
+        desc = desc[:240].rstrip() + "…"
+
+    course = Course(
+        id=str(uuid.uuid4()),
+        title=body.title.strip(),
+        description=desc,
+        category=body.category,
+        tags=json.dumps([body.category] if body.category else []),
+        level=level,
+        school=body.school,
+        status="published",
+        access_level=access,
+        estimated_duration_minutes=0,
+        created_by=current_user.id,
+    )
+    db.add(course)
+    db.flush()  # garantit la ligne course avant le bloc (FK course_id)
+
+    db.add(CourseBlock(
+        id=str(uuid.uuid4()),
+        course_id=course.id,
+        position=0,
+        type="markdown",
+        content={"content": body.content},
+    ))
+
+    log_action(db, current_user.id, "course_create", "course", course.id,
+               {"title": course.title, "access_level": access, "source": "studio"})
+    db.commit()
+    db.refresh(course)
+    return {"message": "Cours enregistré", "course_id": course.id, "title": course.title}
 
 
 # ── Pipeline 3 : Contenu → Flashcards (Phase 11) ─────────────────────────────
@@ -429,5 +539,5 @@ def studio_health():
         "llm_model": provider.model if provider else None,
         "transcription_configured": bool(settings.MISTRAL_API_KEY or settings.OPENAI_API_KEY),
         "transcription_provider": "mistral" if settings.MISTRAL_API_KEY else ("openai" if settings.OPENAI_API_KEY else None),
-        "pipelines": ["excel-to-quiz", "video-to-course", "flashcards", "mindmap", "study-sheet", "faq"],
+        "pipelines": ["excel-to-quiz", "video-to-course", "pdf-to-course", "flashcards", "mindmap", "study-sheet", "faq"],
     }

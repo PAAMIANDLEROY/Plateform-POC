@@ -14,6 +14,22 @@
       naturelle pour **Hi! App** et le contenu interactif. À cadrer : page dédiée vs. embarqué dans un cours,
       packages pré-installés, persistance des notebooks (localStorage vs. compte), poids/perf.
 
+## 📚 Contenu / cours à créer (démo puis catalogue)
+> Il faut **rapidement du contenu**, au moins pour la démo. Voir [CONTENU-DEMO.md](CONTENU-DEMO.md)
+> (articles Hi! PARIS réutilisables + cours à licence ouverte).
+- [ ] Seeder quelques cours réels/OER pour la démo (au moins 3-5 publiés, dont 1-2 en `hiparis`).
+- [ ] Première liste de cours « maison » à créer (proposition — à trier/prioriser) :
+  - [ ] Fondamentaux du Machine Learning
+  - [ ] Introduction au Deep Learning
+  - [ ] NLP & LLMs : les bases
+  - [ ] Python pour la data science
+  - [ ] Statistiques & probabilités pour la data
+  - [ ] Data Engineering & pipelines (MLOps : intro)
+  - [ ] Computer Vision : introduction
+  - [ ] Éthique & IA responsable
+  - [ ] Apprendre avec (et malgré) l'IA — prompt engineering
+- [ ] Décider format d'import : Studio (Excel→Quiz / Vidéo→Cours) vs. markdown direct vs. reprise d'OER.
+
 ## ✍️ Contenu éditable (suite)
 - [ ] **Prévisualiser « en tant que rôle »** (voir une page comme student / public) — passe dédiée.
 - [ ] **i18n des blocs éditables** : aujourd'hui mono-langue. Si besoin FR/EN éditables → clés par langue

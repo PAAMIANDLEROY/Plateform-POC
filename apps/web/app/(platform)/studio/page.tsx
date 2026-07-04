@@ -703,6 +703,15 @@ function AIStudio() {
       cta: "Générer un cours",
     },
     {
+      href: "/studio/pdf-course",
+      icon: "📄",
+      title: "PDF → Cours",
+      desc: "Uploadez un PDF (slides, polycopié) et générez un cours Markdown structuré, boosté par le LLM configuré (Mistral).",
+      badge: "Nouveau",
+      badgeColor: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
+      cta: "Générer un cours",
+    },
+    {
       href: "/studio/ai-tools",
       icon: "🧠",
       title: "Outils IA (cours → ressources)",
