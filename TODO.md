@@ -53,10 +53,12 @@
 - [ ] Récupérer le **repo brouillon de specs** (relancer l'expéditeur si oubli).
 
 ## 🧹 Nettoyage / dette
-- [ ] Pages mock orphelines : `/lms/[id]` + `/lms/[id]/student/[userId]` (retirer ou réécrire).
-- [ ] Auditer `/dashboard` et `/my-learning` (reste-t-il du mock ?).
-- [ ] `output: "export"` : maintenant que GitHub Pages est retiré (Vercel seul), envisager de le **supprimer**
-      pour débloquer les vraies routes dynamiques (réglerait les bidouilles `courses/[id]` et `lms/[id]`).
+- [x] Pages mock orphelines `/lms/[id]` + `/lms/[id]/student/[userId]` → **supprimées** (+ lien sitemap mort).
+- [x] `/dashboard` : sections Insights / Vidéos / Cours → **vraies API** (plus de mock).
+- [x] `/my-learning` : titres de cours résolus via `coursesApi` (plus de `MOCK_COURSES`).
+- [ ] `output: "export"` : **à décider avec le sujet appli mobile** (un wrap Capacitor a besoin de l'export
+      statique ; sinon on peut le retirer pour débloquer les routes dynamiques). Voir section mobile.
+- [ ] Mock restant (hors périmètre de ce nettoyage) : `studio`, `tube/[id]`, `insights` — à traiter au fil de l'eau.
 
 ---
 

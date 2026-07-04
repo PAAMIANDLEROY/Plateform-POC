@@ -32,12 +32,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { learningApi, LearningDashboard, Badge, Certificate, LearningProgress } from "@/lib/api";
+import { learningApi, coursesApi, LearningDashboard, Badge, Certificate, LearningProgress } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useLanguage, type Locale } from "@/lib/i18n";
 import { PageSpinner } from "@/components/ui/Spinner";
-import { MOCK_COURSES } from "@/lib/mock";
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
@@ -52,17 +50,6 @@ function formatDate(iso: string, locale: Locale) {
     locale === "fr" ? "fr-FR" : "en-GB",
     { day: "numeric", month: "long", year: "numeric" }
   );
-}
-
-/**
- * Retourne le titre d'un cours depuis son ID.
- * Recherche dans `MOCK_COURSES` — à remplacer par une map API en production.
- *
- * @param courseId - ID du cours à chercher.
- * @returns Titre du cours, ou `"Course {courseId}"` si non trouvé.
- */
-function getCourseTitle(courseId: string) {
-  return MOCK_COURSES.find((c) => c.id === courseId)?.title ?? `Course ${courseId}`;
 }
 
 // ─── Composant StatCard ───────────────────────────────────────────────────────
@@ -102,6 +89,12 @@ function ProgressTab({ progress, locale, onComplete, onIssue }: {
 }) {
   const { t } = useLanguage();
 
+  // Titres des cours (réels) pour l'affichage — remplace l'ancienne recherche mock.
+  const [titles, setTitles] = useState<Record<string, string>>({});
+  useEffect(() => {
+    coursesApi.list().then((cs) => setTitles(Object.fromEntries(cs.map((c) => [c.id, c.title])))).catch(() => {});
+  }, []);
+
   // Branche aucun cours commencé : état vide avec CTA vers le catalogue
   if (progress.length === 0) {
     return (
@@ -119,7 +112,7 @@ function ProgressTab({ progress, locale, onComplete, onIssue }: {
   return (
     <div className="space-y-4">
       {progress.map((p) => {
-        const title = getCourseTitle(p.course_id);
+        const title = titles[p.course_id] ?? `Course ${p.course_id}`;
         return (
           <div key={p.course_id} className="bg-white border border-gray-200 rounded-2xl p-5">
             <div className="flex items-start justify-between gap-4 mb-4">

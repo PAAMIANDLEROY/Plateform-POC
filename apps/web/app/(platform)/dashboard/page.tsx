@@ -13,29 +13,28 @@
  *   3. Accès Rapide — grille 5 modules (Insights, Tube, Course, MOOC, App).
  *      Titre personnalisé avec le prénom de l'utilisateur si connecté.
  *
- *   4. Derniers Insights — 3 premiers articles de `MOCK_INSIGHTS`, cartes cliquables.
+ *   4. Derniers Insights — 3 premiers articles via `insightsApi.list()`.
  *
- *   5. Vidéos Populaires — 3 premières de `MOCK_VIDEOS` via `VideoCard`.
+ *   5. Vidéos Populaires — 3 premières via `videosApi.list()` (VideoCard).
  *
- *   6. Cours Récents — 3 premiers de `MOCK_COURSES` via `CourseCard`.
+ *   6. Cours Récents — 3 premiers via `coursesApi.list()` (CourseCard).
  *
  * Personnalisation :
  *   `user.first_name` est injecté dans le titre de la section "Accès Rapide".
  *   Si `user` est null (non connecté), le prénom est omis.
  *
- * Dépendances mock :
- *   `MOCK_INSIGHTS.slice(0, 3)`, `MOCK_VIDEOS.slice(0, 3)`, `MOCK_COURSES.slice(0, 3)`.
- *   En production, remplacer par des appels `analyticsApi` / `videosApi` / `coursesApi`.
+ * Données : réelles (chargées côté client au montage). Plus aucune dépendance mock.
  */
 
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useLanguage } from "@/lib/i18n";
 import { VideoCard } from "@/components/platform/VideoCard";
 import { CourseCard } from "@/components/platform/CourseCard";
-import { MOCK_VIDEOS, MOCK_COURSES, MOCK_INSIGHTS } from "@/lib/mock";
+import { coursesApi, videosApi, insightsApi, CourseResponse, VideoResponse, InsightResponse } from "@/lib/api";
 
 /**
  * Page d'accueil du dashboard.
@@ -43,6 +42,16 @@ import { MOCK_VIDEOS, MOCK_COURSES, MOCK_INSIGHTS } from "@/lib/mock";
 export default function DashboardPage() {
   const { user } = useAuth();
   const { t } = useLanguage();
+
+  // Contenu réel (3 premiers de chaque) — remplace les anciennes données mock.
+  const [insights, setInsights] = useState<InsightResponse[]>([]);
+  const [videos, setVideos] = useState<VideoResponse[]>([]);
+  const [courses, setCourses] = useState<CourseResponse[]>([]);
+  useEffect(() => {
+    insightsApi.list().then((r) => setInsights(r.slice(0, 3))).catch(() => {});
+    videosApi.list().then((r) => setVideos(r.slice(0, 3))).catch(() => {});
+    coursesApi.list().then((r) => setCourses(r.slice(0, 3))).catch(() => {});
+  }, []);
 
   /**
    * Modules d'accès rapide — 5 modules avec leur icône, couleur, et lien.
@@ -162,20 +171,26 @@ export default function DashboardPage() {
             {t.common.seeAll} →
           </Link>
         </div>
+        {insights.length === 0 && <p className="text-sm text-gray-400">Aucun article pour l'instant.</p>}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {MOCK_INSIGHTS.slice(0, 3).map((article) => (
+          {insights.map((article) => (
             <Link
               key={article.id}
               href={`/insights/${article.id}`}
               className="group bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-primary/30 hover:shadow-card-hover transition-all shadow-card"
             >
               {/* Couverture avec badge catégorie et dégradé sombre */}
-              <div className="relative h-40 overflow-hidden">
-                <img src={article.cover} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <div className="relative h-40 overflow-hidden bg-navy">
+                {article.cover && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={article.cover} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                <span className="absolute top-3 left-3 text-xs font-semibold bg-danger text-white px-2.5 py-0.5 rounded-full">
-                  {article.category}
-                </span>
+                {article.category && (
+                  <span className="absolute top-3 left-3 text-xs font-semibold bg-danger text-white px-2.5 py-0.5 rounded-full">
+                    {article.category}
+                  </span>
+                )}
               </div>
               <div className="p-4">
                 <h3 className="font-bold text-gray-900 text-sm leading-snug mb-2 group-hover:text-primary transition-colors line-clamp-2">
@@ -207,18 +222,19 @@ export default function DashboardPage() {
             {t.common.seeAll} →
           </Link>
         </div>
+        {videos.length === 0 && <p className="text-sm text-gray-400">Aucune vidéo pour l'instant.</p>}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {MOCK_VIDEOS.slice(0, 3).map((v) => (
+          {videos.map((v) => (
             <VideoCard
               key={v.id}
               id={v.id}
               title={v.title}
-              youtube_id={v.youtubeId}
-              thumbnail_url={v.thumbnail}
+              youtube_id={v.youtube_id}
+              thumbnail_url={v.thumbnail_url}
               category={v.category}
               school={v.school}
               tags={v.tags}
-              view_count={v.views}
+              view_count={v.view_count}
             />
           ))}
         </div>
@@ -232,18 +248,18 @@ export default function DashboardPage() {
             {t.common.seeAll} →
           </Link>
         </div>
+        {courses.length === 0 && <p className="text-sm text-gray-400">Aucun cours pour l'instant.</p>}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {MOCK_COURSES.slice(0, 3).map((c) => (
+          {courses.map((c) => (
             <CourseCard
               key={c.id}
               id={c.id}
               title={c.title}
-              description={c.description}
-              category={c.category}
-              // Mapping label FR (mock) → clé EN (CourseCard)
-              level={c.level === "Débutant" ? "beginner" : c.level === "Avancé" ? "advanced" : "intermediate"}
-              school={c.school}
-              estimated_duration_minutes={c.duration}
+              description={c.description ?? undefined}
+              category={c.category ?? undefined}
+              level={c.level}
+              school={c.school ?? undefined}
+              estimated_duration_minutes={c.estimated_duration_minutes}
               status={c.status}
             />
           ))}

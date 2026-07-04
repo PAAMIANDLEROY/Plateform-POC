@@ -329,8 +329,9 @@ Priorisées. Cases à cocher pour suivre l'avancement du weekend.
 | `avgTimeSpent` (temps passé) | ✅ retiré | non tracké → non inventé |
 | `/admin` (tous les onglets) | ✅ réel | réécrit : `platformKPIs` + `cohortsApi` + `auditApi`, plus aucun MOCK_* |
 | `/analytics/platform` (KPIs) | ✅ réel | vrais compteurs contenus + actifs 30 j (proxy progression) |
-| `/lms/[id]` + `/lms/[id]/student/[userId]` | ⚠️ mock | orphelins depuis la réécriture ; retirer ou réécrire |
-| `/dashboard`, `/my-learning` (à auditer) | ❓ | vérifier s'ils affichent du mock |
+| `/lms/[id]` + `/lms/[id]/student/[userId]` | ✅ supprimé | pages orphelines mock retirées (2026-07-04) |
+| `/dashboard` | ✅ réel | Insights / Vidéos / Cours via les vraies API |
+| `/my-learning` | ✅ réel | titres de cours via `coursesApi` |
 
 ---
 

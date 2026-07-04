@@ -328,7 +328,6 @@ const SITE_MAP: SiteMapItem[] = [
     type: "sub", label: "LMS", icon: "📊", key: "lms",
     children: [
       { label: "Liste des cohortes", href: "/lms" },
-      { label: "Cohorte (détail)",   href: "/lms/1" },
     ],
   },
   { type: "link", label: "Administration", icon: "👑", href: "/admin", tag: "admin" },
