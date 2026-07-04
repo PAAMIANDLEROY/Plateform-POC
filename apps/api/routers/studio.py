@@ -376,9 +376,12 @@ async def pdf_to_course(
         )
 
     MAX_CHARS = 60_000
-    if len(extracted) > MAX_CHARS:
-        logger.info("PDF %s tronqué : %d -> %d chars", file.filename, len(extracted), MAX_CHARS)
+    total_chars = len(extracted)
+    if total_chars > MAX_CHARS:
+        pct = round(MAX_CHARS / total_chars * 100)
+        logger.info("PDF %s tronqué : %d -> %d chars (%d%%)", file.filename, total_chars, MAX_CHARS, pct)
         extracted = extracted[:MAX_CHARS]
+        sources.append(f"⚠️ PDF tronqué : {pct}% du texte utilisé ({MAX_CHARS} / {total_chars} caractères)")
 
     try:
         data = await generate_course_blocks_from_content(

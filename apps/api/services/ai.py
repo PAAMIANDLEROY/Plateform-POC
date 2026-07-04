@@ -1,7 +1,7 @@
 """
 Service IA — Studio.
 Génère quiz et cours via la couche LLM-agnostique (services/llm.py).
-Si aucun provider LLM n'est configuré, retourne un contenu de démonstration.
+Si aucun provider LLM n'est configuré, une erreur est levée (plus de contenu de démonstration).
 """
 import json
 import logging
@@ -20,57 +20,6 @@ def _strip_code_fences(raw: str) -> str:
         if raw.startswith("json"):
             raw = raw[4:]
     return raw.strip()
-
-
-DEMO_QUIZ = {
-    "quiz_title": "Quiz de démonstration",
-    "difficulty": "intermédiaire",
-    "language": "fr",
-    "questions": [
-        {
-            "id": 1,
-            "question": "Qu'est-ce que l'apprentissage supervisé ?",
-            "options": [
-                "A. Un algorithme d'optimisation",
-                "B. Un paradigme où le modèle apprend à partir d'exemples étiquetés",
-                "C. Une méthode de clustering",
-                "D. Un type de réseau de neurones"
-            ],
-            "correct": "B",
-            "explanation": "L'apprentissage supervisé consiste à entraîner un modèle sur des données associées à des labels connus, afin qu'il puisse prédire les labels de nouvelles données.",
-            "difficulty": "facile",
-            "source_row": 1
-        },
-        {
-            "id": 2,
-            "question": "Quelle métrique est appropriée pour un problème de classification déséquilibré ?",
-            "options": [
-                "A. L'accuracy",
-                "B. Le F1-score",
-                "C. La variance",
-                "D. Le coefficient de détermination R²"
-            ],
-            "correct": "B",
-            "explanation": "Le F1-score combine précision et rappel, ce qui le rend plus pertinent que l'accuracy sur des classes déséquilibrées.",
-            "difficulty": "intermédiaire",
-            "source_row": 2
-        },
-        {
-            "id": 3,
-            "question": "Qu'est-ce que la régularisation L2 (Ridge) ?",
-            "options": [
-                "A. Une technique d'augmentation des données",
-                "B. Une pénalité sur la somme des valeurs absolues des paramètres",
-                "C. Une pénalité sur la somme des carrés des paramètres",
-                "D. Une méthode d'initialisation des poids"
-            ],
-            "correct": "C",
-            "explanation": "La régularisation L2 ajoute une pénalité proportionnelle à la somme des carrés des poids, ce qui encourage des poids plus petits et réduit le surapprentissage.",
-            "difficulty": "intermédiaire",
-            "source_row": 3
-        }
-    ]
-}
 
 
 def _build_prompt(content: str, n_questions: int, difficulty: str, language: str) -> str:
@@ -106,76 +55,6 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans markdown, sans commentaires 
     }}
   ]
 }}"""
-
-
-DEMO_COURSE = """# Introduction au Machine Learning
-
-## Objectifs pédagogiques
-- Comprendre les fondements du machine learning
-- Distinguer apprentissage supervisé et non-supervisé
-- Maîtriser les métriques d'évaluation essentielles
-- Appliquer les bonnes pratiques de validation
-
-## Section 1 : Qu'est-ce que le Machine Learning ?
-
-Le machine learning est un sous-domaine de l'intelligence artificielle qui permet aux systèmes informatiques d'apprendre automatiquement à partir de données, sans être explicitement programmés pour chaque tâche.
-
-> **Point clé** : Un modèle ML apprend des patterns dans les données d'entraînement pour généraliser à de nouvelles données inconnues.
-
-Contrairement à la programmation classique où les règles sont écrites manuellement, le ML extrait ces règles directement depuis les exemples. Cette approche est particulièrement puissante pour des problèmes où les règles sont trop complexes à formaliser.
-
-## Section 2 : Types d'apprentissage
-
-**Apprentissage supervisé** : Le modèle apprend depuis des données étiquetées (paires entrée/sortie). Exemples : classification d'images, prédiction de prix.
-
-**Apprentissage non-supervisé** : Le modèle découvre des structures cachées dans des données non étiquetées. Exemples : clustering, réduction de dimension.
-
-**Apprentissage par renforcement** : Un agent apprend en interagissant avec un environnement et en recevant des récompenses ou pénalités.
-
-## Section 3 : Évaluation des modèles
-
-L'évaluation est cruciale pour mesurer la qualité d'un modèle et éviter le surapprentissage.
-
-```python
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, f1_score
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
-model.fit(X_train, y_train)
-predictions = model.predict(X_test)
-print(f"Accuracy: {accuracy_score(y_test, predictions):.3f}")
-print(f"F1-score: {f1_score(y_test, predictions, average='weighted'):.3f}")
-```
-
-> **Point clé** : Utilisez toujours un jeu de test séparé pour l'évaluation finale. Ne touchez jamais aux données de test pendant l'entraînement.
-
-## Quiz de validation
-
-**Question 1** : Quel type d'apprentissage utilise des données étiquetées ?
-- [x] Supervisé (correct)
-- [ ] Non-supervisé
-- [ ] Par renforcement
-- [ ] Semi-supervisé
-
-*Explication : L'apprentissage supervisé nécessite des paires (entrée, étiquette) pour entraîner le modèle.*
-
-**Question 2** : Quelle métrique est la plus adaptée aux classes déséquilibrées ?
-- [ ] Accuracy
-- [x] F1-score (correct)
-- [ ] MSE
-- [ ] R²
-
-*Explication : Le F1-score combine précision et rappel, ce qui le rend robuste aux déséquilibres de classes.*
-
-## Résumé
-
-Le machine learning repose sur trois piliers fondamentaux : les **données** (qualité et quantité), les **algorithmes** (choix du modèle adapté) et l'**évaluation** (mesurer la généralisation). Maîtriser ces trois aspects est indispensable pour développer des systèmes ML fiables.
-
-## Ressources complémentaires
-- Scikit-learn documentation : https://scikit-learn.org
-- Cours Andrew Ng (Coursera) : Machine Learning Specialization
-- Livre : "Hands-On Machine Learning" — Aurélien Géron
-"""
 
 
 def _build_course_prompt(
@@ -259,8 +138,7 @@ async def generate_course_from_content(
     """
     provider = get_llm_provider()
     if provider is None:
-        logger.warning("Aucun provider LLM configuré — retour cours de démo")
-        return DEMO_COURSE
+        raise ValueError("Aucun fournisseur LLM configuré. Renseigne MISTRAL_API_KEY (ou un autre provider).")
 
     try:
         prompt = _build_course_prompt(transcription, slides_content, title, level, language, n_sections)
@@ -275,20 +153,6 @@ async def generate_course_from_content(
 
 # Types de blocs supportés par le rendu (CoursePageClient). "code" → utiliser "markdown".
 _VALID_BLOCK_TYPES = {"heading", "text", "markdown", "quiz", "divider"}
-
-DEMO_COURSE_BLOCKS = {
-    "title": "Introduction au Machine Learning",
-    "blocks": [
-        {"type": "heading", "content": {"content": "Objectifs pédagogiques"}},
-        {"type": "text", "content": {"content": "Comprendre les fondements du machine learning, distinguer apprentissage supervisé et non-supervisé, et maîtriser les métriques d'évaluation essentielles."}},
-        {"type": "heading", "content": {"content": "Qu'est-ce que le Machine Learning ?"}},
-        {"type": "text", "content": {"content": "Le machine learning permet aux systèmes d'apprendre automatiquement à partir de données, sans être explicitement programmés pour chaque tâche."}},
-        {"type": "quiz", "content": {"question": "Quel type d'apprentissage utilise des données étiquetées ?", "options": ["Supervisé", "Non-supervisé", "Par renforcement", "Semi-supervisé"], "answer": 0, "explanation": "L'apprentissage supervisé nécessite des paires (entrée, étiquette) pour entraîner le modèle."}},
-        {"type": "heading", "content": {"content": "Résumé"}},
-        {"type": "text", "content": {"content": "Le machine learning repose sur trois piliers : les données, les algorithmes et l'évaluation rigoureuse."}},
-    ],
-}
-
 
 def _build_course_blocks_prompt(transcription: str, slides_content: str, title: str, level: str, language: str, n_sections: int) -> str:
     lang_label = "français" if language == "fr" else "anglais"
@@ -313,9 +177,11 @@ TYPES DE BLOCS AUTORISÉS :
 - "markdown": code ou contenu riche   → content: {{"content": "```python\\n...\\n```"}}
 - "quiz"    : QCM 4 options            → content: {{"question": "...", "options": ["..","..","..",".."], "answer": 0, "explanation": ".."}}
 
-RÈGLES :
+RÈGLES (viser une forte densité pédagogique) :
 - Alterne "heading" puis "text" pour chaque section (~{n_sections} sections).
-- Ajoute 1 à 3 blocs "quiz". "answer" = index (0-based) de la bonne option.
+- Ajoute GÉNÉREUSEMENT du CODE : au moins un bloc "markdown" avec un exemple ```lang ...``` par section technique.
+- Ajoute PLUSIEURS blocs "quiz" — idéalement un après chaque section clé (~{n_sections} au total). "answer" = index (0-based) de la bonne option.
+- Si les sources contiennent des figures / schémas / captures de slides, signale-les par un bloc "markdown" du type "> 📊 **Figure** : [légende descriptive]".
 - Synthétise fidèlement les sources. Ton {level_label}. Langue : {lang_label} uniquement.
 
 Réponds UNIQUEMENT avec un objet JSON valide, sans markdown ni backticks englobants :
@@ -356,8 +222,7 @@ async def generate_course_blocks_from_content(
     """
     provider = get_llm_provider()
     if provider is None:
-        logger.warning("Aucun provider LLM configuré — retour cours (blocs) de démo")
-        return {"title": title or DEMO_COURSE_BLOCKS["title"], "blocks": DEMO_COURSE_BLOCKS["blocks"]}
+        raise ValueError("Aucun fournisseur LLM configuré. Renseigne MISTRAL_API_KEY (ou un autre provider).")
 
     try:
         prompt = _build_course_blocks_prompt(transcription, slides_content, title, level, language, n_sections)
@@ -388,12 +253,7 @@ async def generate_quiz_from_content(
 
     provider = get_llm_provider()
     if provider is None:
-        logger.warning("Aucun provider LLM configuré — retour quiz de démo")
-        demo = DEMO_QUIZ.copy()
-        demo["questions"] = demo["questions"][:n_questions]
-        if quiz_title:
-            demo["quiz_title"] = quiz_title
-        return demo
+        raise ValueError("Aucun fournisseur LLM configuré. Renseigne MISTRAL_API_KEY (ou un autre provider).")
 
     try:
         prompt = _build_prompt(content, n_questions, difficulty, language)
@@ -414,19 +274,6 @@ async def generate_quiz_from_content(
 
 
 # ── Flashcards (Phase 11) ─────────────────────────────────────────────────────
-
-DEMO_FLASHCARDS = {
-    "title": "Flashcards de démonstration",
-    "language": "fr",
-    "cards": [
-        {"id": 1, "front": "Apprentissage supervisé", "back": "Paradigme où le modèle apprend à partir d'exemples étiquetés (paires entrée/sortie)."},
-        {"id": 2, "front": "Surapprentissage (overfitting)", "back": "Quand un modèle colle trop aux données d'entraînement et généralise mal aux nouvelles données."},
-        {"id": 3, "front": "F1-score", "back": "Moyenne harmonique de la précision et du rappel ; adapté aux classes déséquilibrées."},
-        {"id": 4, "front": "Régularisation L2 (Ridge)", "back": "Pénalité sur la somme des carrés des poids pour réduire le surapprentissage."},
-        {"id": 5, "front": "Validation croisée", "back": "Découpe les données en plusieurs plis pour estimer la performance de façon robuste."},
-    ],
-}
-
 
 def _build_flashcards_prompt(content: str, n_cards: int, language: str) -> str:
     lang_label = "français" if language == "fr" else "anglais"
@@ -460,12 +307,7 @@ async def generate_flashcards_from_content(
     Fallback sur démo si aucun provider LLM n'est configuré."""
     provider = get_llm_provider()
     if provider is None:
-        logger.warning("Aucun provider LLM configuré — retour flashcards de démo")
-        demo = DEMO_FLASHCARDS.copy()
-        demo["cards"] = demo["cards"][:n_cards]
-        if title:
-            demo["title"] = title
-        return demo
+        raise ValueError("Aucun fournisseur LLM configuré. Renseigne MISTRAL_API_KEY (ou un autre provider).")
 
     try:
         prompt = _build_flashcards_prompt(content, n_cards, language)
@@ -484,30 +326,6 @@ async def generate_flashcards_from_content(
 
 
 # ── Carte mentale (NotebookLM-style, Phase 11) ────────────────────────────────
-
-DEMO_MINDMAP = {
-    "title": "Carte mentale de démonstration",
-    "root": {
-        "label": "Machine Learning",
-        "children": [
-            {"label": "Types d'apprentissage", "children": [
-                {"label": "Supervisé", "children": []},
-                {"label": "Non-supervisé", "children": []},
-                {"label": "Par renforcement", "children": []},
-            ]},
-            {"label": "Évaluation", "children": [
-                {"label": "Accuracy", "children": []},
-                {"label": "F1-score", "children": []},
-                {"label": "Validation croisée", "children": []},
-            ]},
-            {"label": "Surapprentissage", "children": [
-                {"label": "Régularisation L1/L2", "children": []},
-                {"label": "Jeu de test séparé", "children": []},
-            ]},
-        ],
-    },
-}
-
 
 def _build_mindmap_prompt(content: str, language: str) -> str:
     lang_label = "français" if language == "fr" else "anglais"
@@ -542,11 +360,7 @@ async def generate_mindmap_from_content(
     Fallback sur démo si aucun provider LLM n'est configuré."""
     provider = get_llm_provider()
     if provider is None:
-        logger.warning("Aucun provider LLM configuré — retour carte mentale de démo")
-        demo = DEMO_MINDMAP.copy()
-        if title:
-            demo["title"] = title
-        return demo
+        raise ValueError("Aucun fournisseur LLM configuré. Renseigne MISTRAL_API_KEY (ou un autre provider).")
 
     try:
         prompt = _build_mindmap_prompt(content, language)
@@ -565,23 +379,6 @@ async def generate_mindmap_from_content(
 
 
 # ── Fiche de révision (NotebookLM-style, Phase 11) ────────────────────────────
-
-DEMO_STUDY_SHEET = {
-    "title": "Fiche de révision de démonstration",
-    "language": "fr",
-    "summary": "Le machine learning permet aux systèmes d'apprendre à partir de données. On distingue l'apprentissage supervisé, non-supervisé et par renforcement. L'évaluation rigoureuse et la lutte contre le surapprentissage sont essentielles.",
-    "key_concepts": [
-        {"term": "Apprentissage supervisé", "definition": "Le modèle apprend depuis des données étiquetées (paires entrée/sortie)."},
-        {"term": "Surapprentissage", "definition": "Le modèle mémorise les données d'entraînement et généralise mal."},
-        {"term": "F1-score", "definition": "Moyenne harmonique précision/rappel, adaptée aux classes déséquilibrées."},
-    ],
-    "key_points": [
-        "Toujours évaluer sur un jeu de test séparé.",
-        "Choisir la métrique selon le problème (ex. F1 si classes déséquilibrées).",
-        "La régularisation réduit le surapprentissage.",
-    ],
-}
-
 
 def _build_study_sheet_prompt(content: str, language: str) -> str:
     lang_label = "français" if language == "fr" else "anglais"
@@ -615,11 +412,7 @@ async def generate_study_sheet_from_content(
     Fallback sur démo si aucun provider LLM n'est configuré."""
     provider = get_llm_provider()
     if provider is None:
-        logger.warning("Aucun provider LLM configuré — retour fiche de révision de démo")
-        demo = DEMO_STUDY_SHEET.copy()
-        if title:
-            demo["title"] = title
-        return demo
+        raise ValueError("Aucun fournisseur LLM configuré. Renseigne MISTRAL_API_KEY (ou un autre provider).")
 
     try:
         prompt = _build_study_sheet_prompt(content, language)
@@ -638,18 +431,6 @@ async def generate_study_sheet_from_content(
 
 
 # ── FAQ (NotebookLM-style, Phase 11) ──────────────────────────────────────────
-
-DEMO_FAQ = {
-    "title": "FAQ de démonstration",
-    "language": "fr",
-    "items": [
-        {"question": "Qu'est-ce que le machine learning ?", "answer": "Un sous-domaine de l'IA où les systèmes apprennent des patterns à partir de données, sans être programmés explicitement pour chaque tâche."},
-        {"question": "Quelle différence entre supervisé et non-supervisé ?", "answer": "Le supervisé apprend depuis des données étiquetées ; le non-supervisé découvre des structures dans des données non étiquetées."},
-        {"question": "Comment éviter le surapprentissage ?", "answer": "Utiliser un jeu de test séparé, la validation croisée et des techniques de régularisation."},
-        {"question": "Pourquoi ne pas se fier à l'accuracy ?", "answer": "Sur des classes déséquilibrées, l'accuracy est trompeuse ; préférer le F1-score."},
-    ],
-}
-
 
 def _build_faq_prompt(content: str, n_items: int, language: str) -> str:
     lang_label = "français" if language == "fr" else "anglais"
@@ -681,12 +462,7 @@ async def generate_faq_from_content(
     Fallback sur démo si aucun provider LLM n'est configuré."""
     provider = get_llm_provider()
     if provider is None:
-        logger.warning("Aucun provider LLM configuré — retour FAQ de démo")
-        demo = DEMO_FAQ.copy()
-        demo["items"] = demo["items"][:n_items]
-        if title:
-            demo["title"] = title
-        return demo
+        raise ValueError("Aucun fournisseur LLM configuré. Renseigne MISTRAL_API_KEY (ou un autre provider).")
 
     try:
         prompt = _build_faq_prompt(content, n_items, language)
