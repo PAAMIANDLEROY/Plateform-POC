@@ -10,6 +10,9 @@
 - [x] Édition de contenu : **liste de pages → clic → édition** (onglet Contenu dans /admin).
 - [ ] **Pass sur les outils IA** (Studio IA) — à cadrer : périmètre, providers, quotas, UX.
 - [ ] **Fiabilité de la BDD / pas de perte de données** — cf. section « Infra & données » (doute exprimé).
+- [ ] **Intégrer JupyterLite** — notebooks Python **in-browser** (Pyodide/WASM, sans serveur). Brique
+      naturelle pour **Hi! App** et le contenu interactif. À cadrer : page dédiée vs. embarqué dans un cours,
+      packages pré-installés, persistance des notebooks (localStorage vs. compte), poids/perf.
 
 ## ✍️ Contenu éditable (suite)
 - [ ] **Prévisualiser « en tant que rôle »** (voir une page comme student / public) — passe dédiée.
