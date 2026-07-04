@@ -15,6 +15,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { submissionsApi, SubmissionEntry, ApiError } from "@/lib/api";
+import EditableBlock from "@/components/platform/EditableBlock";
 
 const MAX_SIZE = 1 * 1024 * 1024;
 const SUBMIT_ROLES = ["student", "teacher", "admin", "super_admin"];
@@ -130,15 +131,12 @@ export default function NeuriPPSubmitPage() {
     <div className="max-w-3xl mx-auto px-6 py-12">
       {/* En-tête */}
       <span className="text-xs font-semibold bg-primary/10 text-primary border border-primary/20 px-2.5 py-1 rounded-full">NeuriPP · Édition 2026</span>
-      <h1 className="text-3xl font-bold text-gray-900 mt-4 mb-2">Appel à soumissions — Outils EdTech</h1>
-      <p className="text-gray-600 leading-relaxed mb-2">
-        Les étudiants développent une infinité d'outils pédagogiques. L'objectif de ce track est de les
-        <strong> mettre en commun</strong> et de créer une base sur laquelle <strong>itérer collectivement</strong>.
-      </p>
-      <p className="text-gray-500 text-sm mb-10">
-        Soumettez votre projet : dépôt GitHub, page de présentation, démo et licence. Ouvert en priorité aux
-        étudiants Hi! PARIS.
-      </p>
+      <EditableBlock blockKey="neuripp.title" as="h1" className="text-3xl font-bold text-gray-900 mt-4 mb-2"
+        fallback="Appel à soumissions — Outils EdTech" />
+      <EditableBlock blockKey="neuripp.intro" as="p" multiline className="text-gray-600 leading-relaxed mb-2"
+        fallback="Les étudiants développent une infinité d'outils pédagogiques. L'objectif de ce track est de les mettre en commun et de créer une base sur laquelle itérer collectivement." />
+      <EditableBlock blockKey="neuripp.note" as="p" multiline className="text-gray-500 text-sm mb-10"
+        fallback="Soumettez votre projet : dépôt GitHub, page de présentation, démo et licence. Ouvert en priorité aux étudiants Hi! PARIS." />
 
       {/* Formulaire */}
       <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-card">

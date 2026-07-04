@@ -12,3 +12,4 @@ from models.insight import Insight, InsightStatus
 from models.cohort import Cohort, CohortMember, CohortCourse, CohortStatus, MemberStatus
 from models.audit import AuditLog, Report
 from models.submission import Submission
+from models.content import ContentBlock

@@ -42,6 +42,25 @@ def get_current_user(
     return user_to_current(user)
 
 
+def get_current_user_optional(
+    access_token: Optional[str] = Cookie(default=None),
+    db: Session = Depends(get_db),
+) -> Optional[CurrentUser]:
+    """Comme get_current_user mais renvoie None au lieu de lever (routes semi-publiques)."""
+    if not access_token:
+        return None
+    payload = decode_token(access_token)
+    if not payload or payload.get("type") != "access":
+        return None
+    user_id = payload.get("sub")
+    if not user_id:
+        return None
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user or not user.is_active:
+        return None
+    return user_to_current(user)
+
+
 def require_role(*roles: str):
     def checker(current_user: CurrentUser = Depends(get_current_user)) -> CurrentUser:
         if current_user.role not in roles:

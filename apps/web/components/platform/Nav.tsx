@@ -784,18 +784,6 @@ export function Nav() {
     router.push("/login");
   }
 
-  /**
-   * `true` si l'utilisateur a un rôle d'enseignant ou supérieur.
-   * Conditionne l'affichage des liens Studio et LMS dans la nav.
-   */
-  const isTeacher = user && ["teacher", "admin", "super_admin"].includes(user.role);
-
-  /**
-   * `true` si l'utilisateur a un rôle administrateur ou super_admin.
-   * Conditionne l'affichage du lien Admin dans la nav et dans le menu utilisateur.
-   */
-  const isAdmin = user && ["admin", "super_admin"].includes(user.role);
-
   return (
     <>
       {/*
@@ -861,61 +849,10 @@ export function Nav() {
               />
             ))}
 
-            {/* Lien direct Mon parcours */}
-            <Link
-              href="/my-learning"
-              className={clsx(
-                "px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
-                pathname.startsWith("/my-learning")
-                  ? "bg-primary/10 text-primary font-semibold"
-                  : "text-gray-600 hover:text-primary hover:bg-primary/5"
-              )}
-            >
-              {t.nav.myLearning}
-            </Link>
-
             {/*
-             * Branche enseignant : Studio + LMS
-             * Visibles uniquement pour les rôles teacher, admin, super_admin.
-             * Un séparateur visuel précède ces liens pour les distinguer
-             * des liens "étudiants".
+             * Studio, LMS, Admin et « Mon parcours » ne sont plus dans la barre :
+             * ils vivent dans l'espace « Mon profil » (menu latéral, voir WorkspaceSidebar).
              */}
-            {isTeacher && (
-              <>
-                <div className="w-px h-5 bg-gray-200 mx-1 shrink-0" />
-                <Link href="/studio" className={clsx(
-                  "px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
-                  pathname.startsWith("/studio")
-                    ? "bg-danger/10 text-danger font-semibold"
-                    : "text-gray-600 hover:text-danger hover:bg-danger/5"
-                )}>
-                  {t.nav.studio}
-                </Link>
-                <Link href="/lms" className={clsx(
-                  "px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
-                  pathname.startsWith("/lms")
-                    ? "bg-danger/10 text-danger font-semibold"
-                    : "text-gray-600 hover:text-danger hover:bg-danger/5"
-                )}>
-                  {t.nav.lms}
-                </Link>
-              </>
-            )}
-
-            {/*
-             * Branche admin : lien Administration
-             * Visible uniquement pour les rôles admin et super_admin.
-             */}
-            {isAdmin && (
-              <Link href="/admin" className={clsx(
-                "px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
-                pathname.startsWith("/admin")
-                  ? "bg-purple-100 text-purple-700 font-semibold"
-                  : "text-gray-600 hover:text-purple-700 hover:bg-purple-50"
-              )}>
-                {t.nav.admin}
-              </Link>
-            )}
           </nav>
 
           {/* ── Zone droite : langue + auth + plan du site ── */}
@@ -971,15 +908,8 @@ export function Nav() {
                       <p className="text-xs text-gray-400 truncate">{user.email}</p>
                     </div>
 
-                    {/* Liens du menu utilisateur (Mon parcours reste dans la barre) */}
-                    <Link href="/profile"     onClick={() => setUserMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">{t.nav.profile}</Link>
-
-                    {/* Branche admin : lien Administration dans le menu utilisateur */}
-                    {isAdmin && (
-                      <Link href="/admin" onClick={() => setUserMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
-                        {t.nav.administration}
-                      </Link>
-                    )}
+                    {/* Entrée dans l'espace « Mon profil » (menu latéral : compte, studio, lms, admin selon droits) */}
+                    <Link href="/profile" onClick={() => setUserMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">{t.nav.profile}</Link>
 
                     {/* Séparateur puis déconnexion */}
                     <div className="border-t border-gray-100" />

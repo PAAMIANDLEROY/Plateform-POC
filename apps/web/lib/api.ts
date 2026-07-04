@@ -1024,6 +1024,33 @@ export const submissionsApi = {
   list: () => request<SubmissionEntry[]>("/api/v1/submissions"),
 };
 
+// ─── Contenu éditable des pages (texte) ──────────────────────────────────────
+
+/** Bloc de texte éditable, identifié par une clé stable (ex. "neuripp.intro"). */
+export interface ContentBlock {
+  key: string;
+  value: string;              // valeur publiée
+  draft_value: string | null; // brouillon (renvoyé aux admins uniquement)
+  has_draft: boolean;
+  updated_at: string | null;
+}
+
+export const contentApi = {
+  /** Tous les blocs. Public → publié ; admin → inclut les brouillons (aperçu). */
+  list: () => request<ContentBlock[]>("/api/v1/content"),
+
+  /** Écrit le brouillon d'un bloc (admin+). Ne publie pas. */
+  update: (key: string, value: string) =>
+    request<ContentBlock>(`/api/v1/content/${encodeURIComponent(key)}`, {
+      method: "PUT",
+      body: JSON.stringify({ value }),
+    }),
+
+  /** Publie le brouillon d'un bloc (admin+). */
+  publish: (key: string) =>
+    request<ContentBlock>(`/api/v1/content/${encodeURIComponent(key)}/publish`, { method: "POST" }),
+};
+
 // ─── Cohortes (LMS — teacher / admin) ────────────────────────────────────────
 
 /** Cohorte telle que renvoyée par l'API (voir routers/cohorts.py). Métriques réelles. */

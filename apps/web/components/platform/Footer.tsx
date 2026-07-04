@@ -23,6 +23,7 @@
 
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n";
+import EditableLink from "@/components/platform/EditableLink";
 
 /**
  * Pied de page global de la plateforme.
@@ -47,14 +48,13 @@ export function Footer() {
           </p>
           {/* Liens externes hi-paris.fr et contact email */}
           <div className="flex items-center gap-3 mt-5">
-            <a
-              href="https://hi-paris.fr"
-              target="_blank"
-              rel="noopener noreferrer"
+            <EditableLink
+              labelKey="footer.hiparis.label"
+              urlKey="footer.hiparis.url"
+              fallbackLabel="hi-paris.fr ↗"
+              fallbackUrl="https://hi-paris.fr"
               className="text-xs font-medium text-gray-400 hover:text-white transition-colors border border-white/10 px-3 py-1.5 rounded-lg hover:border-white/30"
-            >
-              hi-paris.fr ↗
-            </a>
+            />
             <a
               href="mailto:contact@hi-paris.fr"
               className="text-xs font-medium text-gray-400 hover:text-white transition-colors border border-white/10 px-3 py-1.5 rounded-lg hover:border-white/30"

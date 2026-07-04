@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { PageSpinner } from "@/components/ui/Spinner";
 import UserManagement from "@/components/platform/UserManagement";
+import AdminContentPanel from "@/components/platform/AdminContentPanel";
 import {
   analyticsApi, cohortsApi, auditApi, ApiError,
   PlatformKPIs, CohortApi, AuditLogEntry,
@@ -45,6 +46,9 @@ const AUDIT_LABELS: Record<string, string> = {
   report_resolved: "Signalement traité",
   report_dismissed: "Signalement rejeté",
   content_hide: "Contenu masqué",
+  content_edit: "Brouillon de contenu",
+  content_publish: "Publication de contenu",
+  submission_create: "Nouvelle soumission",
 };
 
 function KpiCard({ icon, label, value, sub, accent }: {
@@ -71,7 +75,7 @@ function MiniBar({ pct, color = "bg-primary" }: { pct: number; color?: string })
   );
 }
 
-type AdminTab = "overview" | "users" | "cohorts" | "audit";
+type AdminTab = "overview" | "users" | "cohorts" | "audit" | "content";
 
 export default function AdminDashboardPage() {
   const { user, loading } = useAuth();
@@ -155,6 +159,7 @@ export default function AdminDashboardPage() {
           { key: "users", label: "Utilisateurs" },
           { key: "cohorts", label: "Cohortes" },
           { key: "audit", label: "Audit" },
+          { key: "content", label: "Contenu" },
         ] as const).map((tab) => (
           <button key={tab.key} onClick={() => setActiveTab(tab.key)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -166,7 +171,10 @@ export default function AdminDashboardPage() {
       </div>
 
       {error && <div className="mb-6 text-sm text-danger bg-danger/5 border border-danger/20 rounded-xl px-4 py-3">{error}</div>}
-      {dataLoading && activeTab !== "users" && <p className="text-sm text-gray-500 mb-6">Chargement…</p>}
+      {dataLoading && activeTab !== "users" && activeTab !== "content" && <p className="text-sm text-gray-500 mb-6">Chargement…</p>}
+
+      {/* ── Contenu (blocs de texte éditables) ── */}
+      {activeTab === "content" && <AdminContentPanel />}
 
       {/* ── Vue d'ensemble ── */}
       {activeTab === "overview" && (
