@@ -851,7 +851,7 @@ export function Nav() {
 
             {/*
              * Studio, LMS, Admin et « Mon parcours » ne sont plus dans la barre :
-             * ils vivent dans l'espace « Mon profil » (menu latéral, voir WorkspaceSidebar).
+             * ils vivent dans le menu déroulant de l'avatar (« Mon profil »).
              */}
           </nav>
 
@@ -908,8 +908,26 @@ export function Nav() {
                       <p className="text-xs text-gray-400 truncate">{user.email}</p>
                     </div>
 
-                    {/* Entrée dans l'espace « Mon profil » (menu latéral : compte, studio, lms, admin selon droits) */}
+                    {/* Compte */}
                     <Link href="/profile" onClick={() => setUserMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">{t.nav.profile}</Link>
+                    <Link href="/my-learning" onClick={() => setUserMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">{t.nav.myLearning}</Link>
+
+                    {/* Enseignant (teacher+) */}
+                    {["teacher", "admin", "super_admin"].includes(user.role) && (
+                      <>
+                        <div className="border-t border-gray-100" />
+                        <Link href="/studio" onClick={() => setUserMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">{t.nav.studio}</Link>
+                        <Link href="/lms" onClick={() => setUserMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">{t.nav.lms}</Link>
+                      </>
+                    )}
+
+                    {/* Administration (admin+) */}
+                    {["admin", "super_admin"].includes(user.role) && (
+                      <>
+                        <div className="border-t border-gray-100" />
+                        <Link href="/admin" onClick={() => setUserMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">{t.nav.administration}</Link>
+                      </>
+                    )}
 
                     {/* Séparateur puis déconnexion */}
                     <div className="border-t border-gray-100" />

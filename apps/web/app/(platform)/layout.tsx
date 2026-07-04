@@ -18,7 +18,6 @@
 
 import { Nav } from "@/components/platform/Nav";
 import { Footer } from "@/components/platform/Footer";
-import { WorkspaceShell } from "@/components/platform/WorkspaceShell";
 
 /**
  * Layout wrapper pour toutes les pages de la plateforme.
@@ -31,11 +30,8 @@ export default function PlatformLayout({ children }: { children: React.ReactNode
     <div className="min-h-screen bg-surface flex flex-col">
       {/* Barre de navigation sticky — z-[160] défini dans Nav.tsx */}
       <Nav />
-      {/* Zone de contenu principale — flex-1 pour pousser le footer en bas.
-          WorkspaceShell ajoute le menu latéral sur les routes de l'espace (profil, studio, lms, admin). */}
-      <main className="flex-1">
-        <WorkspaceShell>{children}</WorkspaceShell>
-      </main>
+      {/* Zone de contenu principale — flex-1 pour pousser le footer en bas. */}
+      <main className="flex-1">{children}</main>
       {/* Pied de page — liens plateforme, légaux et copyright */}
       <Footer />
     </div>

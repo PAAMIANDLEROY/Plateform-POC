@@ -1,9 +1,11 @@
 """
 Tests des pipelines Studio IA (génération de contenu).
-- Niveau service : le fallback démo fonctionne sans clé LLM (déterministe).
+- Niveau service : sans clé LLM, la génération lève une erreur (plus de fallback démo).
 - Niveau endpoint : les routes exigent le rôle enseignant.
 """
 import asyncio
+
+import pytest
 
 from fastapi.testclient import TestClient
 
@@ -27,43 +29,28 @@ client = TestClient(app)
 
 # ── Service : fallback démo (sans clé LLM) ────────────────────────────────────
 
-def test_flashcards_demo_fallback():
-    get_llm_provider.cache_clear()  # garantit le chemin démo (pas de clé en test)
-    data = asyncio.run(generate_flashcards_from_content("contenu de cours", n_cards=3))
-    assert data["cards"]
-    assert len(data["cards"]) <= 3
-    card = data["cards"][0]
-    assert card["front"] and card["back"]
+def test_flashcards_no_provider_raises():
+    get_llm_provider.cache_clear()  # pas de clé LLM en test → pas de provider
+    with pytest.raises(ValueError):
+        asyncio.run(generate_flashcards_from_content("contenu de cours", n_cards=3))
 
 
-def test_flashcards_demo_respects_title():
+def test_mindmap_no_provider_raises():
     get_llm_provider.cache_clear()
-    data = asyncio.run(
-        generate_flashcards_from_content("contenu", n_cards=2, title="Mon paquet")
-    )
-    assert data["title"] == "Mon paquet"
+    with pytest.raises(ValueError):
+        asyncio.run(generate_mindmap_from_content("contenu de cours"))
 
 
-def test_mindmap_demo_fallback():
+def test_study_sheet_no_provider_raises():
     get_llm_provider.cache_clear()
-    data = asyncio.run(generate_mindmap_from_content("contenu de cours"))
-    assert data["root"]["label"]
-    assert data["root"]["children"]  # au moins une branche
+    with pytest.raises(ValueError):
+        asyncio.run(generate_study_sheet_from_content("contenu de cours"))
 
 
-def test_study_sheet_demo_fallback():
+def test_faq_no_provider_raises():
     get_llm_provider.cache_clear()
-    data = asyncio.run(generate_study_sheet_from_content("contenu de cours"))
-    assert data["summary"]
-    assert data["key_concepts"] and data["key_concepts"][0]["term"]
-    assert data["key_points"]
-
-
-def test_faq_demo_fallback():
-    get_llm_provider.cache_clear()
-    data = asyncio.run(generate_faq_from_content("contenu de cours", n_items=2))
-    assert len(data["items"]) <= 2
-    assert data["items"][0]["question"] and data["items"][0]["answer"]
+    with pytest.raises(ValueError):
+        asyncio.run(generate_faq_from_content("contenu de cours", n_items=2))
 
 
 # ── Endpoint : auth requise ───────────────────────────────────────────────────
