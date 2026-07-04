@@ -20,11 +20,13 @@ from models.course import Course, CourseBlock
 from services.ai import (
     generate_quiz_from_content,
     generate_course_from_content,
+    generate_course_blocks_from_content,
     generate_flashcards_from_content,
     generate_mindmap_from_content,
     generate_study_sheet_from_content,
     generate_faq_from_content,
 )
+from services.ocr import ocr_pdf_mistral
 from services.transcription import (
     transcribe_audio, extract_pptx_text, extract_pdf_text, extract_youtube_id,
     fetch_youtube_transcript,
@@ -68,11 +70,25 @@ class GeneratedCourse(BaseModel):
     sources_used: list[str]
 
 
-class SaveCourseRequest(BaseModel):
+class GeneratedBlock(BaseModel):
+    type: str          # heading | text | markdown | quiz | divider
+    content: dict
+
+
+class GeneratedCourseBlocks(BaseModel):
     title: str
-    content: str
+    blocks: list[GeneratedBlock]
     level: str
     language: str
+    sources_used: list[str]
+
+
+class SaveCourseRequest(BaseModel):
+    title: str
+    level: str
+    language: str
+    content: Optional[str] = None        # markdown (pipeline vidéo)
+    blocks: Optional[list[dict]] = None  # blocs structurés (pipeline PDF)
     category: Optional[str] = None
     school: Optional[str] = None
     access_level: str = "public"  # public | hiparis | cohort
@@ -320,7 +336,7 @@ async def video_to_course(
     )
 
 
-@router.post("/pdf-to-course", response_model=GeneratedCourse)
+@router.post("/pdf-to-course", response_model=GeneratedCourseBlocks)
 async def pdf_to_course(
     file: UploadFile = File(...),
     title: str = Form(...),
@@ -330,8 +346,8 @@ async def pdf_to_course(
     current_user: CurrentUser = Depends(require_role(*TEACHER_ROLES)),
 ):
     """
-    Pipeline PDF → Cours Markdown (boosté par le provider LLM configuré, ex. Mistral).
-    Extrait le texte du PDF (pdfplumber) puis le structure en cours markdown.
+    Pipeline PDF → Cours en BLOCS structurés (boosté par le provider LLM configuré, ex. Mistral).
+    Extraction texte (pdfplumber) ; si le PDF est en images (peu/pas de texte) → repli OCR Mistral.
     """
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Fichier PDF (.pdf) requis")
@@ -340,25 +356,32 @@ async def pdf_to_course(
     if len(pdf_bytes) > 25 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="PDF trop volumineux (max 25 Mo)")
 
+    sources = [f"PDF : {file.filename}"]
     try:
-        extracted = extract_pdf_text(pdf_bytes)
+        extracted = extract_pdf_text(pdf_bytes) or ""
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Impossible de lire le PDF : {e}")
 
-    if not extracted or not extracted.strip():
+    # Repli OCR : PDF-image (slides, scan) → peu de texte extrait par pdfplumber.
+    if len(extracted.strip()) < 200:
+        ocr_text = ocr_pdf_mistral(pdf_bytes)
+        if ocr_text.strip():
+            extracted = ocr_text
+            sources.append("OCR Mistral")
+
+    if not extracted.strip():
         raise HTTPException(
             status_code=422,
-            detail="Aucun texte extrait du PDF (document scanné/image ? OCR non géré ici).",
+            detail="Aucun texte exploitable extrait (PDF image + OCR indisponible : vérifie MISTRAL_API_KEY).",
         )
 
-    # Bornage pour éviter des prompts démesurés (coût/latence) sur de gros PDF.
     MAX_CHARS = 60_000
     if len(extracted) > MAX_CHARS:
         logger.info("PDF %s tronqué : %d -> %d chars", file.filename, len(extracted), MAX_CHARS)
         extracted = extracted[:MAX_CHARS]
 
     try:
-        content = await generate_course_from_content(
+        data = await generate_course_blocks_from_content(
             transcription="",
             slides_content=extracted,
             title=title,
@@ -369,12 +392,12 @@ async def pdf_to_course(
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
 
-    return GeneratedCourse(
-        title=title,
-        content=content,
+    return GeneratedCourseBlocks(
+        title=data["title"],
+        blocks=[GeneratedBlock(**b) for b in data["blocks"]],
         level=level,
         language=language,
-        sources_used=[f"PDF : {file.filename}"],
+        sources_used=sources,
     )
 
 
@@ -390,17 +413,28 @@ def save_course(
     """
     import uuid
 
-    if not body.title.strip() or not body.content.strip():
-        raise HTTPException(status_code=400, detail="Titre et contenu requis")
+    if not body.title.strip():
+        raise HTTPException(status_code=400, detail="Titre requis")
+    if not body.blocks and not (body.content and body.content.strip()):
+        raise HTTPException(status_code=400, detail="Contenu requis (blocs ou markdown)")
 
     access = body.access_level if body.access_level in ("public", "hiparis", "cohort") else "public"
     level = body.level if body.level in ("beginner", "intermediate", "advanced") else "intermediate"
 
-    # Description courte : 1re ligne non-titre du markdown.
-    desc = next(
-        (l.strip() for l in body.content.split("\n") if l.strip() and not l.strip().startswith("#")),
-        None,
-    )
+    # Description courte : 1er bloc texte, ou 1re ligne non-titre du markdown.
+    desc = None
+    if body.blocks:
+        for b in body.blocks:
+            if b.get("type") == "text":
+                d = (b.get("content") or {}).get("content")
+                if isinstance(d, str) and d.strip():
+                    desc = d.strip()
+                    break
+    elif body.content:
+        desc = next(
+            (l.strip() for l in body.content.split("\n") if l.strip() and not l.strip().startswith("#")),
+            None,
+        )
     if desc and len(desc) > 240:
         desc = desc[:240].rstrip() + "…"
 
@@ -418,15 +452,19 @@ def save_course(
         created_by=current_user.id,
     )
     db.add(course)
-    db.flush()  # garantit la ligne course avant le bloc (FK course_id)
+    db.flush()  # garantit la ligne course avant les blocs (FK course_id)
 
-    db.add(CourseBlock(
-        id=str(uuid.uuid4()),
-        course_id=course.id,
-        position=0,
-        type="markdown",
-        content={"content": body.content},
-    ))
+    valid_types = {"heading", "text", "markdown", "quiz", "code", "video", "image", "divider"}
+    if body.blocks:
+        for i, blk in enumerate(body.blocks):
+            btype = blk.get("type") if blk.get("type") in valid_types else "text"
+            content = blk.get("content") if isinstance(blk.get("content"), dict) else {}
+            db.add(CourseBlock(id=str(uuid.uuid4()), course_id=course.id, position=i, type=btype, content=content))
+    else:
+        db.add(CourseBlock(
+            id=str(uuid.uuid4()), course_id=course.id, position=0,
+            type="markdown", content={"content": body.content},
+        ))
 
     log_action(db, current_user.id, "course_create", "course", course.id,
                {"title": course.title, "access_level": access, "source": "studio"})

@@ -271,6 +271,112 @@ async def generate_course_from_content(
         raise ValueError(f"Erreur lors de la génération du cours: {e}")
 
 
+# ── Cours en blocs structurés (JSON) ─────────────────────────────────────────
+
+# Types de blocs supportés par le rendu (CoursePageClient). "code" → utiliser "markdown".
+_VALID_BLOCK_TYPES = {"heading", "text", "markdown", "quiz", "divider"}
+
+DEMO_COURSE_BLOCKS = {
+    "title": "Introduction au Machine Learning",
+    "blocks": [
+        {"type": "heading", "content": {"content": "Objectifs pédagogiques"}},
+        {"type": "text", "content": {"content": "Comprendre les fondements du machine learning, distinguer apprentissage supervisé et non-supervisé, et maîtriser les métriques d'évaluation essentielles."}},
+        {"type": "heading", "content": {"content": "Qu'est-ce que le Machine Learning ?"}},
+        {"type": "text", "content": {"content": "Le machine learning permet aux systèmes d'apprendre automatiquement à partir de données, sans être explicitement programmés pour chaque tâche."}},
+        {"type": "quiz", "content": {"question": "Quel type d'apprentissage utilise des données étiquetées ?", "options": ["Supervisé", "Non-supervisé", "Par renforcement", "Semi-supervisé"], "answer": 0, "explanation": "L'apprentissage supervisé nécessite des paires (entrée, étiquette) pour entraîner le modèle."}},
+        {"type": "heading", "content": {"content": "Résumé"}},
+        {"type": "text", "content": {"content": "Le machine learning repose sur trois piliers : les données, les algorithmes et l'évaluation rigoureuse."}},
+    ],
+}
+
+
+def _build_course_blocks_prompt(transcription: str, slides_content: str, title: str, level: str, language: str, n_sections: int) -> str:
+    lang_label = "français" if language == "fr" else "anglais"
+    level_label = {"beginner": "débutant", "intermediate": "intermédiaire", "advanced": "avancé"}.get(level, level)
+    sources = []
+    if transcription:
+        sources.append(f"TRANSCRIPTION:\n{transcription[:4000]}")
+    if slides_content:
+        sources.append(f"CONTENU:\n{slides_content[:6000]}")
+
+    return f"""Tu es un expert en création de contenu pédagogique. Génère un cours structuré en BLOCS à partir des sources.
+
+{'=' * 60}
+{chr(10).join(sources) if sources else "Génère un cours de démonstration sur les fondamentaux de l'IA."}
+{'=' * 60}
+
+PARAMÈTRES : titre « {title} » · niveau {level_label} · langue {lang_label} · environ {n_sections} sections.
+
+TYPES DE BLOCS AUTORISÉS :
+- "heading" : titre de section        → content: {{"content": "..."}}
+- "text"    : paragraphe pédagogique  → content: {{"content": "..."}}
+- "markdown": code ou contenu riche   → content: {{"content": "```python\\n...\\n```"}}
+- "quiz"    : QCM 4 options            → content: {{"question": "...", "options": ["..","..","..",".."], "answer": 0, "explanation": ".."}}
+
+RÈGLES :
+- Alterne "heading" puis "text" pour chaque section (~{n_sections} sections).
+- Ajoute 1 à 3 blocs "quiz". "answer" = index (0-based) de la bonne option.
+- Synthétise fidèlement les sources. Ton {level_label}. Langue : {lang_label} uniquement.
+
+Réponds UNIQUEMENT avec un objet JSON valide, sans markdown ni backticks englobants :
+{{
+  "title": "{title}",
+  "blocks": [
+    {{"type": "heading", "content": {{"content": "..."}}}},
+    {{"type": "text", "content": {{"content": "..."}}}},
+    {{"type": "quiz", "content": {{"question": "...", "options": ["..","..","..",".."], "answer": 0, "explanation": ".."}}}}
+  ]
+}}"""
+
+
+def _normalize_blocks(raw_blocks: list) -> list:
+    """Garde uniquement les blocs bien formés (type valide + content dict)."""
+    clean = []
+    for b in raw_blocks or []:
+        if not isinstance(b, dict):
+            continue
+        btype = b.get("type")
+        content = b.get("content")
+        if btype in _VALID_BLOCK_TYPES and isinstance(content, dict):
+            clean.append({"type": btype, "content": content})
+    return clean
+
+
+async def generate_course_blocks_from_content(
+    transcription: str = "",
+    slides_content: str = "",
+    title: str = "Cours généré par IA",
+    level: str = "intermediate",
+    language: str = "fr",
+    n_sections: int = 4,
+) -> dict:
+    """
+    Génère un cours en blocs structurés (heading/text/markdown/quiz) via le LLM configuré.
+    Fallback sur démo si aucun provider LLM n'est configuré.
+    """
+    provider = get_llm_provider()
+    if provider is None:
+        logger.warning("Aucun provider LLM configuré — retour cours (blocs) de démo")
+        return {"title": title or DEMO_COURSE_BLOCKS["title"], "blocks": DEMO_COURSE_BLOCKS["blocks"]}
+
+    try:
+        prompt = _build_course_blocks_prompt(transcription, slides_content, title, level, language, n_sections)
+        raw = _strip_code_fences(provider.complete(prompt, max_tokens=8192))
+        result = json.loads(raw)
+        blocks = _normalize_blocks(result.get("blocks", []))
+        if not blocks:
+            raise ValueError("Le modèle n'a pas retourné de blocs exploitables.")
+        return {"title": result.get("title") or title, "blocks": blocks}
+    except json.JSONDecodeError:
+        logger.error("JSON invalide retourné par le LLM (course blocks)")
+        raise ValueError("Le modèle IA n'a pas retourné un JSON valide. Réessayez.")
+    except ValueError:
+        raise
+    except Exception as e:
+        logger.error("Erreur LLM (course blocks): %s", e)
+        raise ValueError(f"Erreur lors de la génération du cours: {e}")
+
+
 async def generate_quiz_from_content(
     content: str,
     n_questions: int = 5,
