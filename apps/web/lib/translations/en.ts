@@ -79,9 +79,17 @@ export const en: Translations = {
         description: "Learn using AI as a tool",
       },
       learningEdge: {
-        label:       "Learning at the Edge",
+        label:       "Learning at the Edge of AI",
         description: "AI frontiers and challenges",
       },
+    },
+    education: {
+      label:       "Hi! PARIS Education",
+      description: "The Hi! PARIS educational ecosystem",
+      aboutUs:     "About us",
+      aboutUsDesc: "Who we are",
+      neuripp:     "NeuriPP",
+      neurippDesc: "EdTech call for submissions",
     },
     items: {
       tube:   "Educational videos",

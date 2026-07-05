@@ -85,10 +85,13 @@ function NavDropdown({
   const [dropPos, setDropPos] = useState({ top: 72, left: 0 });
 
   /**
-   * `true` si l'URL courante commence par `/${slug}`.
-   * Utilisé pour mettre le bouton en surbrillance "actif".
+   * `true` si l'URL courante correspond à cette section.
+   * Deux cas :
+   *   - l'URL commence par `/${slug}` (sections Learning, préfixe d'URL commun) ;
+   *   - l'URL commence par le href d'un des items (sections sans préfixe commun,
+   *     ex. « Hi! PARIS Education » dont les pages sont /about et /neuripp).
    */
-  const isActive = pathname.startsWith(`/${slug}`);
+  const isActive = pathname.startsWith(`/${slug}`) || items.some((it) => pathname.startsWith(it.href));
 
   /**
    * Gestion du clic sur le bouton.
@@ -222,7 +225,7 @@ function LangSwitcher() {
  * Barre de navigation principale, sticky en haut de toutes les pages platform.
  *
  * Layout (gauche → droite) :
- *   Logo | Insights | About | [Learning AI] [Learning With AI] [Learning at the Edge]
+ *   Logo | Insights | [Hi! PARIS Education] | [Learning AI] [Learning With AI] [Learning at the Edge of AI]
  *   … | FR/EN | [Connexion / UserMenu]
  *
  * Visibilité conditionnelle des entrées :
@@ -297,6 +300,22 @@ export function Nav() {
       ],
     },
   ];
+
+  /**
+   * Section institutionnelle « Hi! PARIS Education ».
+   * Regroupe les pages non pédagogiques (About us, NeuriPP…).
+   * Contrairement aux sections Learning, ses pages n'ont pas de préfixe d'URL
+   * commun : le surlignage actif s'appuie sur les hrefs des items (cf. `NavDropdown`).
+   */
+  const EDUCATION_SECTION = {
+    label:       t.nav.education.label,
+    slug:        "hi-paris-education",
+    description: t.nav.education.description,
+    items: [
+      { href: "/about",   icon: "🏛", label: t.nav.education.aboutUs, desc: t.nav.education.aboutUsDesc },
+      { href: "/neuripp", icon: "🚀", label: t.nav.education.neuripp, desc: t.nav.education.neurippDesc },
+    ],
+  };
 
   // ── Fermeture de tous les menus au changement de route ──
   useEffect(() => {
@@ -377,18 +396,12 @@ export function Nav() {
               {t.nav.insights}
             </Link>
 
-            {/* Lien direct About us */}
-            <Link
-              href="/about"
-              className={clsx(
-                "px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
-                pathname.startsWith("/about")
-                  ? "bg-primary/10 text-primary font-semibold"
-                  : "text-gray-600 hover:text-primary hover:bg-primary/5"
-              )}
-            >
-              {t.nav.about}
-            </Link>
+            {/* Dropdown Hi! PARIS Education (About us, NeuriPP…) */}
+            <NavDropdown
+              {...EDUCATION_SECTION}
+              isOpen={openDropdown === EDUCATION_SECTION.slug}
+              onToggle={handleDropdownToggle}
+            />
 
             {/* 3 dropdowns Learning — itération sur LEARNING_SECTIONS */}
             {LEARNING_SECTIONS.map((section) => (

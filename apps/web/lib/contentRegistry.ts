@@ -17,6 +17,11 @@ export interface RegistryEntry {
 }
 
 export const CONTENT_REGISTRY: RegistryEntry[] = [
+  // About us (Hi! PARIS Education)
+  { key: "about.title", group: "About us", label: "Titre", fallback: "About us" },
+  { key: "about.intro", group: "About us", label: "Introduction", multiline: true,
+    fallback: "Cette page est en cours de rédaction. Elle présentera bientôt Hi! PARIS Education, ses missions et son écosystème pédagogique." },
+
   // NeuriPP
   { key: "neuripp.title", group: "NeuriPP", label: "Titre", fallback: "Appel à soumissions — Outils EdTech" },
   { key: "neuripp.intro", group: "NeuriPP", label: "Introduction", multiline: true,

@@ -99,9 +99,18 @@ export const fr = {
         description: "Apprendre en utilisant l'IA comme outil",
       },
       learningEdge: {
-        label:       "Learning at the Edge",
+        label:       "Learning at the Edge of AI",
         description: "Frontières et enjeux de l'IA",
       },
+    },
+    // Section institutionnelle Hi! PARIS Education (About us, NeuriPP…)
+    education: {
+      label:       "Hi! PARIS Education",
+      description: "L'écosystème pédagogique Hi! PARIS",
+      aboutUs:     "About us",
+      aboutUsDesc: "Qui sommes-nous",
+      neuripp:     "NeuriPP",
+      neurippDesc: "Appel à soumissions EdTech",
     },
     // Items de navigation par module dans les dropdowns
     items: {
