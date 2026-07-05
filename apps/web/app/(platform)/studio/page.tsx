@@ -145,9 +145,9 @@ function TagInput({ tags, onChange }: { tags: string[]; onChange: (t: string[]) 
   }
 
   return (
-    <div className="flex flex-wrap gap-1.5 bg-gray-800 border border-white/10 rounded-lg p-2.5 min-h-[42px]">
+    <div className="flex flex-wrap gap-1.5 bg-white border border-gray-300 rounded-lg p-2.5 min-h-[42px]">
       {tags.map((t) => (
-        <span key={t} className="flex items-center gap-1 text-xs bg-primary/20 text-primary-light border border-primary/20 px-2 py-0.5 rounded-full">
+        <span key={t} className="flex items-center gap-1 text-xs bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full">
           {t}
           <button type="button" onClick={() => onChange(tags.filter((x) => x !== t))} className="opacity-70 hover:opacity-100 ml-0.5">×</button>
         </span>
@@ -157,7 +157,7 @@ function TagInput({ tags, onChange }: { tags: string[]; onChange: (t: string[]) 
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={add}
         placeholder={tags.length === 0 ? "Ajouter des tags (Entrée pour valider)..." : ""}
-        className="text-sm text-white bg-transparent outline-none flex-1 min-w-[100px]"
+        className="text-sm text-gray-900 placeholder-gray-400 bg-transparent outline-none flex-1 min-w-[100px]"
       />
     </div>
   );
@@ -214,7 +214,7 @@ function CourseEditor() {
               <button
                 key={bt.type}
                 onClick={() => addBlock(bt.type)}
-                className="flex flex-col items-center gap-1 p-2.5 rounded-lg border border-white/10 hover:border-primary/40 hover:bg-primary/5 text-xs font-medium text-gray-400 hover:text-primary transition-all"
+                className="flex flex-col items-center gap-1 p-2.5 rounded-lg border border-gray-200 hover:border-primary/40 hover:bg-primary/5 text-xs font-medium text-gray-500 hover:text-primary transition-all"
               >
                 <span className="text-sm font-bold">{bt.icon}</span>
                 {bt.label}
@@ -259,13 +259,13 @@ function CourseEditor() {
             <div key={block.id} className="bg-white border border-gray-200 rounded-xl p-4 group">
               {/* Contrôles : type + déplacer + supprimer (visibles au hover) */}
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs font-semibold text-gray-600 bg-white/5 px-2 py-0.5 rounded uppercase tracking-wide">
+                <span className="text-xs font-semibold text-gray-600 bg-gray-100 px-2 py-0.5 rounded uppercase tracking-wide">
                   {block.type}
                 </span>
                 <div className="flex-1" />
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => move(block.id, "up")}   className="text-xs text-gray-500 hover:text-white px-1.5 py-0.5 rounded hover:bg-white/5">↑</button>
-                  <button onClick={() => move(block.id, "down")} className="text-xs text-gray-500 hover:text-white px-1.5 py-0.5 rounded hover:bg-white/5">↓</button>
+                  <button onClick={() => move(block.id, "up")}   className="text-xs text-gray-500 hover:text-gray-900 px-1.5 py-0.5 rounded hover:bg-gray-100">↑</button>
+                  <button onClick={() => move(block.id, "down")} className="text-xs text-gray-500 hover:text-gray-900 px-1.5 py-0.5 rounded hover:bg-gray-100">↓</button>
                   <button onClick={() => removeBlock(block.id)}  className="text-xs text-danger hover:text-danger-dark px-1.5 py-0.5 rounded hover:bg-danger/5">Supprimer</button>
                 </div>
               </div>
@@ -280,7 +280,7 @@ function CourseEditor() {
               {(block.type === "text" || block.type === "video" || block.type === "image") && (
                 <textarea defaultValue={block.content} rows={3}
                   placeholder={block.type === "text" ? "Contenu texte..." : block.type === "video" ? "URL ou ID YouTube..." : "URL de l'image..."}
-                  className="w-full text-sm text-gray-300 bg-gray-800 border border-white/10 rounded-lg p-3 focus:outline-none focus:border-primary/50 resize-none transition-colors"
+                  className="w-full text-sm text-gray-900 placeholder-gray-400 bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-primary/50 resize-none transition-colors"
                 />
               )}
               {/* Branche code : textarea monospaced avec contenu Python par défaut */}
@@ -296,7 +296,7 @@ function CourseEditor() {
                   {["Option A", "Option B", "Option C", "Option D"].map((opt) => (
                     <div key={opt} className="flex items-center gap-3">
                       <input type="radio" name={`quiz-${block.id}`} className="accent-primary" />
-                      <input placeholder={opt} className="flex-1 text-sm text-gray-300 bg-gray-800 border border-white/10 rounded px-3 py-1.5 focus:outline-none focus:border-primary/50 transition-colors" />
+                      <input placeholder={opt} className="flex-1 text-sm text-gray-900 placeholder-gray-400 bg-white border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:border-primary/50 transition-colors" />
                     </div>
                   ))}
                 </div>
@@ -306,7 +306,7 @@ function CourseEditor() {
 
           {/* Bouton ajout rapide d'un bloc texte */}
           <button onClick={() => addBlock("text")}
-            className="border-2 border-dashed border-white/10 rounded-xl p-6 text-sm text-gray-600 hover:border-primary/30 hover:text-primary/60 transition-colors w-full"
+            className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-sm text-gray-500 hover:border-primary/40 hover:text-primary transition-colors w-full"
           >
             + Ajouter un bloc
           </button>
@@ -371,15 +371,15 @@ function MOOCEditor() {
                     // Branche sélectionné : fond primary léger + bordure primary
                     selected ? "bg-primary/10 border-primary/30"
                     // Branche non sélectionné : fond transparent + hover
-                    : "border-white/5 hover:border-white/20"
+                    : "border-gray-200 hover:border-gray-300"
                   }`}
                 >
                   <span className={`mt-0.5 shrink-0 w-4 h-4 rounded border flex items-center justify-center text-xs font-bold ${
-                    selected ? "bg-primary border-primary text-white" : "border-white/20 text-transparent"
+                    selected ? "bg-primary border-primary text-white" : "border-gray-300 text-transparent"
                   }`}>✓</span>
                   <div>
-                    <p className={`text-xs font-semibold leading-tight ${selected ? "text-primary-light" : "text-gray-700"}`}>{c.title}</p>
-                    <p className="text-xs text-gray-600 mt-0.5">{Math.floor(c.duration / 60)}h · {c.level}</p>
+                    <p className={`text-xs font-semibold leading-tight ${selected ? "text-primary" : "text-gray-700"}`}>{c.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{Math.floor(c.duration / 60)}h · {c.level}</p>
                   </div>
                 </button>
               );
@@ -403,7 +403,7 @@ function MOOCEditor() {
           </Field>
           {/* Durée estimée en lecture seule (calculée automatiquement) */}
           <Field label="Durée estimée (auto)">
-            <div className={`${INP} text-gray-400 bg-gray-800/50 cursor-default`}>
+            <div className={`${INP} text-gray-500 bg-gray-50 cursor-default`}>
               {ordered.length > 0 ? `~${Math.floor(totalMin / 60)}h${totalMin % 60 > 0 ? `${totalMin % 60}min` : ""} · ${ordered.length} cours` : "Sélectionnez des cours"}
             </div>
           </Field>
@@ -434,19 +434,19 @@ function MOOCEditor() {
           ) : (
             <div className="flex flex-col gap-2">
               {ordered.map((c, i) => (
-                <div key={c.id} className="flex items-center gap-3 bg-gray-800 border border-white/10 rounded-lg px-4 py-3">
+                <div key={c.id} className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
                   {/* Numéro de position */}
-                  <span className="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold flex items-center justify-center shrink-0">
+                  <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center shrink-0">
                     {i + 1}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white truncate">{c.title}</p>
+                    <p className="text-sm font-semibold text-gray-900 truncate">{c.title}</p>
                     <p className="text-xs text-gray-500">{c.school} · {Math.floor(c.duration / 60)}h · {c.level}</p>
                   </div>
                   {/* Contrôles déplacer + retirer */}
                   <div className="flex items-center gap-1 shrink-0">
-                    <button onClick={() => move(c.id, "up")}   className="text-xs text-gray-500 hover:text-white px-1.5 py-1 rounded hover:bg-white/5 transition-colors">↑</button>
-                    <button onClick={() => move(c.id, "down")} className="text-xs text-gray-500 hover:text-white px-1.5 py-1 rounded hover:bg-white/5 transition-colors">↓</button>
+                    <button onClick={() => move(c.id, "up")}   className="text-xs text-gray-500 hover:text-gray-900 px-1.5 py-1 rounded hover:bg-gray-100 transition-colors">↑</button>
+                    <button onClick={() => move(c.id, "down")} className="text-xs text-gray-500 hover:text-gray-900 px-1.5 py-1 rounded hover:bg-gray-100 transition-colors">↓</button>
                     <button onClick={() => toggle(c.id)}       className="text-xs text-danger hover:text-danger-dark px-1.5 py-1 rounded hover:bg-danger/5 transition-colors">×</button>
                   </div>
                 </div>
@@ -498,7 +498,7 @@ function VideoEditor() {
               <img src={thumbSrc} alt="Miniature" className="w-full h-full object-cover" />
             ) : (
               // Branche pas de miniature : placeholder ▶
-              <div className="flex flex-col items-center gap-2 text-gray-700">
+              <div className="flex flex-col items-center gap-2 text-gray-400">
                 <span className="text-4xl">▶</span>
                 <span className="text-xs">Aperçu miniature</span>
               </div>
@@ -516,7 +516,7 @@ function VideoEditor() {
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {tags.slice(0, 3).map((t) => (
-                  <span key={t} className="text-xs bg-white/5 border border-white/10 text-gray-400 px-2 py-0.5 rounded-full">{t}</span>
+                  <span key={t} className="text-xs bg-gray-50 border border-gray-200 text-gray-500 px-2 py-0.5 rounded-full">{t}</span>
                 ))}
               </div>
             )}
@@ -601,8 +601,8 @@ function AppEditor() {
       <aside className="w-72 shrink-0">
         <div className="bg-white border border-gray-200 rounded-xl p-5 sticky top-24">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Aperçu de la carte</p>
-          <div className="bg-gray-800 border border-white/10 rounded-xl p-4 mb-3">
-            <h4 className="font-bold text-white text-sm mb-1 line-clamp-1">
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-3">
+            <h4 className="font-bold text-gray-900 text-sm mb-1 line-clamp-1">
               {title || "Nom de l'application"}
             </h4>
             <p className="text-xs text-gray-500 mb-3 line-clamp-3">
@@ -611,14 +611,14 @@ function AppEditor() {
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-1 mb-3">
                 {tags.slice(0, 3).map((t) => (
-                  <span key={t} className="text-xs bg-white/5 border border-white/10 text-gray-400 px-2 py-0.5 rounded-full">{t}</span>
+                  <span key={t} className="text-xs bg-gray-50 border border-gray-200 text-gray-500 px-2 py-0.5 rounded-full">{t}</span>
                 ))}
               </div>
             )}
-            <div className="flex items-center justify-between text-xs text-gray-600 border-t border-white/5 pt-2.5">
+            <div className="flex items-center justify-between text-xs text-gray-500 border-t border-gray-200 pt-2.5">
               <span>{school}</span>
               {/* Indicateur URL valide / manquante */}
-              <span className={validUrl ? "text-primary font-medium" : "text-gray-700"}>
+              <span className={validUrl ? "text-primary font-medium" : "text-gray-400"}>
                 {validUrl ? "Lancer →" : "URL manquante"}
               </span>
             </div>
