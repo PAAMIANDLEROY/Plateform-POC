@@ -37,8 +37,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { InsightBlock } from "@/lib/mock";
 import { insightsApi } from "@/lib/api";
+
+/** Bloc de contenu d'un article Hi! Insights (union discriminée par `type`). */
+type InsightBlock =
+  | { type: "text";        content: string }
+  | { type: "heading";     content: string; level: 2 | 3 }
+  | { type: "code";        content: string; language: string }
+  | { type: "quote";       content: string; author?: string }
+  | { type: "key-insight"; content: string }
+  | { type: "figure";      url: string; caption: string }
+  | { type: "divider" };
 
 /** Type interne : bloc avec ID unique pour les opérations de liste React. */
 type Block = InsightBlock & { id: number };

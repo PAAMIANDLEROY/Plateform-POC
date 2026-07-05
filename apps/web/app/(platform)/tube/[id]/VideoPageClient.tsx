@@ -22,10 +22,7 @@ export function VideoPageClient({ id }: { id: string }) {
   const [related, setRelated] = useState<VideoResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState("");
-  const [comments, setComments] = useState<Comment[]>([
-    { id: "1", author: "Alice M.", content: "Excellente introduction, très claire !", createdAt: "il y a 2 jours" },
-    { id: "2", author: "Thomas B.", content: "La partie sur la rétropropagation mériterait d'être développée.", createdAt: "il y a 5 jours" },
-  ]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [watched, setWatched] = useState(0);
 
   useEffect(() => {

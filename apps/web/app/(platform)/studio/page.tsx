@@ -4,7 +4,7 @@
  *
  * Interface à 5 modes de création (onglets) :
  *   - `course`  : Éditeur de cours par blocs.
- *   - `mooc`    : Éditeur de parcours multi-cours (séquence de `MOCK_COURSES`).
+ *   - `mooc`    : Éditeur de parcours multi-cours (séquence de cours réels via l'API).
  *   - `video`   : Éditeur de vidéo avec préview miniature live.
  *   - `app`     : Éditeur d'application interactive (URL Streamlit/Gradio).
  *   - `ai`      : Studio IA — pipelines "Excel → Quiz" et "Vidéo + Slides → Cours".
@@ -53,9 +53,10 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { MOCK_COURSES } from "@/lib/mock";
+import { coursesApi } from "@/lib/api";
+import type { CourseResponse } from "@/lib/api";
 
 // ─── Types & constantes ───────────────────────────────────────────────────────
 
@@ -169,38 +170,89 @@ function TagInput({ tags, onChange }: { tags: string[]; onChange: (t: string[]) 
  * Éditeur de cours par blocs avec palette latérale.
  * Blocs pré-initialisés : heading "Introduction" + texte "Bienvenue...".
  */
+type EditorBlock = { id: number; type: string; content: Record<string, unknown> };
+const cstr = (c: Record<string, unknown>, k: string) => (typeof c[k] === "string" ? (c[k] as string) : "");
+const carr = (c: Record<string, unknown>, k: string) => (Array.isArray(c[k]) ? (c[k] as string[]) : []);
+const cnum = (c: Record<string, unknown>, k: string) => (typeof c[k] === "number" ? (c[k] as number) : 0);
+const LEVEL_MAP: Record<string, string> = { "Débutant": "beginner", "Intermédiaire": "intermediate", "Avancé": "advanced" };
+
 function CourseEditor() {
-  const [blocks, setBlocks] = useState([
-    { id: 1, type: "heading", content: "Introduction" },
-    { id: 2, type: "text",    content: "Bienvenue dans ce cours..." },
+  const [blocks, setBlocks] = useState<EditorBlock[]>([
+    { id: 1, type: "heading", content: { content: "Introduction" } },
+    { id: 2, type: "text", content: { content: "" } },
   ]);
-  const [title,    setTitle]    = useState("Nouveau cours");
+  const [title, setTitle] = useState("");
   const [category, setCategory] = useState("IA & Data");
-  const [level,    setLevel]    = useState("Débutant");
-  const [school,   setSchool]   = useState("Polytechnique");
+  const [level, setLevel] = useState("Débutant");
+  const [school, setSchool] = useState("Polytechnique");
+  const [access, setAccess] = useState("public");
+  const [saving, setSaving] = useState(false);
+  const [savedId, setSavedId] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
-  /** Ajoute un bloc de type donné à la fin de la liste. */
-  function addBlock(type: string) { setBlocks((b) => [...b, { id: Date.now(), type, content: "" }]); }
-
-  /** Supprime un bloc par son ID. */
+  function defaultContent(type: string): Record<string, unknown> {
+    return type === "quiz" ? { question: "", options: ["", "", "", ""], answer: 0, explanation: "" } : { content: "" };
+  }
+  function addBlock(type: string) { setBlocks((b) => [...b, { id: Date.now(), type, content: defaultContent(type) }]); }
   function removeBlock(id: number) { setBlocks((b) => b.filter((bl) => bl.id !== id)); }
-
-  /**
-   * Déplace un bloc d'une position vers le haut ("up") ou le bas ("down").
-   * Ignore si déjà en limite de tableau.
-   */
+  function setContent(id: number, content: Record<string, unknown>) {
+    setBlocks((b) => b.map((bl) => (bl.id === id ? { ...bl, content } : bl)));
+  }
   function move(id: number, dir: "up" | "down") {
     setBlocks((b) => {
       const i = b.findIndex((bl) => bl.id === id);
-      // Guard : déjà en tête → pas de déplacement vers le haut
       if (dir === "up" && i === 0) return b;
-      // Guard : déjà en queue → pas de déplacement vers le bas
       if (dir === "down" && i === b.length - 1) return b;
       const n = [...b];
       const j = dir === "up" ? i - 1 : i + 1;
       [n[i], n[j]] = [n[j], n[i]];
       return n;
     });
+  }
+
+  async function publish() {
+    if (!title.trim()) { setError("Titre requis."); return; }
+    setSaving(true); setError("");
+    // Mappe les blocs éditeur → format base (types rendus : heading/text/markdown/quiz).
+    const dbBlocks = blocks.map((b) => {
+      if (b.type === "quiz") {
+        return { type: "quiz", content: { question: cstr(b.content, "question"), options: carr(b.content, "options"), answer: cnum(b.content, "answer"), explanation: cstr(b.content, "explanation") } };
+      }
+      const text = cstr(b.content, "content");
+      if (b.type === "heading") return { type: "heading", content: { content: text } };
+      if (b.type === "code") return { type: "markdown", content: { content: text } };
+      if (b.type === "image") return { type: "markdown", content: { content: text ? `![image](${text})` : "" } };
+      if (b.type === "video") return { type: "markdown", content: { content: text } };
+      return { type: "text", content: { content: text } };
+    });
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/api/v1/studio/save-course`, {
+        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: title.trim(), level: LEVEL_MAP[level] ?? "intermediate", language: "fr", blocks: dbBlocks, category, school, access_level: access }),
+      });
+      if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b.detail ?? "Échec de la publication"); }
+      const data = await res.json();
+      setSavedId(data.course_id ?? null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Échec de la publication");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (savedId) {
+    return (
+      <div className="text-center py-16">
+        <div className="w-16 h-16 mx-auto bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-3xl mb-4">✓</div>
+        <h2 className="text-xl font-bold text-gray-900 mb-1">Cours publié !</h2>
+        <p className="text-gray-500 text-sm mb-6">« {title} » est enregistré dans le catalogue.</p>
+        <div className="flex gap-3 justify-center">
+          <a href={`/courses/${savedId}`} className="bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary-dark transition-colors">Voir le cours →</a>
+          <button onClick={() => { setSavedId(null); setTitle(""); setBlocks([{ id: 1, type: "heading", content: { content: "Introduction" } }]); }}
+            className="border border-gray-200 text-gray-600 px-5 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-colors">Créer un autre cours</button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -211,11 +263,8 @@ function CourseEditor() {
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Blocs</p>
           <div className="grid grid-cols-2 gap-2">
             {BLOCK_TYPES.map((bt) => (
-              <button
-                key={bt.type}
-                onClick={() => addBlock(bt.type)}
-                className="flex flex-col items-center gap-1 p-2.5 rounded-lg border border-gray-200 hover:border-primary/40 hover:bg-primary/5 text-xs font-medium text-gray-500 hover:text-primary transition-all"
-              >
+              <button key={bt.type} onClick={() => addBlock(bt.type)}
+                className="flex flex-col items-center gap-1 p-2.5 rounded-lg border border-gray-200 hover:border-primary/40 hover:bg-primary/5 text-xs font-medium text-gray-500 hover:text-primary transition-all">
                 <span className="text-sm font-bold">{bt.icon}</span>
                 {bt.label}
               </button>
@@ -226,8 +275,8 @@ function CourseEditor() {
 
       {/* Zone principale */}
       <div className="flex-1 min-w-0">
-        {/* Métadonnées en 3 colonnes */}
-        <div className="bg-white border border-gray-200 rounded-xl p-5 mb-4 grid grid-cols-3 gap-4">
+        {/* Métadonnées */}
+        <div className="bg-white border border-gray-200 rounded-xl p-5 mb-4 grid grid-cols-2 md:grid-cols-4 gap-4">
           <Field label="Catégorie">
             <select value={category} onChange={(e) => setCategory(e.target.value)} className={SEL}>
               {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
@@ -243,25 +292,25 @@ function CourseEditor() {
               {SCHOOLS.map((s) => <option key={s}>{s}</option>)}
             </select>
           </Field>
+          <Field label="Accès">
+            <select value={access} onChange={(e) => setAccess(e.target.value)} className={SEL}>
+              <option value="public">Ouvert (tous)</option>
+              <option value="hiparis">Hi! PARIS (élèves)</option>
+              <option value="cohort">Cohorte</option>
+            </select>
+          </Field>
         </div>
 
-        {/* Titre du cours */}
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Titre du cours..."
-          className="w-full text-2xl font-extrabold text-gray-900 bg-transparent border-b-2 border-gray-200 focus:border-primary focus:outline-none px-1 py-2 mb-5 transition-colors"
-        />
+        {/* Titre */}
+        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titre du cours..."
+          className="w-full text-2xl font-extrabold text-gray-900 bg-transparent border-b-2 border-gray-200 focus:border-primary focus:outline-none px-1 py-2 mb-5 transition-colors" />
 
-        {/* Séquence des blocs éditables */}
+        {/* Blocs éditables (contrôlés) */}
         <div className="flex flex-col gap-3">
           {blocks.map((block) => (
             <div key={block.id} className="bg-white border border-gray-200 rounded-xl p-4 group">
-              {/* Contrôles : type + déplacer + supprimer (visibles au hover) */}
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs font-semibold text-gray-600 bg-gray-100 px-2 py-0.5 rounded uppercase tracking-wide">
-                  {block.type}
-                </span>
+                <span className="text-xs font-semibold text-gray-600 bg-gray-100 px-2 py-0.5 rounded uppercase tracking-wide">{block.type}</span>
                 <div className="flex-1" />
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button onClick={() => move(block.id, "up")}   className="text-xs text-gray-500 hover:text-gray-900 px-1.5 py-0.5 rounded hover:bg-gray-100">↑</button>
@@ -270,45 +319,50 @@ function CourseEditor() {
                 </div>
               </div>
 
-              {/* Branche heading : input titre de section */}
               {block.type === "heading" && (
-                <input defaultValue={block.content} placeholder="Titre de section..."
-                  className="w-full text-lg font-bold text-gray-900 bg-transparent border-b border-gray-200 focus:border-primary focus:outline-none pb-1 transition-colors"
-                />
+                <input value={cstr(block.content, "content")} onChange={(e) => setContent(block.id, { ...block.content, content: e.target.value })}
+                  placeholder="Titre de section..." className="w-full text-lg font-bold text-gray-900 bg-transparent border-b border-gray-200 focus:border-primary focus:outline-none pb-1 transition-colors" />
               )}
-              {/* Branche text/video/image : textarea avec placeholder contextuel */}
               {(block.type === "text" || block.type === "video" || block.type === "image") && (
-                <textarea defaultValue={block.content} rows={3}
+                <textarea value={cstr(block.content, "content")} onChange={(e) => setContent(block.id, { ...block.content, content: e.target.value })} rows={3}
                   placeholder={block.type === "text" ? "Contenu texte..." : block.type === "video" ? "URL ou ID YouTube..." : "URL de l'image..."}
-                  className="w-full text-sm text-gray-900 placeholder-gray-400 bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-primary/50 resize-none transition-colors"
-                />
+                  className="w-full text-sm text-gray-900 placeholder-gray-400 bg-white border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-primary/50 resize-none transition-colors" />
               )}
-              {/* Branche code : textarea monospaced avec contenu Python par défaut */}
               {block.type === "code" && (
-                <textarea defaultValue="```python\n# Votre code ici\n```" rows={5}
-                  className="w-full text-sm font-mono text-green-400 bg-gray-950 border border-white/10 rounded-lg p-3 focus:outline-none resize-none"
-                />
+                <textarea value={cstr(block.content, "content")} onChange={(e) => setContent(block.id, { ...block.content, content: e.target.value })} rows={5}
+                  placeholder={"```python\n# Votre code ici\n```"}
+                  className="w-full text-sm font-mono text-gray-800 bg-gray-100 border border-gray-200 rounded-lg p-3 focus:outline-none resize-none" />
               )}
-              {/* Branche quiz : question + 4 options radio */}
               {block.type === "quiz" && (
                 <div className="flex flex-col gap-2">
-                  <input placeholder="Question..." className="w-full text-sm font-semibold text-gray-900 bg-transparent border-b border-gray-200 focus:border-primary focus:outline-none pb-1" />
-                  {["Option A", "Option B", "Option C", "Option D"].map((opt) => (
-                    <div key={opt} className="flex items-center gap-3">
-                      <input type="radio" name={`quiz-${block.id}`} className="accent-primary" />
-                      <input placeholder={opt} className="flex-1 text-sm text-gray-900 placeholder-gray-400 bg-white border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:border-primary/50 transition-colors" />
+                  <input value={cstr(block.content, "question")} onChange={(e) => setContent(block.id, { ...block.content, question: e.target.value })}
+                    placeholder="Question..." className="w-full text-sm font-semibold text-gray-900 bg-transparent border-b border-gray-200 focus:border-primary focus:outline-none pb-1" />
+                  {carr(block.content, "options").map((opt, j) => (
+                    <div key={j} className="flex items-center gap-3">
+                      <input type="radio" name={`quiz-${block.id}`} checked={cnum(block.content, "answer") === j} onChange={() => setContent(block.id, { ...block.content, answer: j })} className="accent-primary" title="Bonne réponse" />
+                      <input value={opt} onChange={(e) => { const o = [...carr(block.content, "options")]; o[j] = e.target.value; setContent(block.id, { ...block.content, options: o }); }}
+                        placeholder={`Option ${String.fromCharCode(65 + j)}`} className="flex-1 text-sm text-gray-900 placeholder-gray-400 bg-white border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:border-primary/50 transition-colors" />
                     </div>
                   ))}
+                  <textarea value={cstr(block.content, "explanation")} onChange={(e) => setContent(block.id, { ...block.content, explanation: e.target.value })} rows={2}
+                    placeholder="Explication (affichée après réponse)" className="text-sm text-gray-900 placeholder-gray-400 bg-white border border-gray-300 rounded-lg p-2 focus:outline-none focus:border-primary/50 resize-none" />
                 </div>
               )}
             </div>
           ))}
 
-          {/* Bouton ajout rapide d'un bloc texte */}
           <button onClick={() => addBlock("text")}
-            className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-sm text-gray-500 hover:border-primary/40 hover:text-primary transition-colors w-full"
-          >
+            className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-sm text-gray-500 hover:border-primary/40 hover:text-primary transition-colors w-full">
             + Ajouter un bloc
+          </button>
+        </div>
+
+        {/* Barre de publication */}
+        {error && <p className="mt-4 text-sm text-danger bg-danger/5 border border-danger/20 rounded-lg px-3 py-2">{error}</p>}
+        <div className="flex justify-end mt-5">
+          <button onClick={publish} disabled={saving || !title.trim()}
+            className="bg-primary text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary-dark transition-colors disabled:opacity-40">
+            {saving ? "Publication…" : "Publier le cours →"}
           </button>
         </div>
       </div>
@@ -327,6 +381,10 @@ function MOOCEditor() {
   const [description,     setDescription]     = useState("");
   const [school,          setSchool]          = useState("Polytechnique");
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
+  const [courses,         setCourses]         = useState<CourseResponse[]>([]);
+
+  // Cours réels disponibles (Supabase) pour composer le parcours.
+  useEffect(() => { coursesApi.list().then(setCourses).catch(() => setCourses([])); }, []);
 
   /** Bascule l'état sélectionné/désélectionné d'un cours par ID. */
   function toggle(id: string) {
@@ -349,10 +407,10 @@ function MOOCEditor() {
   }
 
   /** Cours dans l'ordre de la sélection. */
-  const ordered = selectedCourses.map((id) => MOCK_COURSES.find((c) => c.id === id)).filter(Boolean) as typeof MOCK_COURSES;
+  const ordered = selectedCourses.map((id) => courses.find((c) => c.id === id)).filter(Boolean) as CourseResponse[];
 
   /** Durée totale en minutes (somme des durées des cours sélectionnés). */
-  const totalMin = ordered.reduce((acc, c) => acc + c.duration, 0);
+  const totalMin = ordered.reduce((acc, c) => acc + c.estimated_duration_minutes, 0);
 
   return (
     <div className="flex gap-6">
@@ -363,7 +421,10 @@ function MOOCEditor() {
             Cours disponibles
           </p>
           <div className="flex flex-col gap-2 max-h-[70vh] overflow-y-auto pr-1">
-            {MOCK_COURSES.map((c) => {
+            {courses.length === 0 && (
+              <p className="text-xs text-gray-500 py-4 text-center">Aucun cours disponible pour le moment.</p>
+            )}
+            {courses.map((c) => {
               const selected = selectedCourses.includes(c.id);
               return (
                 <button key={c.id} onClick={() => toggle(c.id)}
@@ -379,7 +440,7 @@ function MOOCEditor() {
                   }`}>✓</span>
                   <div>
                     <p className={`text-xs font-semibold leading-tight ${selected ? "text-primary" : "text-gray-700"}`}>{c.title}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{Math.floor(c.duration / 60)}h · {c.level}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{Math.floor(c.estimated_duration_minutes / 60)}h · {c.level}</p>
                   </div>
                 </button>
               );
@@ -441,7 +502,7 @@ function MOOCEditor() {
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-900 truncate">{c.title}</p>
-                    <p className="text-xs text-gray-500">{c.school} · {Math.floor(c.duration / 60)}h · {c.level}</p>
+                    <p className="text-xs text-gray-500">{c.school} · {Math.floor(c.estimated_duration_minutes / 60)}h · {c.level}</p>
                   </div>
                   {/* Contrôles déplacer + retirer */}
                   <div className="flex items-center gap-1 shrink-0">
