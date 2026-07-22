@@ -261,45 +261,11 @@ export function Nav() {
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   /**
-   * Configuration des 3 sections Learning.
-   * Défini à l'intérieur du composant pour accéder aux traductions (`t`).
-   * Chaque section génère un `NavDropdown` avec 4 modules (Tube, Course, MOOC, App).
+   * Version « soft » (prod) : les 3 sections Learning (Learning AI / With AI / Edge)
+   * sont retirées de la nav au profit d'un unique pilier « Hi! Databootcamp »,
+   * rendu plus bas comme lien direct vers le catalogue de cours (/courses).
+   * La configuration complète des piliers Learning est conservée sur la branche `full`.
    */
-  const LEARNING_SECTIONS = [
-    {
-      label:       t.nav.sections.learningAI.label,
-      slug:        "learning-ai",
-      description: t.nav.sections.learningAI.description,
-      items: [
-        { href: "/learning-ai/tube",    icon: "▶",  label: "Hi! Tube",   desc: t.nav.items.tube },
-        { href: "/learning-ai/courses", icon: "📖", label: "Hi! Course", desc: t.nav.items.course },
-        { href: "/learning-ai/moocs",   icon: "🎓", label: "Hi! MOOC",   desc: t.nav.items.mooc },
-        { href: "/learning-ai/apps",    icon: "⚡", label: "Hi! App",    desc: t.nav.items.app },
-      ],
-    },
-    {
-      label:       t.nav.sections.learningWith.label,
-      slug:        "learning-with-ai",
-      description: t.nav.sections.learningWith.description,
-      items: [
-        { href: "/learning-with-ai/tube",    icon: "▶",  label: "Hi! Tube",   desc: t.nav.items.tube },
-        { href: "/learning-with-ai/courses", icon: "📖", label: "Hi! Course", desc: t.nav.items.course },
-        { href: "/learning-with-ai/moocs",   icon: "🎓", label: "Hi! MOOC",   desc: t.nav.items.mooc },
-        { href: "/learning-with-ai/apps",    icon: "⚡", label: "Hi! App",    desc: t.nav.items.app },
-      ],
-    },
-    {
-      label:       t.nav.sections.learningEdge.label,
-      slug:        "learning-edge-ai",
-      description: t.nav.sections.learningEdge.description,
-      items: [
-        { href: "/learning-edge-ai/tube",    icon: "▶",  label: "Hi! Tube",   desc: t.nav.items.tube },
-        { href: "/learning-edge-ai/courses", icon: "📖", label: "Hi! Course", desc: t.nav.items.course },
-        { href: "/learning-edge-ai/moocs",   icon: "🎓", label: "Hi! MOOC",   desc: t.nav.items.mooc },
-        { href: "/learning-edge-ai/apps",    icon: "⚡", label: "Hi! App",    desc: t.nav.items.app },
-      ],
-    },
-  ];
 
   /**
    * Section institutionnelle « Hi! PARIS Education ».
@@ -403,15 +369,22 @@ export function Nav() {
               onToggle={handleDropdownToggle}
             />
 
-            {/* 3 dropdowns Learning — itération sur LEARNING_SECTIONS */}
-            {LEARNING_SECTIONS.map((section) => (
-              <NavDropdown
-                key={section.slug}
-                {...section}
-                isOpen={openDropdown === section.slug}
-                onToggle={handleDropdownToggle}
-              />
-            ))}
+            {/*
+             * Pilier « Hi! Databootcamp » — version soft (prod).
+             * Lien direct (pas de sous-menu) vers le catalogue de cours.
+             * Remplace les 3 dropdowns Learning, conservés sur la branche `full`.
+             */}
+            <Link
+              href="/courses"
+              className={clsx(
+                "px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
+                pathname.startsWith("/courses")
+                  ? "bg-primary/10 text-primary font-semibold"
+                  : "text-gray-600 hover:text-primary hover:bg-primary/5"
+              )}
+            >
+              {t.nav.databootcamp}
+            </Link>
 
             {/*
              * Studio, LMS, Admin et « Mon parcours » ne sont plus dans la barre :
