@@ -80,6 +80,14 @@ export const fr = {
   nav: {
     insights:       "Insights",
     databootcamp:   "Hi! Databootcamp",
+    // Sous-menu du pilier Hi! Databootcamp (présentation + liste des cours)
+    databootcampMenu: {
+      description:  "Programme intensif Data Science & IA",
+      bootcamp:     "Data Bootcamp",
+      bootcampDesc: "Le programme d'été",
+      courses:      "Liste des cours",
+      coursesDesc:  "Les cours du bootcamp",
+    },
     about:          "NeuriPP",
     myLearning:     "Mon parcours",
     studio:         "Studio",

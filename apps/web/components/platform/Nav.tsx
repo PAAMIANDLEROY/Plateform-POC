@@ -262,8 +262,8 @@ export function Nav() {
 
   /**
    * Version « soft » (prod) : les 3 sections Learning (Learning AI / With AI / Edge)
-   * sont retirées de la nav au profit d'un unique pilier « Hi! Databootcamp »,
-   * rendu plus bas comme lien direct vers le catalogue de cours (/courses).
+   * sont retirées de la nav au profit d'un unique pilier « Hi! Databootcamp »
+   * (dropdown défini ci-dessous, `DATABOOTCAMP_SECTION`).
    * La configuration complète des piliers Learning est conservée sur la branche `full`.
    */
 
@@ -280,6 +280,22 @@ export function Nav() {
     items: [
       { href: "/about",   icon: "🏛", label: t.nav.education.aboutUs, desc: t.nav.education.aboutUsDesc },
       { href: "/neuripp", icon: "🚀", label: t.nav.education.neuripp, desc: t.nav.education.neurippDesc },
+    ],
+  };
+
+  /**
+   * Pilier « Hi! Databootcamp » (version soft/prod).
+   * Dropdown avec deux pages, toutes sous le préfixe d'URL `/databootcamp` :
+   *   - la page de présentation du bootcamp (contenu hi-paris.fr/data-bootcamp) ;
+   *   - la liste des cours du bootcamp (vide pour l'instant).
+   */
+  const DATABOOTCAMP_SECTION = {
+    label:       t.nav.databootcamp,
+    slug:        "databootcamp",
+    description: t.nav.databootcampMenu.description,
+    items: [
+      { href: "/databootcamp",         icon: "🚀", label: t.nav.databootcampMenu.bootcamp, desc: t.nav.databootcampMenu.bootcampDesc },
+      { href: "/databootcamp/courses", icon: "📚", label: t.nav.databootcampMenu.courses,  desc: t.nav.databootcampMenu.coursesDesc },
     ],
   };
 
@@ -340,7 +356,7 @@ export function Nav() {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center gap-2">
 
           {/* ── Logo ── */}
-          <Link href="/dashboard" className="shrink-0 mr-4 flex items-center gap-0 select-none">
+          <Link href="/" className="shrink-0 mr-4 flex items-center gap-0 select-none">
             <span className="text-xl font-extrabold text-primary tracking-tight">Hi!</span>
             <span className="text-xl font-extrabold text-gray-900 tracking-tight"> Platform</span>
           </Link>
@@ -370,21 +386,15 @@ export function Nav() {
             />
 
             {/*
-             * Pilier « Hi! Databootcamp » — version soft (prod).
-             * Lien direct (pas de sous-menu) vers le catalogue de cours.
+             * Dropdown « Hi! Databootcamp » — version soft (prod).
+             * Deux pages : présentation du bootcamp + liste des cours.
              * Remplace les 3 dropdowns Learning, conservés sur la branche `full`.
              */}
-            <Link
-              href="/courses"
-              className={clsx(
-                "px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
-                pathname.startsWith("/courses")
-                  ? "bg-primary/10 text-primary font-semibold"
-                  : "text-gray-600 hover:text-primary hover:bg-primary/5"
-              )}
-            >
-              {t.nav.databootcamp}
-            </Link>
+            <NavDropdown
+              {...DATABOOTCAMP_SECTION}
+              isOpen={openDropdown === DATABOOTCAMP_SECTION.slug}
+              onToggle={handleDropdownToggle}
+            />
 
             {/*
              * Studio, LMS, Admin et « Mon parcours » ne sont plus dans la barre :
