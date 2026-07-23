@@ -9,6 +9,7 @@
 "use client";
 
 import type React from "react";
+import { RunnableCodeBlock } from "@/components/platform/RunnableCodeBlock";
 
 const DEFAULT_STEPS = ["Source", "Traitement IA", "Édition", "Publication"];
 
@@ -117,19 +118,25 @@ export function MarkdownPreview({ content, variant = "dark" }: { content: string
     } else if (line.startsWith("> ")) {
       rendered.push(<blockquote key={i} className={`border-l-2 pl-4 text-sm my-2 ${s.quote}`}>{line.slice(2)}</blockquote>);
     } else if (line.startsWith("```")) {
-      const lang = line.slice(3);
+      const lang = line.slice(3).trim();
       const codeLines: string[] = [];
       i++;
       while (i < lines.length && !lines[i].startsWith("```")) {
         codeLines.push(lines[i]);
         i++;
       }
-      rendered.push(
-        <pre key={i} className={`border rounded-xl p-4 text-sm font-mono overflow-x-auto my-3 ${s.code}`}>
-          {lang && <div className={`text-xs mb-2 ${s.codeLang}`}>{lang}</div>}
-          {codeLines.join("\n")}
-        </pre>
-      );
+      // Fence ```python-run``` (ou ```run```) → bloc de code Python exécutable dans le navigateur.
+      // Les fences classiques (```python, ```js…) restent un affichage statique.
+      if (lang === "python-run" || lang === "run") {
+        rendered.push(<RunnableCodeBlock key={i} code={codeLines.join("\n")} />);
+      } else {
+        rendered.push(
+          <pre key={i} className={`border rounded-xl p-4 text-sm font-mono overflow-x-auto my-3 ${s.code}`}>
+            {lang && <div className={`text-xs mb-2 ${s.codeLang}`}>{lang}</div>}
+            {codeLines.join("\n")}
+          </pre>
+        );
+      }
     } else if (line.startsWith("- [x] ") || line.startsWith("- [ ] ")) {
       const correct = line.startsWith("- [x]");
       const text = line.slice(6);
