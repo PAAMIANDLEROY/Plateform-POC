@@ -41,7 +41,7 @@ export function Footer() {
           {/* Logo texte "Hi! Platform" */}
           <div className="flex items-baseline gap-0 mb-3">
             <span className="text-2xl font-extrabold text-primary-light tracking-tight">Hi!</span>
-            <span className="text-2xl font-extrabold text-white tracking-tight"> Platform</span>
+            <span className="text-2xl font-extrabold text-white tracking-tight"> PARIS Education</span>
           </div>
           <p className="text-sm text-gray-400 leading-relaxed max-w-xs">
             {t.footer.description}

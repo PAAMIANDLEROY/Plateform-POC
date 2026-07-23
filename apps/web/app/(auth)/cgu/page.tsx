@@ -1,6 +1,6 @@
 /**
  * @file (auth)/cgu/page.tsx
- * @description Page des Conditions Générales d'Utilisation de Hi! Platform "/cgu".
+ * @description Page des Conditions Générales d'Utilisation de Hi! PARIS Education "/cgu".
  *
  * Composant serveur (pas de "use client") — contenu statique, pas d'état interactif.
  * Thème sombre (`bg-black`) cohérent avec les pages légales.
@@ -44,12 +44,12 @@ export default function CGUPage() {
 
         <h1 className="text-3xl font-extrabold text-white mb-2">Conditions Générales d'Utilisation</h1>
         {/* Version et date des CGU */}
-        <p className="text-gray-500 text-sm mb-10">Hi! Platform — Hi! PARIS · Version 1.0 · Juin 2026</p>
+        <p className="text-gray-500 text-sm mb-10">Hi! PARIS Education — Hi! PARIS · Version 1.0 · Juin 2026</p>
 
         <div className="space-y-8 text-gray-300 text-sm">
 
           <Section title="1. Objet">
-            <p>Les présentes CGU régissent l'accès et l'utilisation de la plateforme LMS Hi! Platform, développée par Hi! PARIS (HEC Paris + Institut Polytechnique de Paris). La plateforme est réservée aux membres des institutions partenaires de Hi! PARIS.</p>
+            <p>Les présentes CGU régissent l'accès et l'utilisation de la plateforme LMS Hi! PARIS Education, développée par Hi! PARIS (HEC Paris + Institut Polytechnique de Paris). La plateforme est réservée aux membres des institutions partenaires de Hi! PARIS.</p>
           </Section>
 
           <Section title="2. Accès à la plateforme">

@@ -1,6 +1,6 @@
 /**
  * @file (auth)/privacy/page.tsx
- * @description Page Politique de confidentialité de Hi! Platform "/privacy".
+ * @description Page Politique de confidentialité de Hi! PARIS Education "/privacy".
  *
  * Composant serveur (pas de "use client") — contenu statique.
  * Thème sombre (`bg-black`) cohérent avec les pages légales.
@@ -48,7 +48,7 @@ export default function PrivacyPage() {
 
         <h1 className="text-3xl font-extrabold text-white mb-2">Politique de confidentialité</h1>
         {/* Version et date de la politique */}
-        <p className="text-gray-500 text-sm mb-10">Hi! Platform — Hi! PARIS · Version 1.0 · Juin 2026</p>
+        <p className="text-gray-500 text-sm mb-10">Hi! PARIS Education — Hi! PARIS · Version 1.0 · Juin 2026</p>
 
         <div className="prose prose-invert prose-sm max-w-none space-y-8 text-gray-300">
 

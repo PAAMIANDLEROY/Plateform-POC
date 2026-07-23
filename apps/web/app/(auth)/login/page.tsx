@@ -179,23 +179,18 @@ export default function LoginPage() {
         <div className="relative">
           <div className="flex items-baseline gap-0 mb-2">
             <span className="text-3xl font-extrabold text-primary-light">Hi!</span>
-            <span className="text-3xl font-extrabold text-white"> Platform</span>
+            <span className="text-3xl font-extrabold text-white"> PARIS Education</span>
           </div>
           <p className="text-white/50 text-sm">{t.login.tagline}</p>
         </div>
 
-        {/* Citation et logos institutions */}
+        {/* Citation */}
         <div className="relative space-y-8">
           <blockquote className="border-l-2 border-primary-light pl-6">
             <p className="text-xl font-light text-white/90 leading-relaxed italic">
               {t.login.quote}
             </p>
           </blockquote>
-          <div className="flex items-center gap-6 flex-wrap">
-            {["IP Paris", "HEC Paris", "Télécom Paris", "Inria", "ENSAE"].map((school) => (
-              <span key={school} className="text-xs text-white/40 font-medium">{school}</span>
-            ))}
-          </div>
         </div>
 
         <div className="relative text-xs text-white/25">
@@ -211,7 +206,7 @@ export default function LoginPage() {
           <div className="lg:hidden text-center mb-8">
             <Link href="/" className="inline-flex items-baseline gap-0">
               <span className="text-2xl font-extrabold text-primary">Hi!</span>
-              <span className="text-2xl font-extrabold text-gray-900"> Platform</span>
+              <span className="text-2xl font-extrabold text-gray-900"> PARIS Education</span>
             </Link>
             <p className="mt-1 text-sm text-gray-400">{t.login.tagline}</p>
           </div>

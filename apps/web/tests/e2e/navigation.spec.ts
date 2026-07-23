@@ -51,7 +51,7 @@ test.describe("Navigation dropdowns", () => {
 
   /** Vérifie que la page de login charge avec le bon titre et un h1. */
   test("login page loads correctly", async ({ page }) => {
-    await expect(page).toHaveTitle(/Hi! Platform/);
+    await expect(page).toHaveTitle(/Hi! PARIS Education/);
     await expect(page.locator("h1")).toBeVisible();
   });
 });

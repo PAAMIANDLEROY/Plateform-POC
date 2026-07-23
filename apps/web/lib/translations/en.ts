@@ -1,6 +1,6 @@
 /**
  * @file lib/translations/en.ts
- * @description Dictionnaire de traductions **anglais** pour Hi! Platform.
+ * @description Dictionnaire de traductions **anglais** pour Hi! PARIS Education.
  *
  * Implémente le type `Translations` exporté depuis `fr.ts`.
  * TypeScript garantit à la compilation que toutes les clés de `fr.ts` sont présentes
@@ -12,7 +12,7 @@
  * - Les variables dynamiques `{{name}}` sont conservées telles quelles — le remplacement
  *   est effectué côté composant.
  * - Les références légales "RGPD" deviennent "GDPR" en anglais (Article numéros inchangés).
- * - Les noms propres (Hi! PARIS, Hi! Platform, Hi! Tube, etc.) ne sont pas traduits.
+ * - Les noms propres (Hi! PARIS, Hi! PARIS Education, Hi! Tube, etc.) ne sont pas traduits.
  *
  * @see fr.ts — source de vérité du type `Translations` et dictionnaire français.
  */
@@ -196,7 +196,7 @@ export const en: Translations = {
 
   // ── Complétion du profil (première connexion) ─────────────────────────────────
   completeProfile: {
-    title:              "Welcome to Hi! Platform",
+    title:              "Welcome to Hi! PARIS Education",
     subtitle:           "Complete your profile to get started.",
     firstName:          "First name *",
     lastName:           "Last name *",
@@ -252,8 +252,8 @@ export const en: Translations = {
   // ── Page "Mon parcours" → "My learning" ──────────────────────────────────────
   myLearning: {
     title:         "My learning",
-    subtitle:      "Hello {{name}} — here is your progress on Hi! Platform",
-    subtitleGuest: "Here is your progress on Hi! Platform",
+    subtitle:      "Hello {{name}} — here is your progress on Hi! PARIS Education",
+    subtitleGuest: "Here is your progress on Hi! PARIS Education",
     stats: {
       started:      "Courses started",
       completed:    "Courses completed",
@@ -323,7 +323,7 @@ export const en: Translations = {
   verifyEmail: {
     title:       "Code-based authentication",
     description:
-      "Hi! Platform now uses a 6-digit code sent by email. Log in directly from the login page.",
+      "Hi! PARIS Education now uses a 6-digit code sent by email. Log in directly from the login page.",
     loginBtn:    "Go to login",
   },
 };

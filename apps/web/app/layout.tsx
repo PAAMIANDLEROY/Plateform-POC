@@ -29,7 +29,7 @@ import { CookieBanner } from "@/components/platform/CookieBanner";
  * Peuvent être surchargées par les métadonnées de chaque page via `generateMetadata`.
  */
 export const metadata: Metadata = {
-  title: "Hi! Platform",
+  title: "Hi! PARIS Education",
   description: "Plateforme pédagogique mutualisée Hi! PARIS",
 };
 

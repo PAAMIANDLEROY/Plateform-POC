@@ -358,7 +358,7 @@ export function Nav() {
           {/* ── Logo ── */}
           <Link href="/" className="shrink-0 mr-4 flex items-center gap-0 select-none">
             <span className="text-xl font-extrabold text-primary tracking-tight">Hi!</span>
-            <span className="text-xl font-extrabold text-gray-900 tracking-tight"> Platform</span>
+            <span className="text-xl font-extrabold text-gray-900 tracking-tight"> PARIS Education</span>
           </Link>
 
           {/* ── Navigation principale (flex, scrollable sur petits écrans) ── */}

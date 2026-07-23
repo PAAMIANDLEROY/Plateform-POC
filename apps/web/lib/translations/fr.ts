@@ -1,6 +1,6 @@
 /**
  * @file lib/translations/fr.ts
- * @description Dictionnaire de traductions **français** pour Hi! Platform.
+ * @description Dictionnaire de traductions **français** pour Hi! PARIS Education.
  *
  * Ce fichier est la source de vérité du type `Translations` exporté en bas de fichier.
  * Le type est dérivé via `typeof fr` pour garantir que toutes les clés de `en.ts`
@@ -217,7 +217,7 @@ export const fr = {
 
   // ── Complétion du profil (première connexion) ─────────────────────────────────
   completeProfile: {
-    title:              "Bienvenue sur Hi! Platform",
+    title:              "Bienvenue sur Hi! PARIS Education",
     subtitle:           "Complétez votre profil pour commencer.",
     firstName:          "Prénom *",
     lastName:           "Nom *",
@@ -274,8 +274,8 @@ export const fr = {
   myLearning: {
     title:         "Mon parcours",
     // {{name}} est remplacé côté composant par le prénom de l'utilisateur
-    subtitle:      "Bonjour {{name}} — voici votre progression sur Hi! Platform",
-    subtitleGuest: "Voici votre progression sur Hi! Platform",
+    subtitle:      "Bonjour {{name}} — voici votre progression sur Hi! PARIS Education",
+    subtitleGuest: "Voici votre progression sur Hi! PARIS Education",
     stats: {
       started:      "Cours commencés",
       completed:    "Cours complétés",
@@ -348,7 +348,7 @@ export const fr = {
   verifyEmail: {
     title:       "Authentification par code",
     description:
-      "Hi! Platform utilise désormais un code à 6 chiffres envoyé par email. Connectez-vous directement depuis la page de connexion.",
+      "Hi! PARIS Education utilise désormais un code à 6 chiffres envoyé par email. Connectez-vous directement depuis la page de connexion.",
     loginBtn:    "Aller à la connexion",
   },
 };
