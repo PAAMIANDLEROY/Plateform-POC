@@ -123,14 +123,12 @@ export default function ConferencePage() {
             post to see the expected structure and formatting.
           </p>
           <div className="flex flex-wrap gap-3 mt-5">
-            <a
-              href={REPO_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/conference/submission"
               className="inline-flex items-center gap-1.5 bg-primary text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-primary-dark transition-colors"
             >
               Submission instructions
-            </a>
+            </Link>
             <a
               href={REPO_URL}
               target="_blank"
