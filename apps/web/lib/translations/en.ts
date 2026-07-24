@@ -61,6 +61,7 @@ export const en: Translations = {
   nav: {
     insights:       "Insights",
     databootcamp:   "Hi! Databootcamp",
+    conference:     "AIStuCon",
     // Hi! Databootcamp pillar submenu (overview + course list)
     databootcampMenu: {
       description:  "Intensive Data Science & AI program",

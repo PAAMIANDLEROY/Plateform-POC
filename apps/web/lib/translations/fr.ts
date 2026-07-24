@@ -80,6 +80,7 @@ export const fr = {
   nav: {
     insights:       "Insights",
     databootcamp:   "Hi! Databootcamp",
+    conference:     "AIStuCon",
     // Sous-menu du pilier Hi! Databootcamp (présentation + liste des cours)
     databootcampMenu: {
       description:  "Programme intensif Data Science & IA",

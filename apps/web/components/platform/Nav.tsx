@@ -396,6 +396,19 @@ export function Nav() {
               onToggle={handleDropdownToggle}
             />
 
+            {/* Onglet direct « AIStuCon » — conférence blog-post étudiante Hi! PARIS */}
+            <Link
+              href="/conference"
+              className={clsx(
+                "px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
+                pathname.startsWith("/conference")
+                  ? "bg-primary/10 text-primary font-semibold"
+                  : "text-gray-600 hover:text-primary hover:bg-primary/5"
+              )}
+            >
+              {t.nav.conference}
+            </Link>
+
             {/*
              * Studio, LMS, Admin et « Mon parcours » ne sont plus dans la barre :
              * ils vivent dans le menu déroulant de l'avatar (« Mon profil »).
