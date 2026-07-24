@@ -62,6 +62,14 @@ export const en: Translations = {
     insights:       "Insights",
     databootcamp:   "Hi! Databootcamp",
     conference:     "AIStuCon",
+    // AIStuCon tab submenu (overview + submission)
+    conferenceMenu: {
+      description:    "Student blog-post conference",
+      overview:       "AIStuCon",
+      overviewDesc:   "Conference overview",
+      submission:     "Submission Requirements",
+      submissionDesc: "How to submit a post",
+    },
     // Hi! Databootcamp pillar submenu (overview + course list)
     databootcampMenu: {
       description:  "Intensive Data Science & AI program",

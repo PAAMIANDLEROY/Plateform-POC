@@ -299,6 +299,21 @@ export function Nav() {
     ],
   };
 
+  /**
+   * Onglet « AIStuCon » — conférence blog-post étudiante Hi! PARIS.
+   * Dropdown : présentation de la conférence + exigences de soumission.
+   * Toutes les pages sont sous le préfixe d'URL `/conference`.
+   */
+  const CONFERENCE_SECTION = {
+    label:       t.nav.conference,
+    slug:        "conference",
+    description: t.nav.conferenceMenu.description,
+    items: [
+      { href: "/conference",            icon: "🎤", label: t.nav.conferenceMenu.overview,   desc: t.nav.conferenceMenu.overviewDesc },
+      { href: "/conference/submission", icon: "📝", label: t.nav.conferenceMenu.submission, desc: t.nav.conferenceMenu.submissionDesc },
+    ],
+  };
+
   // ── Fermeture de tous les menus au changement de route ──
   useEffect(() => {
     setOpenDropdown(null);
@@ -396,18 +411,12 @@ export function Nav() {
               onToggle={handleDropdownToggle}
             />
 
-            {/* Onglet direct « AIStuCon » — conférence blog-post étudiante Hi! PARIS */}
-            <Link
-              href="/conference"
-              className={clsx(
-                "px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
-                pathname.startsWith("/conference")
-                  ? "bg-primary/10 text-primary font-semibold"
-                  : "text-gray-600 hover:text-primary hover:bg-primary/5"
-              )}
-            >
-              {t.nav.conference}
-            </Link>
+            {/* Dropdown « AIStuCon » — présentation + submission requirements */}
+            <NavDropdown
+              {...CONFERENCE_SECTION}
+              isOpen={openDropdown === CONFERENCE_SECTION.slug}
+              onToggle={handleDropdownToggle}
+            />
 
             {/*
              * Studio, LMS, Admin et « Mon parcours » ne sont plus dans la barre :

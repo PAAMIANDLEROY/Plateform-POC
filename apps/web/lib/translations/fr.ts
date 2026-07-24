@@ -81,6 +81,14 @@ export const fr = {
     insights:       "Insights",
     databootcamp:   "Hi! Databootcamp",
     conference:     "AIStuCon",
+    // Sous-menu de l'onglet AIStuCon (présentation + soumission)
+    conferenceMenu: {
+      description:    "Conférence blog-post étudiante",
+      overview:       "AIStuCon",
+      overviewDesc:   "Présentation de la conférence",
+      submission:     "Submission Requirements",
+      submissionDesc: "Comment soumettre un billet",
+    },
     // Sous-menu du pilier Hi! Databootcamp (présentation + liste des cours)
     databootcampMenu: {
       description:  "Programme intensif Data Science & IA",
